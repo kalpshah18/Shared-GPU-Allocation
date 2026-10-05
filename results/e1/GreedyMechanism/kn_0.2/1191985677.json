@@ -1,0 +1,12 @@
+{
+  "WR": 1.0,
+  "J_A": 0.9957669945063535,
+  "NSW": 258.98010815985776,
+  "Q_max": 46,
+  "SR_delta": 0.07998,
+  "pct95_wait": 12.0,
+  "PoF": 0.0,
+  "seed": 1191985677,
+  "kn_ratio": 0.2,
+  "mechanism": "GreedyMechanism"
+}

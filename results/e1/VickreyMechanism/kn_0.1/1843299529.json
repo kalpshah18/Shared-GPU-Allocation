@@ -1,0 +1,12 @@
+{
+  "WR": 1.0,
+  "J_A": 0.990122537565249,
+  "NSW": 226.88634519066093,
+  "Q_max": 78,
+  "SR_delta": 0.1078,
+  "pct95_wait": 28.0,
+  "PoF": 0.0,
+  "seed": 1843299529,
+  "kn_ratio": 0.1,
+  "mechanism": "VickreyMechanism"
+}

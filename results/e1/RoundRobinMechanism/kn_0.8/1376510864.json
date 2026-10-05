@@ -1,0 +1,12 @@
+{
+  "WR": 0.8356961973145153,
+  "J_A": 1.0,
+  "NSW": 299.5090881105003,
+  "Q_max": 1,
+  "SR_delta": 0.0,
+  "pct95_wait": 1.0,
+  "PoF": 0.1643038026854847,
+  "seed": 1376510864,
+  "kn_ratio": 0.8,
+  "mechanism": "RoundRobinMechanism"
+}
