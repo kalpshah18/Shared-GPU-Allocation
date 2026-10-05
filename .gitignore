@@ -45,3 +45,6 @@ results/*/*.json
 !results/**/summary.json
 !seeds/master_seeds.json
 !config/base.yaml
+
+# Project Proposal
+FAI_Project_Proposal.pdf
