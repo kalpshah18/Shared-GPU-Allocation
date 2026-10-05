@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating System Artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project Specific: Simulation raw outputs
+# Ignore per-seed raw outputs while allowing summary files and directories
+results/**/seed_*.json
+results/*/*.json
+!results/**/summary.json
+!seeds/master_seeds.json
+!config/base.yaml

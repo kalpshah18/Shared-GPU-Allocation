@@ -1,0 +1,512 @@
+[
+  {
+    "time_per_round_us": {
+      "mean": 49.611040006857365,
+      "ci_lower": 38.86611999478191,
+      "ci_upper": 60.35596001893282,
+      "std": 13.636404027521897
+    },
+    "peak_memory_kib": {
+      "mean": 242.34375,
+      "ci_lower": 242.34375,
+      "ci_upper": 242.34375,
+      "std": 0.0
+    },
+    "mechanism": "RandomMechanism",
+    "n": 10,
+    "k": 2
+  },
+  {
+    "time_per_round_us": {
+      "mean": 17.798539996147156,
+      "ci_lower": 16.283019981347024,
+      "ci_upper": 19.292240007780492,
+      "std": 1.9827533690737718
+    },
+    "peak_memory_kib": {
+      "mean": 242.34375,
+      "ci_lower": 242.34375,
+      "ci_upper": 242.34375,
+      "std": 0.0
+    },
+    "mechanism": "RoundRobinMechanism",
+    "n": 10,
+    "k": 2
+  },
+  {
+    "time_per_round_us": {
+      "mean": 46.53412001207471,
+      "ci_lower": 35.87140002055094,
+      "ci_upper": 58.28279999550432,
+      "std": 14.433556240185302
+    },
+    "peak_memory_kib": {
+      "mean": 242.34375,
+      "ci_lower": 242.34375,
+      "ci_upper": 242.34375,
+      "std": 0.0
+    },
+    "mechanism": "GreedyMechanism",
+    "n": 10,
+    "k": 2
+  },
+  {
+    "time_per_round_us": {
+      "mean": 36.88677998725325,
+      "ci_lower": 34.52959997812286,
+      "ci_upper": 39.22737998655066,
+      "std": 3.0432955102680324
+    },
+    "peak_memory_kib": {
+      "mean": 242.34375,
+      "ci_lower": 242.34375,
+      "ci_upper": 242.34375,
+      "std": 0.0
+    },
+    "mechanism": "ScoreMechanism",
+    "n": 10,
+    "k": 2
+  },
+  {
+    "time_per_round_us": {
+      "mean": 29.735299991443753,
+      "ci_lower": 27.976459998171777,
+      "ci_upper": 31.543399998918176,
+      "std": 2.318840371244256
+    },
+    "peak_memory_kib": {
+      "mean": 242.34375,
+      "ci_lower": 242.34375,
+      "ci_upper": 242.34375,
+      "std": 0.0
+    },
+    "mechanism": "VickreyMechanism",
+    "n": 10,
+    "k": 2
+  },
+  {
+    "time_per_round_us": {
+      "mean": 40.03127999603748,
+      "ci_lower": 32.196700014173985,
+      "ci_upper": 48.208139988128096,
+      "std": 10.265399506803746
+    },
+    "peak_memory_kib": {
+      "mean": 594.140625,
+      "ci_lower": 594.140625,
+      "ci_upper": 594.140625,
+      "std": 0.0
+    },
+    "mechanism": "RandomMechanism",
+    "n": 25,
+    "k": 5
+  },
+  {
+    "time_per_round_us": {
+      "mean": 11.187820020131767,
+      "ci_lower": 10.247560020070523,
+      "ci_upper": 12.14176001958549,
+      "std": 1.2785517187417956
+    },
+    "peak_memory_kib": {
+      "mean": 594.140625,
+      "ci_lower": 594.140625,
+      "ci_upper": 594.140625,
+      "std": 0.0
+    },
+    "mechanism": "RoundRobinMechanism",
+    "n": 25,
+    "k": 5
+  },
+  {
+    "time_per_round_us": {
+      "mean": 32.77926000300795,
+      "ci_lower": 30.48805999569595,
+      "ci_upper": 34.59721999242902,
+      "std": 2.532564020121562
+    },
+    "peak_memory_kib": {
+      "mean": 594.140625,
+      "ci_lower": 594.140625,
+      "ci_upper": 594.140625,
+      "std": 0.0
+    },
+    "mechanism": "GreedyMechanism",
+    "n": 25,
+    "k": 5
+  },
+  {
+    "time_per_round_us": {
+      "mean": 41.533759993035346,
+      "ci_lower": 35.369599994737655,
+      "ci_upper": 50.5169199896045,
+      "std": 10.045560673299939
+    },
+    "peak_memory_kib": {
+      "mean": 594.140625,
+      "ci_lower": 594.140625,
+      "ci_upper": 594.140625,
+      "std": 0.0
+    },
+    "mechanism": "ScoreMechanism",
+    "n": 25,
+    "k": 5
+  },
+  {
+    "time_per_round_us": {
+      "mean": 44.241020013578236,
+      "ci_lower": 35.90950003126636,
+      "ci_upper": 52.57253999589011,
+      "std": 10.524322438283708
+    },
+    "peak_memory_kib": {
+      "mean": 594.140625,
+      "ci_lower": 594.140625,
+      "ci_upper": 594.140625,
+      "std": 0.0
+    },
+    "mechanism": "VickreyMechanism",
+    "n": 25,
+    "k": 5
+  },
+  {
+    "time_per_round_us": {
+      "mean": 34.41286000888795,
+      "ci_lower": 32.66108001116663,
+      "ci_upper": 36.39919999986887,
+      "std": 2.3363952307776783
+    },
+    "peak_memory_kib": {
+      "mean": 1180.46875,
+      "ci_lower": 1180.46875,
+      "ci_upper": 1180.46875,
+      "std": 0.0
+    },
+    "mechanism": "RandomMechanism",
+    "n": 50,
+    "k": 10
+  },
+  {
+    "time_per_round_us": {
+      "mean": 10.731900006067008,
+      "ci_lower": 10.210500005632639,
+      "ci_upper": 11.280719994101673,
+      "std": 0.6734980549202757
+    },
+    "peak_memory_kib": {
+      "mean": 1180.46875,
+      "ci_lower": 1180.46875,
+      "ci_upper": 1180.46875,
+      "std": 0.0
+    },
+    "mechanism": "RoundRobinMechanism",
+    "n": 50,
+    "k": 10
+  },
+  {
+    "time_per_round_us": {
+      "mean": 31.38950001448393,
+      "ci_lower": 26.58016001805663,
+      "ci_upper": 38.27960002236068,
+      "std": 7.779124325496166
+    },
+    "peak_memory_kib": {
+      "mean": 1180.46875,
+      "ci_lower": 1180.46875,
+      "ci_upper": 1180.46875,
+      "std": 0.0
+    },
+    "mechanism": "GreedyMechanism",
+    "n": 50,
+    "k": 10
+  },
+  {
+    "time_per_round_us": {
+      "mean": 52.832399983890355,
+      "ci_lower": 47.75583997834474,
+      "ci_upper": 58.91523997997865,
+      "std": 7.353482627962525
+    },
+    "peak_memory_kib": {
+      "mean": 1180.46875,
+      "ci_lower": 1180.46875,
+      "ci_upper": 1180.46875,
+      "std": 0.0
+    },
+    "mechanism": "ScoreMechanism",
+    "n": 50,
+    "k": 10
+  },
+  {
+    "time_per_round_us": {
+      "mean": 43.97942000068724,
+      "ci_lower": 41.245779977180064,
+      "ci_upper": 46.91178002394736,
+      "std": 3.6175106075990087
+    },
+    "peak_memory_kib": {
+      "mean": 1180.46875,
+      "ci_lower": 1180.46875,
+      "ci_upper": 1180.46875,
+      "std": 0.0
+    },
+    "mechanism": "VickreyMechanism",
+    "n": 50,
+    "k": 10
+  },
+  {
+    "time_per_round_us": {
+      "mean": 246.9817600096576,
+      "ci_lower": 121.46386001259089,
+      "ci_upper": 360.2600800106302,
+      "std": 151.8530658035072
+    },
+    "peak_memory_kib": {
+      "mean": 2353.125,
+      "ci_lower": 2353.125,
+      "ci_upper": 2353.125,
+      "std": 0.0
+    },
+    "mechanism": "RandomMechanism",
+    "n": 100,
+    "k": 20
+  },
+  {
+    "time_per_round_us": {
+      "mean": 101.47033998509869,
+      "ci_lower": 88.26257998589426,
+      "ci_upper": 114.67809998430312,
+      "std": 17.134157126161583
+    },
+    "peak_memory_kib": {
+      "mean": 2353.125,
+      "ci_lower": 2353.125,
+      "ci_upper": 2353.125,
+      "std": 0.0
+    },
+    "mechanism": "RoundRobinMechanism",
+    "n": 100,
+    "k": 20
+  },
+  {
+    "time_per_round_us": {
+      "mean": 616.4200200000778,
+      "ci_lower": 404.38422000734136,
+      "ci_upper": 844.7592999902554,
+      "std": 289.6964182709575
+    },
+    "peak_memory_kib": {
+      "mean": 2353.125,
+      "ci_lower": 2353.125,
+      "ci_upper": 2353.125,
+      "std": 0.0
+    },
+    "mechanism": "GreedyMechanism",
+    "n": 100,
+    "k": 20
+  },
+  {
+    "time_per_round_us": {
+      "mean": 502.64324001036584,
+      "ci_lower": 438.2959200069308,
+      "ci_upper": 575.3920200048015,
+      "std": 88.0003178232122
+    },
+    "peak_memory_kib": {
+      "mean": 2353.125,
+      "ci_lower": 2353.125,
+      "ci_upper": 2353.125,
+      "std": 0.0
+    },
+    "mechanism": "ScoreMechanism",
+    "n": 100,
+    "k": 20
+  },
+  {
+    "time_per_round_us": {
+      "mean": 388.9981600106694,
+      "ci_lower": 367.33664001803845,
+      "ci_upper": 402.7672399999574,
+      "std": 23.630316496481132
+    },
+    "peak_memory_kib": {
+      "mean": 2353.125,
+      "ci_lower": 2353.125,
+      "ci_upper": 2353.125,
+      "std": 0.0
+    },
+    "mechanism": "VickreyMechanism",
+    "n": 100,
+    "k": 20
+  },
+  {
+    "time_per_round_us": {
+      "mean": 380.9800599934533,
+      "ci_lower": 335.41903998702765,
+      "ci_upper": 440.406859992072,
+      "std": 65.18432418116329
+    },
+    "peak_memory_kib": {
+      "mean": 5871.09375,
+      "ci_lower": 5871.09375,
+      "ci_upper": 5871.09375,
+      "std": 0.0
+    },
+    "mechanism": "RandomMechanism",
+    "n": 250,
+    "k": 50
+  },
+  {
+    "time_per_round_us": {
+      "mean": 141.3484200136736,
+      "ci_lower": 120.34348000306636,
+      "ci_upper": 174.45062000770122,
+      "std": 36.80071995748833
+    },
+    "peak_memory_kib": {
+      "mean": 5871.09375,
+      "ci_lower": 5871.09375,
+      "ci_upper": 5871.09375,
+      "std": 0.0
+    },
+    "mechanism": "RoundRobinMechanism",
+    "n": 250,
+    "k": 50
+  },
+  {
+    "time_per_round_us": {
+      "mean": 534.7217000089586,
+      "ci_lower": 417.65947999665514,
+      "ci_upper": 741.6221200022846,
+      "std": 228.20268485457822
+    },
+    "peak_memory_kib": {
+      "mean": 5871.09375,
+      "ci_lower": 5871.09375,
+      "ci_upper": 5871.09375,
+      "std": 0.0
+    },
+    "mechanism": "GreedyMechanism",
+    "n": 250,
+    "k": 50
+  },
+  {
+    "time_per_round_us": {
+      "mean": 482.19777998747304,
+      "ci_lower": 449.15311998920515,
+      "ci_upper": 515.2424399857409,
+      "std": 43.20691261024865
+    },
+    "peak_memory_kib": {
+      "mean": 5871.09375,
+      "ci_lower": 5871.09375,
+      "ci_upper": 5871.09375,
+      "std": 0.0
+    },
+    "mechanism": "ScoreMechanism",
+    "n": 250,
+    "k": 50
+  },
+  {
+    "time_per_round_us": {
+      "mean": 561.1564199905843,
+      "ci_lower": 502.0141799817793,
+      "ci_upper": 623.4413200058043,
+      "std": 77.79414300842016
+    },
+    "peak_memory_kib": {
+      "mean": 5871.09375,
+      "ci_lower": 5871.09375,
+      "ci_upper": 5871.09375,
+      "std": 0.0
+    },
+    "mechanism": "VickreyMechanism",
+    "n": 250,
+    "k": 50
+  },
+  {
+    "time_per_round_us": {
+      "mean": 581.7671400145628,
+      "ci_lower": 457.6453600078821,
+      "ci_upper": 718.4772800188512,
+      "std": 171.90912520508823
+    },
+    "peak_memory_kib": {
+      "mean": 11734.375,
+      "ci_lower": 11734.375,
+      "ci_upper": 11734.375,
+      "std": 0.0
+    },
+    "mechanism": "RandomMechanism",
+    "n": 500,
+    "k": 100
+  },
+  {
+    "time_per_round_us": {
+      "mean": 208.48552000243217,
+      "ci_lower": 195.32282000873238,
+      "ci_upper": 222.69389999564737,
+      "std": 17.44272785619328
+    },
+    "peak_memory_kib": {
+      "mean": 11734.375,
+      "ci_lower": 11734.375,
+      "ci_upper": 11734.375,
+      "std": 0.0
+    },
+    "mechanism": "RoundRobinMechanism",
+    "n": 500,
+    "k": 100
+  },
+  {
+    "time_per_round_us": {
+      "mean": 527.4509800132364,
+      "ci_lower": 489.7404200164601,
+      "ci_upper": 576.6482000006363,
+      "std": 58.59755566768747
+    },
+    "peak_memory_kib": {
+      "mean": 11734.375,
+      "ci_lower": 11734.375,
+      "ci_upper": 11734.375,
+      "std": 0.0
+    },
+    "mechanism": "GreedyMechanism",
+    "n": 500,
+    "k": 100
+  },
+  {
+    "time_per_round_us": {
+      "mean": 679.607139993459,
+      "ci_lower": 582.9262800049037,
+      "ci_upper": 844.7034800075926,
+      "std": 182.82526421736617
+    },
+    "peak_memory_kib": {
+      "mean": 11734.375,
+      "ci_lower": 11734.375,
+      "ci_upper": 11734.375,
+      "std": 0.0
+    },
+    "mechanism": "ScoreMechanism",
+    "n": 500,
+    "k": 100
+  },
+  {
+    "time_per_round_us": {
+      "mean": 592.1164400060661,
+      "ci_lower": 537.9570400109515,
+      "ci_upper": 657.8664200031199,
+      "std": 75.73714727041815
+    },
+    "peak_memory_kib": {
+      "mean": 11734.375,
+      "ci_lower": 11734.375,
+      "ci_upper": 11734.375,
+      "std": 0.0
+    },
+    "mechanism": "VickreyMechanism",
+    "n": 500,
+    "k": 100
+  }
+]
