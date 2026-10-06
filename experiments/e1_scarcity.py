@@ -5,6 +5,7 @@ E1 — Resource Scarcity — Owner: Kalp Shah
 
 Vary k/n ∈ {0.1, 0.2, 0.4, 0.6, 0.8} and compare WR, J_A, Q_max,
 95th-percentile wait, and SR_Δ under truthful reports.
+M4 uses the default history penalty λ = cfg.lambda_ (1.0).
 
 Output: results/e1/<seed>.json per seed, plus
         results/e1/summary.json (bootstrap CIs across seeds).
@@ -44,10 +45,10 @@ def load_seeds(seeds_file: str = "seeds/master_seeds.json") -> list[int]:
         return json.load(fh)["seeds"]
 
 
-def mechanism_factory(name: str, cfg: Config):
+def mechanism_factory(name: str, cfg: Config, pkg: SeedPackage):
     return {
         "RandomMechanism"    : RandomMechanism(cfg),
-        "RoundRobinMechanism": RoundRobinMechanism(cfg, init_seed=0),
+        "RoundRobinMechanism": RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
         "GreedyMechanism"    : GreedyMechanism(cfg),
         "ScoreMechanism"     : ScoreMechanism(cfg),
         "VickreyMechanism"   : VickreyMechanism(cfg),
@@ -70,7 +71,7 @@ def run_e1(seeds: list[int]) -> list[dict]:
             per_seed = []
             for seed in seeds:
                 pkg     = SeedPackage.generate(seed, cfg)
-                mech    = mechanism_factory(mname, cfg)
+                mech    = mechanism_factory(mname, cfg, pkg)
                 history = run_single(mech, pkg, cfg, policy_fn=None)
 
                 result = M.compute_all(history, pkg.valuations, cfg)
@@ -99,5 +100,5 @@ if __name__ == "__main__":
     out = Path("results/e1")
     out.mkdir(parents=True, exist_ok=True)
     with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2)
+        json.dump(results, fh, indent=2, allow_nan=False)
     print("E1 complete. Summary saved to results/e1/summary.json")

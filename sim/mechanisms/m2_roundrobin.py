@@ -12,7 +12,7 @@ Implementation notes
 * The initial queue permutation is fixed by the tie_seed passed at round 0.
   For subsequent rounds the queue simply advances (no re-randomisation).
 * Round-robin is stateful: the queue position carries over across rounds.
-  The queue is stored on the instance, so a fresh RandomMechanism instance
+  The queue is stored on the instance, so a fresh RoundRobinMechanism instance
   must be used per simulation run.
 """
 

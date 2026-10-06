@@ -172,12 +172,17 @@ def manipulation_gain(
     strategic_set: np.ndarray,
 ) -> dict:
     """
-    M_i(σ_i; ω) = U_i(σ_i, σ_{-i}; ω) − U_i(truthful, σ_{-i}; ω)
+    Coalition manipulation gain for each strategic user i:
 
-    where U_i = Σ_t (v_{i,t} · x_{i,t} − p_{i,t}).
+        M_i^coal(ω) = U_i(σ_S, truthful_{-S}; ω) − U_i(truthful; ω)
 
-    Both histories must share the same ω (same valuation trace, tie seed,
-    opponent policies) — only the focal user's policy differs.
+    where U_i = Σ_t (v_{i,t} · x_{i,t} − p_{i,t}) and S is the strategic set.
+
+    `history_strategic` is the mixed run (all of S deviate together) and
+    `history_truthful` is the all-truthful run, both on the same ω.  This is a
+    *group* deviation: strategic users compete with each other, so a negative
+    value does NOT imply that an individual user is better off truthful.  Use
+    `unilateral_gain` for the individual incentive M_i(σ_i, σ_{-i}; ω).
 
     Returns
     -------
@@ -193,11 +198,33 @@ def manipulation_gain(
     U_truth   = np.sum(valuations * Xt - Pt, axis=1)
     gains     = (U_strat - U_truth)[strategic_set]
 
+    if len(gains) == 0:
+        # No strategic users (ρ = 0): the coalition gain is undefined.
+        return {"M_mean": float("nan"), "M_max": float("nan"), "frac_pos": float("nan")}
     return {
         "M_mean"  : float(np.mean(gains)),
-        "M_max"   : float(np.max(gains)) if len(gains) > 0 else 0.0,
-        "frac_pos": float(np.mean(gains > 0)) if len(gains) > 0 else 0.0,
+        "M_max"   : float(np.max(gains)),
+        "frac_pos": float(np.mean(gains > 0)),
     }
+
+
+def unilateral_gain(
+    history_deviate: History,
+    history_truthful_focal: History,
+    valuations: np.ndarray,
+    focal: int,
+) -> float:
+    """
+    M_f(σ_f; ω) = U_f(σ_f, σ_{-f}; ω) − U_f(truthful, σ_{-f}; ω)
+
+    Histories come from `sim.runner.run_unilateral`: identical ω and opponent
+    behaviour; only the focal user's report policy differs.
+    """
+    Xd, Pd = _matrices(history_deviate)
+    Xt, Pt = _matrices(history_truthful_focal)
+    U_d = float(np.sum(valuations[focal] * Xd[focal] - Pd[focal]))
+    U_t = float(np.sum(valuations[focal] * Xt[focal] - Pt[focal]))
+    return U_d - U_t
 
 
 def price_of_strategy(

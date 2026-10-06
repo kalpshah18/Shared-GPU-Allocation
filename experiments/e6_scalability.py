@@ -53,11 +53,11 @@ def load_seeds(path: str = "seeds/master_seeds.json", max_seeds: int = 5) -> lis
     return seeds[:max_seeds]  # Use 5 seeds for computational benchmarks
 
 
-def make_mech(mname: str, cfg: Config):
+def make_mech(mname: str, cfg: Config, pkg: SeedPackage):
     if mname == "RandomMechanism":
         return RandomMechanism(cfg)
     if mname == "RoundRobinMechanism":
-        return RoundRobinMechanism(cfg, init_seed=0)
+        return RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0]))
     if mname == "GreedyMechanism":
         return GreedyMechanism(cfg)
     if mname == "ScoreMechanism":
@@ -78,14 +78,17 @@ def run_e6(seeds: list[int]) -> list[dict]:
             per_seed = []
             for seed in seeds:
                 pkg = SeedPackage.generate(seed, cfg)
-                mech = make_mech(mname, cfg)
+                mech = make_mech(mname, cfg, pkg)
 
                 t0 = time.perf_counter()
                 history = run_single(mech, pkg, cfg, policy_fn=None)
                 elapsed_s = time.perf_counter() - t0
 
                 time_per_round_us = (elapsed_s / cfg.T) * 1e6
-                # Peak memory footprint for the simulation state (tensors + history)
+                # Analytic size of the simulation state arrays (valuations, tie
+                # seeds, history vectors, per-round allocation + payment records).
+                # Computed from array sizes, not measured with a profiler, so it is
+                # identical across mechanisms by construction.
                 state_bytes = (
                     pkg.valuations.nbytes
                     + pkg.tie_seeds.nbytes

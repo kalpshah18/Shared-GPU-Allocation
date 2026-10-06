@@ -21,6 +21,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+from matplotlib.colors import LinearSegmentedColormap, Normalize, TwoSlopeNorm
 import numpy as np
 
 FIGURES_DIR = Path("figures")
@@ -89,7 +90,7 @@ def plot_e1(results: list[dict], save: bool = True) -> None:
         ax.legend(fontsize=9, frameon=True)
         ax.grid(True, linestyle="--", alpha=0.4)
 
-    fig.suptitle("E1 — Resource Scarcity Sweep (n=50, T=1000)", fontsize=14, fontweight="bold")
+    fig.suptitle("E1 — Resource Scarcity Sweep (n=50, T=1000, truthful; M4 λ=1)", fontsize=14, fontweight="bold")
     if save:
         fig.savefig(FIGURES_DIR / "e1_scarcity.pdf", bbox_inches="tight")
         fig.savefig(FIGURES_DIR / "e1_scarcity.png", bbox_inches="tight")
@@ -99,40 +100,100 @@ def plot_e1(results: list[dict], save: bool = True) -> None:
 
 # ── E2: Fairness–Frontier Scatter ─────────────────────────────────────────────
 
+# Diverging map for signed gains: blue (< 0, manipulation does not pay) ->
+# neutral gray (0) -> red (> 0, manipulation pays).
+DIVERGING_CMAP = LinearSegmentedColormap.from_list(
+    "gain_diverging", ["#1c5cab", "#f0efec", "#b8322f"]
+)
+
+
+def _signed_norm(values) -> TwoSlopeNorm:
+    vals = np.asarray([v for v in values if v is not None and np.isfinite(v)])
+    lim_lo = min(-1e-9, float(vals.min())) if len(vals) else -1.0
+    lim_hi = max(1e-9, float(vals.max())) if len(vals) else 1.0
+    return TwoSlopeNorm(vmin=lim_lo, vcenter=0.0, vmax=lim_hi)
+
+
 def plot_e2(results: list[dict], save: bool = True) -> None:
     """
-    Scatter: WR (x) vs J_A (y), coloured by M_mean.
-    Each point represents a (mechanism, λ) combination under strategic users.
+    Scatter: WR (x) vs J_A (y), coloured by the unilateral manipulation gain
+    M_uni (the individual incentive to inflate).  M3, M5 and M4 at λ = 0 share
+    one allocation rule and therefore one (WR, J_A) point; M5 is drawn as an
+    outer ring because its payments give it a different gain.  The crowded
+    high-λ cluster is repeated in a zoomed inset.
     """
-    fig, ax = plt.subplots(figsize=(9, 6.5), tight_layout=True)
+    color_key = "M_uni" if "M_uni" in results[0] else "M_mean"
 
-    wrs    = [r["WR"]["mean"] for r in results]
-    jas    = [r["J_A"]["mean"] for r in results]
-    ms     = [r["M_mean"]["mean"] for r in results]
+    def short(r: dict) -> str:
+        if r["mechanism"] == "ScoreMechanism":
+            return f"M4 λ={r['lambda_']:g}"
+        return MECHANISM_LABELS.get(r["mechanism"], r["mechanism"])
 
-    labels = []
+    # Merge only points that share position AND gain
+    groups: dict[tuple, list[dict]] = {}
     for r in results:
-        m_lbl = MECHANISM_LABELS.get(r["mechanism"], r["mechanism"])
-        lam = r.get("lambda_")
-        if lam is not None:
-            labels.append(f"{m_lbl} (λ={lam})")
-        else:
-            labels.append(m_lbl)
+        key = (round(r["WR"]["mean"], 4), round(r["J_A"]["mean"], 4),
+               round(r[color_key]["mean"], 2))
+        groups.setdefault(key, []).append(r)
+    pts = []
+    for (wr, ja, g), rs in groups.items():
+        rs.sort(key=lambda r: (r["mechanism"] != "ScoreMechanism", r.get("lambda_") or 0))
+        pts.append(dict(wr=wr, ja=ja, g=g, label=" = ".join(short(r) for r in rs),
+                        ring=rs[0]["mechanism"] == "VickreyMechanism"))
 
-    sc = ax.scatter(wrs, jas, c=ms, cmap="coolwarm", s=110, edgecolors="black", linewidths=0.8, zorder=3)
-    cbar = plt.colorbar(sc, ax=ax)
-    cbar.set_label("Mean Manipulation Gain M", rotation=270, labelpad=15, fontweight="bold")
+    norm = _signed_norm([p["g"] for p in pts])
+    fig, ax = plt.subplots(figsize=(10, 6.5), constrained_layout=True)
 
-    for x, y, lbl in zip(wrs, jas, labels):
-        ax.annotate(
-            lbl, (x, y), fontsize=7.5, ha="left", va="bottom",
-            xytext=(4, 4), textcoords="offset points",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none"),
-        )
+    def draw(axis, subset, fs, offsets):
+        for p in sorted(subset, key=lambda p: not p["ring"]):
+            axis.scatter(p["wr"], p["ja"], c=[p["g"]], cmap=DIVERGING_CMAP, norm=norm,
+                         s=260 if p["ring"] else 90, edgecolors="#333333",
+                         linewidths=0.8, zorder=2 if p["ring"] else 3)
+            dx, dy, ha = offsets(p)
+            axis.annotate(p["label"], (p["wr"], p["ja"]), xytext=(dx, dy),
+                          textcoords="offset points", fontsize=fs, ha=ha, va="center")
 
-    ax.set_xlabel("Welfare Ratio (WR) — Allocative Efficiency", fontweight="bold")
-    ax.set_ylabel("Jain Allocation Fairness (J_A)", fontweight="bold")
-    ax.set_title("E2 — Fairness, Efficiency, and Strategic Vulnerability Frontier", fontsize=13, fontweight="bold")
+    in_cluster = lambda p: p["wr"] > 0.94 and p["ja"] > 0.95
+
+    def main_offsets(p):
+        if p["ring"]:
+            return (12, -12, "left")
+        if p["wr"] < 0.7:
+            return (9, -9 if "Random" in p["label"] else 7, "left")
+        return (-10, 0, "right")
+
+    draw(ax, [p for p in pts if not in_cluster(p)], 8.5, main_offsets)
+    cluster = [p for p in pts if in_cluster(p)]
+    sc = ax.scatter([p["wr"] for p in cluster], [p["ja"] for p in cluster],
+               c=[p["g"] for p in cluster], cmap=DIVERGING_CMAP, norm=norm,
+               s=90, edgecolors="#333333", linewidths=0.8, zorder=3)
+
+    if cluster:
+        x0, x1 = min(p["wr"] for p in cluster) - 0.004, max(p["wr"] for p in cluster) + 0.004
+        y0, y1 = min(p["ja"] for p in cluster) - 0.006, 1.004
+        axins = ax.inset_axes([0.33, 0.12, 0.40, 0.48])
+        draw(axins, cluster, 8.5, lambda p: (8, 0, "left"))
+        axins.set_xlim(x0, x1 + 0.006)
+        axins.set_ylim(y0, y1)
+        axins.tick_params(labelsize=8)
+        axins.grid(True, linestyle="--", alpha=0.4)
+        axins.set_title("zoom: M4 with λ ≥ 0.5", fontsize=9)
+        ax.indicate_inset_zoom(axins, edgecolor="#888888")
+
+    cbar = fig.colorbar(sc, ax=ax)
+    lo, hi = norm.vmin, norm.vmax
+    # Truncate toward zero so no tick falls outside [vmin, vmax]
+    ticks = {0.0} | {float(np.trunc(t)) for t in np.r_[np.linspace(lo, 0, 3), np.linspace(0, hi, 4)]}
+    cbar.set_ticks(sorted(ticks))
+    cbar.set_label("Unilateral manipulation gain $M_{uni}$ (> 0: inflating pays)"
+                   if color_key == "M_uni" else "Mean manipulation gain M",
+                   rotation=270, labelpad=18)
+
+    ax.set_xlim(0.52, 1.0)
+    ax.set_xlabel("Welfare Ratio (WR)")
+    ax.set_ylabel("Jain Allocation Fairness (J_A)")
+    ax.set_title("E2 — Fairness / Efficiency / Manipulation Frontier "
+                 "(ρ = 0.25, capped exaggeration c = 2)", fontsize=12, fontweight="bold")
     ax.grid(True, linestyle="--", alpha=0.4, zorder=0)
 
     if save:
@@ -144,76 +205,89 @@ def plot_e2(results: list[dict], save: bool = True) -> None:
 
 # ── E3: Strategic Population Heatmap ─────────────────────────────────────────
 
+E3_POLICY_ORDER = ["truthful", "cap_2", "max_claim"]
+E3_TITLES = {
+    "M_mean": "Coalition manipulation gain (strategic set vs. all truthful)",
+    "M_uni" : "Unilateral manipulation gain (one user deviates, others fixed)",
+    "PoS"   : "Price of Strategy (welfare loss vs. all truthful)",
+}
+
+
+def _e3_grid(results, mech, metric, rhos, policies):
+    data = np.full((len(rhos), len(policies)), np.nan)
+    for r in results:
+        if r["mechanism"] != mech or metric not in r:
+            continue
+        v = r[metric]["mean"]
+        if v is not None:
+            data[rhos.index(r["rho"]), policies.index(r["policy"])] = v
+    return data
+
+
+def _draw_e3_panel(ax, data, cmap, norm, rhos, policies, fontsize):
+    masked = np.ma.masked_invalid(data)
+    cm = cmap.copy()
+    cm.set_bad("#e6e6e3")
+    im = ax.imshow(masked, aspect="auto", cmap=cm, norm=norm)
+    ax.set_xticks(range(len(policies)))
+    ax.set_xticklabels(policies, rotation=30, ha="right", fontsize=9)
+    for i in range(len(rhos)):
+        for j in range(len(policies)):
+            val = data[i, j]
+            txt = "n/a" if np.isnan(val) else f"{val:.2f}" if abs(val) < 10 else f"{val:.0f}"
+            ax.text(j, i, txt, ha="center", va="center", fontsize=fontsize, color="#1a1a19")
+    return im
+
+
 def plot_e3(results: list[dict], metric: str = "M_mean", save: bool = True) -> None:
     """
-    Heatmaps: rho (rows) × policy (columns), coloured by metric.
-    Generates both per-mechanism heatmaps and a unified 5-panel overview.
+    Heatmaps: ρ (rows) × policy (columns) for one metric.  All panels share one
+    colour scale (diverging around 0 for signed gains, sequential for PoS) so
+    colours are comparable across mechanisms.  Undefined cells show "n/a".
     """
+    if not any(metric in r for r in results):
+        print(f"  [SKIP] E3 metric {metric} not in results")
+        return
     rhos     = sorted({r["rho"] for r in results})
-    policies = sorted({r["policy"] for r in results})
-    mechs    = [m for m in MECHANISM_LABELS.keys() if any(r["mechanism"] == m for r in results)]
-    if not mechs:
-        mechs = sorted({r["mechanism"] for r in results})
+    present  = {r["policy"] for r in results}
+    policies = [p for p in E3_POLICY_ORDER if p in present] + sorted(present - set(E3_POLICY_ORDER))
+    mechs    = [m for m in MECHANISM_LABELS if any(r["mechanism"] == m for r in results)]
+
+    grids = {m: _e3_grid(results, m, metric, rhos, policies) for m in mechs}
+    allv  = np.concatenate([g[~np.isnan(g)] for g in grids.values()])
+    if metric == "PoS":
+        cmap = plt.get_cmap("Blues")
+        norm = Normalize(vmin=0.0, vmax=max(float(allv.max()), 1e-9))
+    else:
+        cmap = DIVERGING_CMAP
+        norm = _signed_norm(allv)
+    title = E3_TITLES.get(metric, metric)
 
     # Individual mechanism heatmaps
     for mech in mechs:
-        data = np.full((len(rhos), len(policies)), np.nan)
-        for r in results:
-            if r["mechanism"] != mech:
-                continue
-            ri = rhos.index(r["rho"])
-            ci = policies.index(r["policy"])
-            data[ri, ci] = r[metric]["mean"]
-
-        fig, ax = plt.subplots(figsize=(7, 5), tight_layout=True)
-        im = ax.imshow(data, aspect="auto", cmap="YlOrRd")
-        ax.set_xticks(range(len(policies)))
-        ax.set_xticklabels(policies, rotation=25)
+        fig, ax = plt.subplots(figsize=(6.5, 4.8), tight_layout=True)
+        im = _draw_e3_panel(ax, grids[mech], cmap, norm, rhos, policies, 9)
         ax.set_yticks(range(len(rhos)))
         ax.set_yticklabels([f"ρ = {r}" for r in rhos])
         plt.colorbar(im, ax=ax, label=metric)
         ax.set_title(f"E3 — {MECHANISM_LABELS.get(mech, mech)}: {metric}", fontweight="bold")
-
-        for i in range(len(rhos)):
-            for j in range(len(policies)):
-                val = data[i, j]
-                if not np.isnan(val):
-                    ax.text(j, i, f"{val:.3f}", ha="center", va="center", color="black", fontsize=8)
-
         if save:
             fig.savefig(FIGURES_DIR / f"e3_{mech}_{metric}.pdf", bbox_inches="tight")
             fig.savefig(FIGURES_DIR / f"e3_{mech}_{metric}.png", bbox_inches="tight")
         plt.close(fig)
 
-    # Unified 5-panel figure
-    fig, axes = plt.subplots(1, len(mechs), figsize=(4 * len(mechs), 4.5), sharey=True, tight_layout=True)
-    if len(mechs) == 1:
-        axes = [axes]
-
+    # Unified panel figure with one shared colour bar
+    fig, axes = plt.subplots(1, len(mechs), figsize=(3.6 * len(mechs) + 1.2, 4.6),
+                             sharey=True, constrained_layout=True)
+    axes = np.atleast_1d(axes)
     for ax, mech in zip(axes, mechs):
-        data = np.full((len(rhos), len(policies)), np.nan)
-        for r in results:
-            if r["mechanism"] != mech:
-                continue
-            ri = rhos.index(r["rho"])
-            ci = policies.index(r["policy"])
-            data[ri, ci] = r[metric]["mean"]
-
-        im = ax.imshow(data, aspect="auto", cmap="YlOrRd")
-        ax.set_xticks(range(len(policies)))
-        ax.set_xticklabels(policies, rotation=35, ha="right", fontsize=9)
+        im = _draw_e3_panel(ax, grids[mech], cmap, norm, rhos, policies, 8)
         ax.set_title(MECHANISM_LABELS.get(mech, mech), fontsize=11, fontweight="bold")
-
-        for i in range(len(rhos)):
-            for j in range(len(policies)):
-                val = data[i, j]
-                if not np.isnan(val):
-                    ax.text(j, i, f"{val:.3f}", ha="center", va="center", color="black", fontsize=7.5)
-
     axes[0].set_yticks(range(len(rhos)))
     axes[0].set_yticklabels([f"ρ = {r}" for r in rhos])
-    axes[0].set_ylabel("Strategic Fraction ρ", fontweight="bold")
-    fig.suptitle(f"E3 — Strategic Vulnerability Comparison: {metric}", fontsize=13, fontweight="bold")
+    axes[0].set_ylabel("Strategic fraction ρ")
+    fig.colorbar(im, ax=list(axes), shrink=0.9, label=metric)
+    fig.suptitle(f"E3 — {title}", fontsize=13, fontweight="bold")
 
     if save:
         fig.savefig(FIGURES_DIR / f"e3_all_mechs_{metric}.pdf", bbox_inches="tight")
@@ -279,7 +353,7 @@ def plot_e4(results: list[dict], save: bool = True) -> None:
         ax.legend(fontsize=9, frameon=True)
 
     axes[0].set_ylabel("Jain Fairness Index", fontweight="bold")
-    fig.suptitle("E4 — Equal-Service vs Equal-Benefit Fairness Divergence", fontsize=14, fontweight="bold")
+    fig.suptitle("E4 — Equal-Service vs Equal-Benefit Fairness Divergence (M4 λ=1)", fontsize=14, fontweight="bold")
 
     if save:
         fig.savefig(FIGURES_DIR / "e4_heterogeneous.pdf", bbox_inches="tight")
@@ -331,7 +405,7 @@ def plot_e5(results: list[dict], save: bool = True) -> None:
         ax.legend(fontsize=9, frameon=True)
         ax.grid(True, linestyle="--", alpha=0.4)
 
-    fig.suptitle("E5 — Temporal Persistence in Valuations", fontsize=14, fontweight="bold")
+    fig.suptitle("E5 — Temporal Persistence in Valuations (M4 λ=1)", fontsize=14, fontweight="bold")
     if save:
         fig.savefig(FIGURES_DIR / "e5_persistence.pdf", bbox_inches="tight")
         fig.savefig(FIGURES_DIR / "e5_persistence.png", bbox_inches="tight")
@@ -371,8 +445,8 @@ def plot_e6(results: list[dict], save: bool = True) -> None:
     ax1.grid(True, linestyle="--", alpha=0.4, which="both")
 
     ax2.set_xlabel("Population Size n (k = 0.2·n)", fontweight="bold")
-    ax2.set_ylabel("Peak Memory (KiB)", fontweight="bold")
-    ax2.set_title("Memory Footprint Scaling", fontweight="bold")
+    ax2.set_ylabel("State array size (KiB, analytic)", fontweight="bold")
+    ax2.set_title("Simulation State Size", fontweight="bold")
     ax2.legend(fontsize=9, frameon=True)
     ax2.grid(True, linestyle="--", alpha=0.4, which="both")
 
@@ -413,6 +487,7 @@ def run_all_plots() -> None:
         with open(e3_path) as fh:
             data = json.load(fh)
         plot_e3(data, metric="M_mean")
+        plot_e3(data, metric="M_uni")
         plot_e3(data, metric="PoS")
     else:
         print(f"[SKIP] {e3_path} not found.")

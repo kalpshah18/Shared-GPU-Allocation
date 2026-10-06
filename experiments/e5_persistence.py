@@ -51,10 +51,10 @@ def load_seeds(path: str = "seeds/master_seeds.json") -> list[int]:
         return json.load(fh)["seeds"]
 
 
-def make_mech(mname: str, cfg: Config):
+def make_mech(mname: str, cfg: Config, pkg: SeedPackage):
     return {
         "RandomMechanism"    : RandomMechanism(cfg),
-        "RoundRobinMechanism": RoundRobinMechanism(cfg, init_seed=0),
+        "RoundRobinMechanism": RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
         "GreedyMechanism"    : GreedyMechanism(cfg),
         "ScoreMechanism"     : ScoreMechanism(cfg),
         "VickreyMechanism"   : VickreyMechanism(cfg),
@@ -71,7 +71,7 @@ def run_e5(seeds: list[int]) -> list[dict]:
             per_seed = []
             for seed in seeds:
                 pkg = SeedPackage.generate(seed, cfg)
-                mech = make_mech(mname, cfg)
+                mech = make_mech(mname, cfg, pkg)
                 history = run_single(mech, pkg, cfg, policy_fn=None)
 
                 result = M.compute_all(history, pkg.valuations, cfg)
@@ -99,5 +99,5 @@ if __name__ == "__main__":
     out = Path("results/e5")
     out.mkdir(parents=True, exist_ok=True)
     with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2)
+        json.dump(results, fh, indent=2, allow_nan=False)
     print("E5 complete. Summary saved to results/e5/summary.json")

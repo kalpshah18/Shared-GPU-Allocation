@@ -110,6 +110,20 @@ def test_manipulation_gain_truthful():
     assert result["frac_pos"]    == 0.0
 
 
+def test_manipulation_gain_empty_strategic_set_is_nan():
+    result = M.manipulation_gain(_h(), _h(), VAL, np.array([], dtype=np.int64))
+    assert np.isnan(result["M_mean"])
+
+
+def test_unilateral_gain_hand_computed():
+    # Deviating run: user 0 wins both rounds and pays 0.5 in round 1.
+    # Truthful run: user 0 wins round 0 only (ALLOC).
+    h_dev = _make_history(2, [[1, 0], [1, 0]], [[0.0, 0.0], [0.5, 0.0]])
+    h_tru = _h()
+    # U_dev = 0.8 + 0.3 - 0.5 = 0.6 ; U_tru = 0.8  ->  gain = -0.2
+    assert abs(M.unilateral_gain(h_dev, h_tru, VAL, focal=0) - (-0.2)) < 1e-12
+
+
 # ── Price of Strategy ─────────────────────────────────────────────────────────
 
 def test_price_of_strategy_zero():

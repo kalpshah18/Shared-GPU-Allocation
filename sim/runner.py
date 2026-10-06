@@ -17,6 +17,7 @@ Separation of concerns
 
 from __future__ import annotations
 
+import copy
 from typing import Callable
 
 import numpy as np
@@ -75,6 +76,7 @@ def run_mixed(
     pkg: SeedPackage,
     cfg: Config,
     strategic_policy: Callable[[float, History, Config], float],
+    strategic_set: np.ndarray | None = None,
 ) -> History:
     """
     Simulate T rounds with a mixed population:
@@ -85,13 +87,17 @@ def run_mixed(
     ----------
     strategic_policy : callable
         The reporting policy for strategic users.
+    strategic_set : ndarray or None
+        Indices of strategic users.  Defaults to ``pkg.strategic_set``.
 
     Returns
     -------
     history : History
     """
+    if strategic_set is None:
+        strategic_set = pkg.strategic_set
     is_strategic = np.zeros(cfg.n, dtype=bool)
-    is_strategic[pkg.strategic_set] = True
+    is_strategic[strategic_set] = True
 
     history = History(cfg.n)
 
@@ -129,8 +135,43 @@ def run_paired(
     -------
     (history_truthful, history_strategic)
     """
-    # Need fresh mechanism instances for each run to reset stateful mechanisms
-    # (e.g. M2's queue).  The caller is responsible for passing fresh instances
-    # when mechanism is stateful.  Document this clearly.
-    history_truthful  = run_single(mechanism, pkg, cfg, policy_fn=None)
-    return history_truthful, run_mixed(mechanism, pkg, cfg, strategic_policy)
+    # Deep-copy the mechanism for each run so stateful mechanisms (e.g. M2's
+    # queue position) start both runs from the same initial state.
+    history_truthful  = run_single(copy.deepcopy(mechanism), pkg, cfg, policy_fn=None)
+    history_strategic = run_mixed(copy.deepcopy(mechanism), pkg, cfg, strategic_policy)
+    return history_truthful, history_strategic
+
+
+def focal_user(pkg: SeedPackage) -> int:
+    """The user whose unilateral deviation is measured: the first strategic
+    user, or user 0 when the strategic set is empty (ρ = 0)."""
+    return int(pkg.strategic_set[0]) if len(pkg.strategic_set) > 0 else 0
+
+
+def run_unilateral(
+    mechanism: Mechanism,
+    pkg: SeedPackage,
+    cfg: Config,
+    strategic_policy: Callable[[float, History, Config], float],
+) -> tuple[History, History, int]:
+    """
+    Measure a single user's incentive to deviate, holding everyone else fixed.
+
+    Let f = focal_user(pkg) and S = pkg.strategic_set ∪ {f}.  Two runs share ω:
+      1. users in S use `strategic_policy` (f deviates);
+      2. users in S \\ {f} use `strategic_policy`, f reports truthfully.
+
+    U_f(run 1) − U_f(run 2) is the unilateral manipulation gain
+    M_f(σ_f, σ_{-f}; ω) defined in the proposal.  At ρ = 0 this is a single
+    deviator in an otherwise truthful population.
+
+    Returns
+    -------
+    (history_deviate, history_truthful_focal, focal)
+    """
+    f = focal_user(pkg)
+    deviators = np.union1d(pkg.strategic_set, [f]).astype(np.int64)
+    others    = deviators[deviators != f]
+    h_dev   = run_mixed(copy.deepcopy(mechanism), pkg, cfg, strategic_policy, deviators)
+    h_truth = run_mixed(copy.deepcopy(mechanism), pkg, cfg, strategic_policy, others)
+    return h_dev, h_truth, f

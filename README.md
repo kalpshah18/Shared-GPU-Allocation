@@ -30,7 +30,7 @@ FAI_Project/
 │   │   └── m5_vickrey.py          # M5: k-unit Vickrey auction with (k+1)-th price
 │   └── policies/                  # Strategic reporting policies
 │       ├── __init__.py
-│       └── strategic.py           # Truthful, capped exaggeration, max claim, rollout attack
+│       └── strategic.py           # Truthful, capped exaggeration, max claim, rollout attack (rollout implemented, not run)
 ├── experiments/                   # Experiment scripts
 │   ├── __init__.py
 │   ├── e0_validation.py           # E0: Invariant and DSIC sanity checks
@@ -45,11 +45,12 @@ FAI_Project/
 │   ├── bootstrap.py               # Vectorized 95% paired bootstrap CI (10,000 resamples)
 │   ├── pareto.py                  # Multi-objective Pareto-dominance filter
 │   └── plots.py                   # Academic-grade figures (PDF + PNG)
-├── tests/                         # Full automated test suite (55 unit tests)
+├── tests/                         # Full automated test suite (63 unit tests)
 │   ├── __init__.py
 │   ├── test_environment.py       # Determinism, bounds, AR(1), History tracking
 │   ├── test_mechanisms.py        # Capacity, payments, invariance, wait bounds, DSIC
 │   ├── test_metrics.py           # Hand-computed 2-user, 2-round validation cases
+│   ├── test_runner.py            # Paired/unilateral runners, NaN-safe summaries
 │   └── test_policies.py          # Reporting bounds, identities, capped scaling
 ├── config/
 │   └── base.yaml                  # Default benchmark parameters (n=50, k=10, T=1000)
@@ -93,13 +94,13 @@ FAI_Project/
 
 ## 🧪 Running the Test Suite
 
-The test suite contains 55 automated tests covering environment determinism, mechanism invariants, metric calculations on hand-computed examples, and strategic policy bounds:
+The test suite contains 63 automated tests covering environment determinism, mechanism invariants, metric calculations on hand-computed examples, paired/unilateral runners, and strategic policy bounds:
 
 ```bash
 pytest
 ```
 
-All 55 tests pass in under 1 second.
+All 63 tests pass in under 1 second.
 
 ---
 
@@ -111,7 +112,7 @@ Before any main experiments run, the E0 validation suite verifies foundational t
 - **Payment invariant**: $p_{i,t} = 0$ whenever $x_{i,t} = 0$.
 - **Report-invariance**: M1 and M2 produce identical allocations regardless of reports.
 - **M3 $\equiv$ M4 at $\lambda = 0$**: Score mechanism matches Greedy allocation exactly.
-- **Round-robin wait bound**: No user waits longer than $\lceil n/k \rceil$ rounds.
+- **Round-robin wait bound**: No user goes more than $\lceil n/k \rceil - 1$ consecutive rounds without service (checked every round).
 - **Welfare oracle**: M3 with truthful reports achieves first-best social welfare $W^*$.
 - **M5 one-round DSIC**: Dominant-strategy incentive compatibility verified over a fine discrete grid.
 
@@ -156,9 +157,9 @@ To run all validation checks, execute experiments, and generate all figures from
 | ID | Name | Description | Key Theoretical Property |
 |---|---|---|---|
 | **M1** | Random | $k$ users sampled uniformly without replacement | Report-invariant, fair in expectation, welfare-oblivious |
-| **M2** | Round-Robin | Cyclic service queue of capacity $k$ | Report-invariant, worst-case wait bounded by $\lceil n/k \rceil$ |
+| **M2** | Round-Robin | Cyclic service queue of capacity $k$ | Report-invariant, served at least once every $\lceil n/k \rceil$ rounds ($Q_{\max} \le \lceil n/k \rceil - 1$) |
 | **M3** | Greedy Reported Value | Allocate to top-$k$ reported valuations ($p=0$) | First-best welfare under truthfulness; vulnerable to inflation |
-| **M4** | History-Penalised Score | Score $s_{i,t} = \hat{v}_{i,t} / (1 + a_i(t))^\lambda$ | Continuous trade-off between efficiency and long-run fairness |
+| **M4** | History-Penalised Score | Score $s_{i,t} = \hat{v}_{i,t} / (1 + a_i(t))^\lambda$ | Continuous trade-off between efficiency and long-run fairness; $\lambda = 0$ is exactly M3. Default $\lambda = 1$ (all experiments except the E2 sweep) |
 | **M5** | $k$-unit Vickrey Auction | Top-$k$ bids win, pay $(k+1)$-th highest bid | Per-round DSIC quasi-linear benchmark |
 
 ---
@@ -171,7 +172,8 @@ All metrics accept raw per-seed output tensors and support paired bootstrap anal
 - **Jain's Benefit Fairness ($J_B$)**: Jain's index on normalized utility $B_i = G_i / (T \cdot \mu_i)$, distinguishing equal service from equal benefit.
 - **Maximum Consecutive Wait ($Q_{\max}$)**: $\max_{i,t} q_i(t)$.
 - **Starvation Rate ($\text{SR}_\Delta$)**: Proportion of user-rounds where consecutive wait exceeds $\Delta = 2\lceil n/k \rceil$.
-- **Manipulation Gain ($M, M_{\max}$)**: Ex-post benefit difference for strategic users under paired random seeds $\omega$.
+- **Coalition Manipulation Gain ($M$, $M_{\max}$, frac_pos)**: For each strategic user, utility when the whole strategic set deviates minus utility when everyone is truthful (same $\omega$). Strategic users compete with each other, so $M < 0$ does **not** mean an individual is better off truthful.
+- **Unilateral Manipulation Gain ($M_{\text{uni}}$)**: $U_f(\sigma_f, \sigma_{-f};\omega) - U_f(\text{truthful}, \sigma_{-f};\omega)$ for one focal user $f$, all other users' behaviour held fixed. This is the individual incentive to manipulate. At $\rho = 0$ the focal user is a lone deviator in a truthful population.
 - **Price of Strategy (PoS)**: Social welfare loss $(W_{\text{truth}} - W_{\text{strat}}) / W_{\text{truth}}$ caused by strategic reporting.
 - **Price of Fairness (PoF)**: Welfare sacrifice $(W^* - W_{\text{fair}}) / W^*$ necessary to enforce equitable distribution.
 

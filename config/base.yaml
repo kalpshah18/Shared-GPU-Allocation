@@ -3,7 +3,7 @@ k: 10               # number of GPUs per round (scarcity ratio = 0.2)
 T: 1000             # number of rounds
 v_max: 1.0          # upper bound on valuations and reports
 rho: 0.25           # fraction of strategic users
-lambda_: 0.0        # history-penalty exponent for M4 (sweep in E2)
+lambda_: 1.0        # history-penalty exponent for M4 (sweep in E2; 0 reduces M4 to M3)
 alpha: 0.0          # AR(1) persistence coefficient (sweep in E5; 0 = i.i.d.)
 n_seeds: 30         # master seeds per condition
 n_bootstrap: 10000  # resamples for paired 95% CI
