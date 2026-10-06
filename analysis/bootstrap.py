@@ -100,10 +100,16 @@ def summarise_seeds(
 
     Returns
     -------
-    dict mapping metric_key -> bootstrap_ci output dict
+    dict mapping metric_key -> bootstrap_ci output dict.  Undefined (NaN)
+    per-seed values are dropped; if none remain, every statistic is None so
+    the summary serialises as valid JSON (null rather than NaN).
     """
     summary = {}
     for key in metric_keys:
         vals = np.array([r[key] for r in per_seed_results], dtype=np.float64)
+        vals = vals[~np.isnan(vals)]
+        if len(vals) == 0:
+            summary[key] = {"mean": None, "ci_lower": None, "ci_upper": None, "std": None}
+            continue
         summary[key] = bootstrap_ci(vals, n_resamples=n_resamples, seed=seed)
     return summary

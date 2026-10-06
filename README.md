@@ -30,7 +30,7 @@ FAI_Project/
 │   │   └── m5_vickrey.py          # M5: k-unit Vickrey auction with (k+1)-th price
 │   └── policies/                  # Strategic reporting policies
 │       ├── __init__.py
-│       └── strategic.py           # Truthful, capped exaggeration, max claim, rollout attack
+│       └── strategic.py           # Truthful, capped exaggeration, max claim, rollout attack (rollout implemented, not run)
 ├── experiments/                   # Experiment scripts
 │   ├── __init__.py
 │   ├── e0_validation.py           # E0: Invariant and DSIC sanity checks
@@ -45,11 +45,12 @@ FAI_Project/
 │   ├── bootstrap.py               # Vectorized 95% paired bootstrap CI (10,000 resamples)
 │   ├── pareto.py                  # Multi-objective Pareto-dominance filter
 │   └── plots.py                   # Academic-grade figures (PDF + PNG)
-├── tests/                         # Full automated test suite (55 unit tests)
+├── tests/                         # Full automated test suite (63 unit tests)
 │   ├── __init__.py
 │   ├── test_environment.py       # Determinism, bounds, AR(1), History tracking
 │   ├── test_mechanisms.py        # Capacity, payments, invariance, wait bounds, DSIC
 │   ├── test_metrics.py           # Hand-computed 2-user, 2-round validation cases
+│   ├── test_runner.py            # Paired/unilateral runners, NaN-safe summaries
 │   └── test_policies.py          # Reporting bounds, identities, capped scaling
 ├── config/
 │   └── base.yaml                  # Default benchmark parameters (n=50, k=10, T=1000)
@@ -93,13 +94,13 @@ FAI_Project/
 
 ## 🧪 Running the Test Suite
 
-The test suite contains 55 automated tests covering environment determinism, mechanism invariants, metric calculations on hand-computed examples, and strategic policy bounds:
+The test suite contains 63 automated tests covering environment determinism, mechanism invariants, metric calculations on hand-computed examples, paired/unilateral runners, and strategic policy bounds:
 
 ```bash
 pytest
 ```
 
-All 55 tests pass in under 1 second.
+All 63 tests pass in under 1 second.
 
 ---
 
@@ -111,7 +112,7 @@ Before any main experiments run, the E0 validation suite verifies foundational t
 - **Payment invariant**: $p_{i,t} = 0$ whenever $x_{i,t} = 0$.
 - **Report-invariance**: M1 and M2 produce identical allocations regardless of reports.
 - **M3 $\equiv$ M4 at $\lambda = 0$**: Score mechanism matches Greedy allocation exactly.
-- **Round-robin wait bound**: No user waits longer than $\lceil n/k \rceil$ rounds.
+- **Round-robin wait bound**: No user goes more than $\lceil n/k \rceil - 1$ consecutive rounds without service (checked every round).
 - **Welfare oracle**: M3 with truthful reports achieves first-best social welfare $W^*$.
 - **M5 one-round DSIC**: Dominant-strategy incentive compatibility verified over a fine discrete grid.
 
@@ -156,9 +157,9 @@ To run all validation checks, execute experiments, and generate all figures from
 | ID | Name | Description | Key Theoretical Property |
 |---|---|---|---|
 | **M1** | Random | $k$ users sampled uniformly without replacement | Report-invariant, fair in expectation, welfare-oblivious |
-| **M2** | Round-Robin | Cyclic service queue of capacity $k$ | Report-invariant, worst-case wait bounded by $\lceil n/k \rceil$ |
+| **M2** | Round-Robin | Cyclic service queue of capacity $k$ | Report-invariant, served at least once every $\lceil n/k \rceil$ rounds ($Q_{\max} \le \lceil n/k \rceil - 1$) |
 | **M3** | Greedy Reported Value | Allocate to top-$k$ reported valuations ($p=0$) | First-best welfare under truthfulness; vulnerable to inflation |
-| **M4** | History-Penalised Score | Score $s_{i,t} = \hat{v}_{i,t} / (1 + a_i(t))^\lambda$ | Continuous trade-off between efficiency and long-run fairness |
+| **M4** | History-Penalised Score | Score $s_{i,t} = \hat{v}_{i,t} / (1 + a_i(t))^\lambda$ | Continuous trade-off between efficiency and long-run fairness; $\lambda = 0$ is exactly M3. Default $\lambda = 1$ (all experiments except the E2 sweep) |
 | **M5** | $k$-unit Vickrey Auction | Top-$k$ bids win, pay $(k+1)$-th highest bid | Per-round DSIC quasi-linear benchmark |
 
 ---
@@ -171,7 +172,8 @@ All metrics accept raw per-seed output tensors and support paired bootstrap anal
 - **Jain's Benefit Fairness ($J_B$)**: Jain's index on normalized utility $B_i = G_i / (T \cdot \mu_i)$, distinguishing equal service from equal benefit.
 - **Maximum Consecutive Wait ($Q_{\max}$)**: $\max_{i,t} q_i(t)$.
 - **Starvation Rate ($\text{SR}_\Delta$)**: Proportion of user-rounds where consecutive wait exceeds $\Delta = 2\lceil n/k \rceil$.
-- **Manipulation Gain ($M, M_{\max}$)**: Ex-post benefit difference for strategic users under paired random seeds $\omega$.
+- **Coalition Manipulation Gain ($M$, $M_{\max}$, frac_pos)**: For each strategic user, utility when the whole strategic set deviates minus utility when everyone is truthful (same $\omega$). Strategic users compete with each other, so $M < 0$ does **not** mean an individual is better off truthful.
+- **Unilateral Manipulation Gain ($M_{\text{uni}}$)**: $U_f(\sigma_f, \sigma_{-f};\omega) - U_f(\text{truthful}, \sigma_{-f};\omega)$ for one focal user $f$, all other users' behaviour held fixed. This is the individual incentive to manipulate. At $\rho = 0$ the focal user is a lone deviator in a truthful population.
 - **Price of Strategy (PoS)**: Social welfare loss $(W_{\text{truth}} - W_{\text{strat}}) / W_{\text{truth}}$ caused by strategic reporting.
 - **Price of Fairness (PoF)**: Welfare sacrifice $(W^* - W_{\text{fair}}) / W^*$ necessary to enforce equitable distribution.
 
@@ -211,48 +213,67 @@ To implement and evaluate a new mechanism $M_{\text{new}}$:
 
 ## 🏁 Final Project Results
 
-This section synthesizes the final findings from the simulation pipeline. The evaluation compares five mechanisms (M1: Random, M2: Round-Robin, M3: Greedy, M4: Score, M5: Vickrey) across allocative efficiency (Welfare Ratio, WR), long-run fairness (Jain's indices $J_A, J_B$), waiting time ($Q_{\max}$, $\text{SR}_\Delta$), and empirical resistance to manipulation ($M$).
+This section synthesizes the findings from the simulation pipeline. All results use $n = 50$, $T = 1000$ and 30 locked master seeds (means; 95% bootstrap CIs are in `results/*/summary.json`). Unless stated otherwise $k = 10$ ($k/n = 0.2$) and **M4 Score uses $\lambda = 1$** (E2 sweeps $\lambda$). Manipulation is reported two ways: the coalition gain $M$ (all strategic users deviate together) and the unilateral gain $M_{\text{uni}}$ (one user deviates, everyone else fixed). Only $M_{\text{uni}}$ measures an individual's incentive to manipulate.
 
 ### E1: Resource Scarcity
-This experiment varied the capacity ratio $k/n$ from $0.1$ to $0.8$ under truthful reporting.
-- **Welfare vs. Fairness:** Report-invariant mechanisms (Random, Round-Robin) achieve perfect or near-perfect allocation fairness ($J_A \approx 0.99 - 1.0$) but suffer significantly in social welfare ($WR \approx 0.53 - 0.71$, depending on scarcity). Value-aware mechanisms (Greedy, Score, Vickrey) achieve the first-best truthful welfare ($WR = 1.0$).
-- **Starvation bounds:** Round-Robin strictly bounds the maximum consecutive wait ($Q_{\max} = \lceil n/k \rceil$). For instance, at $k/n = 0.1$, $Q_{\max} = 9.0$ and Starvation Rate ($\text{SR}_\Delta$) is $0.0$. In contrast, Greedy allocation leads to severe starvation ($Q_{\max} \approx 81.7$, $\text{SR}_\Delta \approx 10.8\%$) under severe scarcity.
+$k/n$ varied from $0.1$ to $0.8$ under truthful reporting.
+- **Welfare vs. fairness:** Random and Round-Robin reach $J_A \approx 0.99$–$1.0$ but only $WR \approx 0.53$–$0.84$, rising with $k/n$ (PoF $0.47 \to 0.16$). Greedy and Vickrey reach first-best $WR = 1.0$. Score ($\lambda = 1$) gives up at most 0.8% ($WR = 0.992$ at $k/n = 0.1$, $0.996$ at $0.2$) and has the highest $J_A$ of the value-aware mechanisms ($0.9996$ vs. $0.996$ at $k/n = 0.2$).
+- **Waiting:** Round-Robin bounds the consecutive wait at $Q_{\max} = \lceil n/k \rceil - 1$ ($9$ at $k/n = 0.1$, $4$ at $0.2$) with $\text{SR}_\Delta = 0$. With i.i.d. values every other mechanism starves users at a similar rate: at $k/n = 0.1$, Greedy has $Q_{\max} \approx 81.7$, $\text{SR}_\Delta \approx 10.8\%$, Random $85.5$ / $10.7\%$, and Score $67.1$ / $7.7\%$. Starvation comes from the absence of a service guarantee, not from greed specifically.
 
-### E2: Fairness and Strategic-Vulnerability Frontier (The $\lambda$ Sweep)
-We swept the history penalty parameter $\lambda \in \{0, 0.05, 0.1, \dots, 5.0\}$ for the Score mechanism (M4) to observe the tradeoff between fairness, welfare, and manipulation gain ($M$).
-- **Vulnerability of Greedy:** At $\lambda = 0$ (equivalent to Greedy), users gain massively by inflating their reports ($M \approx 220$), making the system highly vulnerable to manipulation.
-- **The "Sweet Spot" ($\lambda \approx 1.0$):** As $\lambda$ increases, the history penalty reduces the benefit of strategic inflation. At $\lambda = 1.0$, the manipulation gain becomes strictly negative ($M \approx -3.41$). This means **strategic inflation actively hurts the user**. 
-- **Welfare Retention:** Remarkably, at $\lambda = 1.0$, social welfare remains exceptionally high ($WR \approx 0.960$), and allocation fairness approaches perfection ($J_A \approx 0.991$). This confirms **Hypotheses 1 and 2**: a moderate history penalty drastically improves fairness and disincentivizes manipulation without a catastrophic loss of true welfare.
+### E2: Fairness / Strategic-Vulnerability Frontier ($\lambda$ sweep)
+$\lambda \in \{0, 0.05, 0.1, 0.25, 0.5, 1, 2, 5\}$ for M4, with $\rho = 0.25$ of users using capped exaggeration ($c = 2$).
+
+| $\lambda$ | WR | $J_A$ | $\text{SR}_\Delta$ | Coalition $M$ | Unilateral $M_{\text{uni}}$ [95% CI] |
+|---|---|---|---|---|---|
+| 0 (≡ Greedy) | 0.893 | 0.506 | 0.270 | +220.0 | +303.3 [301.0, 305.6] |
+| 0.25 | 0.953 | 0.898 | 0.104 | +59.2 | +85.2 |
+| 0.5 | 0.959 | 0.967 | 0.082 | +19.6 | +32.7 |
+| 1 | 0.960 | 0.991 | 0.070 | −3.4 | **+2.5 [1.3, 3.6]** |
+| 2 | 0.957 | 0.998 | 0.060 | −15.5 | **−13.0 [−14.0, −12.0]** |
+| 5 | 0.946 | 0.999 | 0.047 | −21.7 | −20.9 |
+
+- **Greedy is highly manipulable:** at $\lambda = 0$ one inflating user gains $\approx 303$ utility units.
+- **The history penalty shrinks the gain fast.** Welfare under manipulation *rises* from 0.893 to ≈ 0.96, because the penalty limits how much inflators can grab, and $J_A$ approaches 1.
+- **$\lambda = 1$ does not make inflation unprofitable for an individual.** The coalition gain is negative ($-3.4$) only because the 12 inflating users crowd each other out. A single user who inflates still gains $+2.5$ (CI excludes 0). The unilateral gain turns negative between $\lambda = 1$ and $\lambda = 2$. At $\lambda = 2$ inflation costs the deviator $\approx 13$ while WR stays at $0.957$ and $J_A = 0.998$.
+- Hypothesis 1 (a history penalty improves fairness at small welfare cost) is supported. Hypothesis 2 (a penalty disincentivises manipulation) holds only for $\lambda \gtrsim 2$ against capped exaggeration.
 
 ### E3: Strategic Population and Attack Type
-This experiment scaled the fraction of strategic users $\rho$ and tested various bounded attacks (Truthful, Capped Exaggeration, Maximum Claim).
-- **Degradation of Welfare:** When users employ the `max_claim` strategy, mechanisms relying on reported values degrade. Even the robust Vickrey mechanism degrades to a random allocation in terms of social welfare ($WR \approx 0.561$) when everyone max-claims, because prices become uniformly high and allocation becomes a tie-breaker.
-- **Report-Invariant Stability:** Random and Round-Robin maintain a stable $WR \approx 0.560$ regardless of the attack type or the proportion of strategic users ($\rho$), confirming their total immunity to report inflation.
+$\rho \in \{0, 0.1, 0.25, 0.5, 1\}$ × {truthful, capped exaggeration $c = 2$, maximum claim}. The diagnostic rollout attack is implemented in `sim/policies/strategic.py` but was **not run**, so no rollout results are reported.
+- **Report-invariant stability:** Random ($WR = 0.561$) and Round-Robin ($0.560$) are unaffected by every attack ($M = M_{\text{uni}} = 0$, PoS $= 0$).
+- **Greedy:** inflating always pays individually. $M_{\text{uni}}$ ranges from $+99$ to $+418$, and is still $+149$ (cap_2) and $+99$ (max_claim) when everyone already inflates. Max-claim at $\rho \ge 0.25$ drops WR to the random level ($0.561$, PoS $0.44$) with $J_A$ as low as $0.24$.
+- **Vickrey:** inflating never pays ($M_{\text{uni}}$ from $-50$ to $-414$), which is consistent with per-round DSIC. Its welfare collapse under max-claim ($WR = 0.561$ at $\rho \ge 0.25$) therefore needs users to act against their own interest. It is a stress test, not a realistic equilibrium.
+- **Score ($\lambda = 1$):** max-claim is unprofitable ($M_{\text{uni}} \approx -48$ to $-54$ at every $\rho$). Capped exaggeration yields a small positive unilateral gain when few others inflate ($+5.0$ at $\rho = 0$, $+4.0$ at $0.1$, $+2.5$ at $0.25$). That gain is indistinguishable from 0 at $\rho = 0.5$ ($+0.19$, CI $[-0.92, 1.29]$) and negative at $\rho = 1$ ($-2.8$). WR under attack degrades gracefully (cap_2: $0.981 \to 0.838$; max_claim: $0.949 \to 0.560$), and $J_A$ stays $\ge 0.989$ throughout.
 
 ### E4: Heterogeneous Users
-We evaluated a two-group population with differing value distributions (e.g., $\text{Beta}(2,5)$ vs. $\text{Beta}(5,2)$).
-- **Service vs. Benefit:** Round-Robin maintains perfect allocation fairness ($J_A = 1.0$) and near-perfect normalized benefit fairness ($J_B \approx 0.999$). 
-- **Efficiency Bias:** Greedy, Score, and Vickrey mechanisms naturally allocate more GPUs to the group with the higher value distribution to maximize overall social welfare. Consequently, their fairness scores drop substantially in mixed populations ($J_A \approx 0.506, J_B \approx 0.516$). This addresses **Hypothesis 3**: when values are heterogeneous, equal allocation does not organically arise from value-aware welfare maximization.
+Half the users draw values from $\text{Beta}(2,5)$ (mean $2/7$) and half from $\text{Beta}(5,2)$ (mean $5/7$); truthful reporting.
 
-### E5: Temporally Persistent Demand (AR(1) Process)
-When user valuations are persistent across rounds (using an AR(1) process with $\alpha \in \{0.0, 0.5, 0.9\}$) rather than strictly i.i.d.:
-- High-value users hold on to their high values longer. As persistence $\alpha$ increases to $0.9$, the welfare achieved by Random and Round-Robin artificially rises ($WR \approx 0.843$).
-- Value-based mechanisms (Greedy, Score, Vickrey) continue to successfully track the highest true values and consistently achieve optimal welfare ($WR = 1.0$) regardless of temporal persistence.
-- Allocation fairness ($J_A$) for value-based mechanisms drops slightly as persistence increases (from $0.996$ at $\alpha=0.0$ to $0.957$ at $\alpha=0.9$), as heavy-hitters monopolize the GPUs for longer consecutive streaks.
+| Mechanism | WR | $J_A$ | $J_B$ | $\text{SR}_\Delta$ |
+|---|---|---|---|---|
+| Random | 0.581 | 0.996 | 0.995 | 0.085 |
+| Round-Robin | 0.581 | 1.000 | 0.999 | 0.000 |
+| Greedy / Vickrey | 1.000 | 0.507 | 0.517 | 0.481 |
+| Score ($\lambda = 1$) | 0.897 | 0.925 | 0.995 | 0.098 |
+
+- Greedy and Vickrey give almost all GPUs to the high-value group, so both fairness indices collapse ($\approx 0.51$). This addresses **Hypothesis 3**: with heterogeneous values, welfare maximisation does not produce equal service.
+- Score keeps benefit fairness at the Random level ($J_B = 0.995$) while recovering most of the welfare (0.897 vs. 0.581). It still serves the high-value group somewhat more ($J_A = 0.925$), so it trades equal service for near-equal *normalised benefit*.
+
+### E5: Temporally Persistent Demand (AR(1))
+$\alpha \in \{0.0, 0.5, 0.9\}$; truthful reporting.
+- Random and Round-Robin welfare rises with persistence ($WR = 0.561 \to 0.843$ at $\alpha = 0.9$), because last round's random winners are likely still high-value.
+- Greedy and Vickrey stay at $WR = 1.0$, but persistent high-value users monopolise GPUs. $J_A$ falls from $0.996$ to $0.957$, $Q_{\max}$ rises from $41.7$ to $206.4$, and $\text{SR}_\Delta$ from $8.4\%$ to $49.4\%$.
+- Score keeps $J_A \ge 0.998$ and $WR = 0.969$ at $\alpha = 0.9$ and starves less than Greedy ($Q_{\max} = 130$, $\text{SR}_\Delta = 37.7\%$). It still starves far more than Random ($8.5\%$) or Round-Robin ($0\%$). A cumulative-allocation penalty equalises *totals*, not *waiting times*.
 
 ### E6: Scalability Benchmark
-The Python simulator exhibits highly efficient scalability:
-- Simulating a population of $n=500$ users takes only $\approx 57.3\mu\text{s}$ per round for the most complex mechanism (Vickrey).
-- The state footprint is extremely minimal, requiring only $\approx 11.7\text{ MiB}$ of RAM at $n=500$.
+- Per-round runtime is roughly flat from $n = 10$ to $n = 500$ ($\approx 9$–$57\,\mu\text{s}$). The slowest case is Vickrey at $n = 500$ ($\approx 57.3\,\mu\text{s}$ per round). Times are machine-dependent.
+- The simulation state (valuations, tie seeds, history vectors, per-round allocation and payment records) is $\approx 11{,}734$ KiB $\approx 11.5$ MiB at $n = 500$, $T = 1000$. This figure is computed from array sizes, not measured with a profiler, so it is identical across mechanisms by construction.
 
 ### 🎯 Final Conclusions
 
-1. **The Limitations of Extremes:** Strict equality mechanisms (Round-Robin) eliminate starvation and manipulation but sacrifice ~40-45% of potential system value. Conversely, pure Greedy allocation achieves optimal value but induces severe starvation and is highly vulnerable to priority inflation.
-2. **The Success of History Penalties (Score Mechanism):** The results provide strong evidence for the practical viability of the **History-Penalised Score Mechanism** ($s_{i,t} = \hat{v}_{i,t} / (1 + a_i(t))^\lambda$). Setting $\lambda \approx 1.0$:
-   - Achieves near-optimal efficiency ($>95\%$ WR).
-   - Eliminates starvation effectively.
-   - Provides an empirical, non-monetary defense against priority inflation (manipulation yields negative utility).
-3. **No Need for Real Money:** While the Vickrey auction provides rigorous dominant-strategy truthfulness, the History-Penalised Score mechanism offers a highly competitive proxy for fairness and efficiency without requiring a complex, real-money intertemporal payment infrastructure.
+1. **The extremes each fail on one axis.** Round-Robin eliminates starvation and manipulation but sacrifices 16–47% of attainable welfare (44% at the base $k/n = 0.2$). Greedy achieves first-best welfare under truth-telling but is the most manipulable mechanism (individual gains of hundreds of units), and under persistent or heterogeneous values it starves and concentrates service.
+2. **A history penalty buys fairness cheaply.** Score at $\lambda = 1$ keeps $WR \ge 0.99$ under truthful reports in every i.i.d. setting, $0.96$ against 25% capped exaggerators, and $0.90$ with heterogeneous groups, with $J_A \ge 0.99$ in homogeneous populations and $J_B \approx 0.995$ in heterogeneous ones.
+3. **Strategy-resistance needs a stronger penalty than fairness does.** At $\lambda = 1$ a lone inflator still gains slightly (+2.5 to +5). The incentive turns negative at $\lambda \approx 2$, which costs only $\approx 0.3$ pp of welfare relative to $\lambda = 1$. Maximum-claim inflation is already unprofitable at $\lambda = 1$. Group-level (coalition) gains overstate deterrence and should not be read as individual incentives.
+4. **Starvation is not solved by a penalty on cumulative allocations.** Score reduces starvation only modestly relative to Greedy (e.g. $7.5\%$ vs. $8.4\%$ at base settings, $37.7\%$ vs. $49.4\%$ under strong persistence). Only Round-Robin's explicit service guarantee gives $\text{SR}_\Delta = 0$. A wait-time-aware penalty would be needed to bound starvation.
+5. **Payments vs. no payments.** Vickrey is the only mechanism whose unilateral manipulation gain is negative in every tested setting, but it needs a monetary infrastructure. The Score mechanism with $\lambda \approx 2$ is a non-monetary alternative that removes the incentive to inflate against the tested policies while retaining ≈ 96% welfare. That is an empirical result for these bounded policies, not a truthfulness guarantee.
 
 ---
 

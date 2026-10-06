@@ -8,7 +8,9 @@ Also runs M1–M3 and M5 at λ=N/A for comparison on the same scatter.
 
 For each (mechanism, λ) setting:
   - Run 30 seeds under capped-exaggeration (c=2) for strategic users (ρ=0.25)
-  - Report WR, J_A, and M (manipulation gain)
+  - Report WR, J_A, SR_Δ, coalition gain M_mean (all strategic users deviate
+    together vs. all truthful) and unilateral gain M_uni (one strategic user
+    switches to truthful while the others keep inflating)
   - Identify non-dominated settings on the WR vs J_A frontier coloured by M
 
 Output: results/e2/summary.json
@@ -33,14 +35,14 @@ from sim.mechanisms import (
     GreedyMechanism, ScoreMechanism, VickreyMechanism,
 )
 from sim.policies import capped_exaggeration
-from sim.runner import run_single, run_mixed, run_paired
+from sim.runner import run_paired, run_unilateral
 from sim import metrics as M
 from analysis.bootstrap import summarise_seeds
 from analysis.pareto import filter_e2_results
 
 LAMBDA_VALUES = [0.0, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
 BASE_CFG_KWARGS = dict(n=50, k=10, T=1000, rho=0.25)
-METRIC_KEYS = ["WR", "J_A", "SR_delta", "M_mean"]
+METRIC_KEYS = ["WR", "J_A", "SR_delta", "M_mean", "M_uni"]
 
 
 def load_seeds(path="seeds/master_seeds.json"):
@@ -54,10 +56,10 @@ def run_e2(seeds: list[int]) -> list[dict]:
 
     # Non-M4 mechanisms (λ is irrelevant; run once)
     static_mechs = {
-        "RandomMechanism"    : lambda cfg: RandomMechanism(cfg),
-        "RoundRobinMechanism": lambda cfg: RoundRobinMechanism(cfg, init_seed=0),
-        "GreedyMechanism"    : lambda cfg: GreedyMechanism(cfg),
-        "VickreyMechanism"   : lambda cfg: VickreyMechanism(cfg),
+        "RandomMechanism"    : lambda cfg, pkg: RandomMechanism(cfg),
+        "RoundRobinMechanism": lambda cfg, pkg: RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
+        "GreedyMechanism"    : lambda cfg, pkg: GreedyMechanism(cfg),
+        "VickreyMechanism"   : lambda cfg, pkg: VickreyMechanism(cfg),
     }
 
     for mname, mfactory in static_mechs.items():
@@ -65,11 +67,13 @@ def run_e2(seeds: list[int]) -> list[dict]:
         per_seed = []
         for seed in seeds:
             pkg = SeedPackage.generate(seed, cfg)
-            mech = mfactory(cfg)
+            mech = mfactory(cfg, pkg)
             h_truth, h_strat = run_paired(mech, pkg, cfg, cap2)
             row = M.compute_all(h_strat, pkg.valuations, cfg)
             mgain = M.manipulation_gain(h_strat, h_truth, pkg.valuations, pkg.strategic_set)
             row.update(mgain)
+            h_dev, h_uni, f = run_unilateral(mech, pkg, cfg, cap2)
+            row["M_uni"] = M.unilateral_gain(h_dev, h_uni, pkg.valuations, f)
             row["seed"] = seed
             per_seed.append(row)
 
@@ -89,13 +93,16 @@ def run_e2(seeds: list[int]) -> list[dict]:
             row = M.compute_all(h_strat, pkg.valuations, cfg)
             mgain = M.manipulation_gain(h_strat, h_truth, pkg.valuations, pkg.strategic_set)
             row.update(mgain)
+            h_dev, h_uni, f = run_unilateral(mech, pkg, cfg, cap2)
+            row["M_uni"] = M.unilateral_gain(h_dev, h_uni, pkg.valuations, f)
             row["seed"] = seed
             per_seed.append(row)
 
         summary = summarise_seeds(per_seed, METRIC_KEYS)
         summary.update({"mechanism": "ScoreMechanism", "lambda_": lam})
         results.append(summary)
-        print(f"  E2 M4 λ={lam} WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f}")
+        print(f"  E2 M4 λ={lam} WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f} "
+              f"M={summary['M_mean']['mean']:.2f} M_uni={summary['M_uni']['mean']:.2f}")
 
     # Identify Pareto front
     pareto = filter_e2_results([
@@ -114,5 +121,5 @@ if __name__ == "__main__":
     out = Path("results/e2")
     out.mkdir(parents=True, exist_ok=True)
     with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2)
+        json.dump(results, fh, indent=2, allow_nan=False)
     print("E2 complete. Summary saved to results/e2/summary.json")

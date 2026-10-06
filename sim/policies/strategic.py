@@ -22,8 +22,9 @@ Notes
 -----
 * The rollout attack is a unilateral heuristic, not an equilibrium
   computation or a proof of manipulability.  It is separated from the
-  scalable policies (used in E1–E4) and applied only in selected E3 settings
-  for M3–M5 (proposal §4.2, §4.3).
+  scalable policies (used in E2–E3).  The proposal (§4.2, §4.3) planned it
+  for selected E3 settings on M3–M5; it is implemented and unit-tested but
+  not run by any experiment script, so no rollout results are reported.
 * Policies operate on scalar values; vectorisation across users is done in
   the runner.
 """

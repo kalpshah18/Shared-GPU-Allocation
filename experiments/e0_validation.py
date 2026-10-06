@@ -12,7 +12,7 @@ Checks performed (from proposal §4.3)
 2. Payment invariant        : p_{i,t} = 0 when x_{i,t} = 0
 3. Report-invariance        : M1 and M2 — outcomes identical for any reports
 4. M3 ≡ M4 at λ=0          : same allocation on every test case
-5. Round-robin wait bound   : no user waits > ⌈n/k⌉ rounds
+5. Round-robin wait bound   : no user waits > ⌈n/k⌉ − 1 consecutive rounds
 6. Welfare oracle           : M3 with truthful reports achieves W* (exhaustive)
 7. M5 one-round truthfulness: on grid G, truthful report maximises utility
                               for every opponent profile (exhaustive, small n)
@@ -166,25 +166,29 @@ def test_m3_equals_m4_at_lambda_zero() -> None:
 # ── Check 5: Round-robin wait bound ──────────────────────────────────────────
 
 def test_roundrobin_wait_bound() -> None:
-    print("\n[Check 5] Round-robin wait bound ≤ ⌈n/k⌉")
-    cfg      = Config(n=6, k=2, T=100)
-    pkg      = SeedPackage.generate(master_seed=1, cfg=cfg)
-    m2       = RoundRobinMechanism(cfg, init_seed=0)
-    history  = History(cfg.n)
-    rng      = np.random.default_rng(1)
-    bound    = math.ceil(cfg.n / cfg.k)
+    # Every user is served once per ⌈n/k⌉-round cycle, so the number of
+    # consecutive rounds without service (Q_max) is at most ⌈n/k⌉ − 1.
+    print("\n[Check 5] Round-robin wait bound: Q_max ≤ ⌈n/k⌉ − 1")
+    for n, k in [(6, 2), (7, 3), (50, 10)]:
+        cfg      = Config(n=n, k=k, T=100)
+        pkg      = SeedPackage.generate(master_seed=1, cfg=cfg)
+        m2       = RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0]))
+        history  = History(cfg.n)
+        rng      = np.random.default_rng(1)
+        bound    = math.ceil(cfg.n / cfg.k) - 1
+        max_wait = 0
 
-    for t in range(cfg.T):
-        reports = rng.uniform(0, 1, cfg.n)
-        x, p    = m2.allocate(reports, history, int(pkg.tie_seeds[t]))
-        history.update(x, p)
+        for t in range(cfg.T):
+            reports = rng.uniform(0, 1, cfg.n)
+            x, p    = m2.allocate(reports, history, int(pkg.tie_seeds[t]))
+            history.update(x, p)
+            max_wait = max(max_wait, int(history.consecutive_wait.max()))
 
-    max_wait = int(history.consecutive_wait.max())
-    check(
-        f"RR max wait ({max_wait}) ≤ ceil(n/k) = {bound}",
-        max_wait <= bound,
-        f"max_wait={max_wait}",
-    )
+        check(
+            f"n={n}, k={k}: RR max wait ({max_wait}) ≤ ceil(n/k) − 1 = {bound}",
+            max_wait <= bound,
+            f"max_wait={max_wait}",
+        )
 
 
 # ── Check 6: M3 welfare oracle (exhaustive on small instance) ─────────────────

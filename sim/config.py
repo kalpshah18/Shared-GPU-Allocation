@@ -27,7 +27,7 @@ class Config:
     rho: float = 0.25     # fraction of strategic users  ρ ∈ [0, 1]
 
     # ── Mechanism-specific ───────────────────────────────────────────────────
-    lambda_: float = 0.0  # history-penalty exponent for M4
+    lambda_: float = 1.0  # history-penalty exponent for M4 (0 ≡ M3 Greedy)
     c: float = 2.0        # capped-exaggeration multiplier (1.25, 1.5, or 2)
 
     # ── Valuation process ────────────────────────────────────────────────────

@@ -5,7 +5,7 @@
   "Q_max": 19,
   "SR_delta": 0.02734,
   "pct95_wait": 5.0,
-  "PoF": 0.36950112058538104,
+  "PoF": 0.369501120585381,
   "seed": 803566779,
   "kn_ratio": 0.4,
   "mechanism": "RandomMechanism"

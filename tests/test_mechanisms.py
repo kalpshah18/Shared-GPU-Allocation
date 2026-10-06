@@ -109,17 +109,19 @@ def test_m3_equals_m4_lambda_zero():
 
 # ── Round-robin wait bound ────────────────────────────────────────────────────
 
-def test_roundrobin_wait_bound():
-    cfg  = Config(n=6, k=2, T=100)
+@pytest.mark.parametrize("n,k", [(6, 2), (7, 3), (50, 10)])
+def test_roundrobin_wait_bound(n, k):
+    # Consecutive unserved rounds never exceed ⌈n/k⌉ − 1, checked every round.
+    cfg  = Config(n=n, k=k, T=100)
     mech = RoundRobinMechanism(cfg, init_seed=7)
     h    = History(cfg.n)
     rng  = np.random.default_rng(7)
-    bound = math.ceil(cfg.n / cfg.k)
+    bound = math.ceil(cfg.n / cfg.k) - 1
     for t in range(cfg.T):
         r = rng.uniform(0, 1, cfg.n)
         x, p = mech.allocate(r, h, t)
         h.update(x, p)
-    assert h.consecutive_wait.max() <= bound
+        assert h.consecutive_wait.max() <= bound
 
 
 # ── M3 welfare oracle ─────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@
   "Q_max": 6,
   "SR_delta": 0.00024,
   "pct95_wait": 1.0,
-  "PoF": -1.5202394281124656e-16,
+  "PoF": -3.040478856224931e-16,
   "seed": 1537853632,
   "kn_ratio": 0.8,
   "mechanism": "GreedyMechanism"
