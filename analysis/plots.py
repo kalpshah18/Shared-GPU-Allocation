@@ -287,7 +287,7 @@ def plot_e3(results: list[dict], metric: str = "M_mean", save: bool = True) -> N
     axes[0].set_yticklabels([f"ρ = {r}" for r in rhos])
     axes[0].set_ylabel("Strategic fraction ρ")
     fig.colorbar(im, ax=list(axes), shrink=0.9, label=metric)
-    fig.suptitle(f"E3 — {title}", fontsize=13, fontweight="bold")
+    fig.suptitle(f"E3 — {title}  (n=50, k=10; M4 λ=1)", fontsize=13, fontweight="bold")
 
     if save:
         fig.savefig(FIGURES_DIR / f"e3_all_mechs_{metric}.pdf", bbox_inches="tight")
