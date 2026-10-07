@@ -59,6 +59,29 @@ class Mechanism(ABC):
             Payment vector; p_i = 0 whenever x_i = 0.
         """
 
+    def allocate_batch(
+        self,
+        reports: np.ndarray,
+        cumulative: np.ndarray,
+        tiebreak: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Vectorised ``allocate`` over B independent scenarios (used by the
+        rollout attack).  Only mechanisms whose decision depends on history
+        solely through the cumulative allocation counts can implement this.
+
+        Parameters
+        ----------
+        reports, cumulative, tiebreak : ndarray, shape (B, n)
+            Reports, cumulative allocations a_i(t) and the secondary
+            tie-breaking key for every scenario.
+
+        Returns
+        -------
+        (x, p) : both shape (B, n); x in {0,1} with k ones per row.
+        """
+        raise NotImplementedError(f"{self.name} has no batch allocation rule.")
+
     @property
     def name(self) -> str:
         return self.__class__.__name__

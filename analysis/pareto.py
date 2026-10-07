@@ -67,25 +67,29 @@ def pareto_front(
     return np.where(~is_dominated)[0]
 
 
-def filter_e2_results(rows: list[dict]) -> list[dict]:
-    """
-    Convenience wrapper for experiment E2.
+def _value(r: dict, key: str) -> float:
+    v = r[key]
+    if isinstance(v, dict):
+        v = v.get("mean")
+    return float("nan") if v is None else float(v)
 
-    Each row must contain keys: 'WR', 'J_A', 'SR_delta', 'M_mean'.
-    Returns only the non-dominated rows.
 
-    Objective directions:
-        WR       → maximize
-        J_A      → maximize
-        SR_delta → minimize
-        M_mean   → minimize
+def pareto_flags(rows: list, gain_key: str = "M_uni") -> list:
     """
-    keys     = ["WR", "J_A", "SR_delta", "M_mean"]
+    Boolean list marking the non-dominated rows on the proposal's objectives
+    (WR max, J_A max, SR_delta min, manipulation gain min).  Each row maps
+    metric names to floats or to summary dicts with a 'mean'.
+    """
+    keys     = ["WR", "J_A", "SR_delta", gain_key]
     maximize = [True, True, False, False]
+    points = np.array([[_value(r, k) for k in keys] for r in rows], dtype=np.float64)
+    if np.isnan(points).any():
+        raise ValueError("pareto_flags: NaN objective value; summarise before filtering.")
+    front = set(pareto_front(points, maximize).tolist())
+    return [i in front for i in range(len(rows))]
 
-    points = np.array([
-        [r[k]["mean"] if isinstance(r[k], dict) and "mean" in r[k] else float(r[k]) for k in keys]
-        for r in rows
-    ], dtype=np.float64)
-    front  = pareto_front(points, maximize)
-    return [rows[i] for i in front]
+
+def filter_e2_results(rows: list, gain_key: str = "M_uni") -> list:
+    """Return only the non-dominated rows (see ``pareto_flags``)."""
+    flags = pareto_flags(rows, gain_key)
+    return [r for r, f in zip(rows, flags) if f]

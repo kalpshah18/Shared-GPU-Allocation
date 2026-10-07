@@ -1,114 +1,71 @@
 """
 experiments/e4_heterogeneous.py
 ================================
-E4 — Heterogeneous Users — Owner: Kalp Shah
+E4 — Heterogeneous users — Owner: Kalp Shah
 
-Compare the homogeneous base case (Uniform) with an equal-sized two-group
-population:
-  D_L = Beta(2,5)   (low-value group,  first n//2 users)
-  D_H = Beta(5,2)   (high-value group, remaining users)
+Compare the homogeneous base case (Uniform(0,1) for everyone) with an
+equal-sized two-group population,
 
-Both distributions remain in [0,1] but have different means.
-Report J_A and J_B together to identify cases where equal service and
-equal normalised benefit diverge.
+    D_L = Beta(2, 5)  (low-value group,  first n//2 users)
+    D_H = Beta(5, 2)  (high-value group, remaining users)
 
-Output: results/e4/summary.json
+Both stay in [0, 1] but have different means (2/7 vs 5/7).  J_A (equal
+service) and J_B (equal normalised benefit) are reported together to expose
+cases where they diverge.  All reports are truthful.
+
+Outputs: results/e4/{summary,paired,config}.json and results/e4/raw/*.json
+Usage:   python experiments/e4_heterogeneous.py [--seeds N] [--results-dir DIR]
 """
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import numpy as np
-
-sys.path.insert(0, ".")
-
-from sim.config import Config
-from sim.environment import SeedPackage
-from sim.mechanisms import (
-    RandomMechanism, RoundRobinMechanism,
-    GreedyMechanism, ScoreMechanism, VickreyMechanism,
+from analysis.bootstrap import paired_differences
+from experiments.common import (
+    TRUTHFUL_KEYS, build_parser, load_seeds, overrides_from_args, run_cell,
+    save_outputs, save_raw, truthful_row,
 )
-from sim.runner import run_single
-from sim import metrics as M
-from analysis.bootstrap import summarise_seeds
+from sim.config import Config
+from sim.mechanisms import MECHANISM_NAMES
 
-METRIC_KEYS = ["WR", "J_A", "J_B", "SR_delta", "PoF"]
-MECH_NAMES  = [
-    "RandomMechanism", "RoundRobinMechanism",
-    "GreedyMechanism", "ScoreMechanism", "VickreyMechanism",
-]
-
-# Per-user expected values for mixed distribution (Beta(2,5) mean = 2/7,
-# Beta(5,2) mean = 5/7)
-def per_user_mu(n: int) -> np.ndarray:
-    half = n // 2
-    mu = np.empty(n)
-    mu[:half]  = 2 / 7   # E[Beta(2,5)]
-    mu[half:]  = 5 / 7   # E[Beta(5,2)]
-    return mu
+DISTS = {"uniform": "uniform", "mixed": "mixed"}
+REFERENCE = "ScoreMechanism"
 
 
-def make_mech(mname: str, cfg: Config, pkg: SeedPackage):
-    return {
-        "RandomMechanism"    : RandomMechanism(cfg),
-        "RoundRobinMechanism": RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
-        "GreedyMechanism"    : GreedyMechanism(cfg),
-        "ScoreMechanism"     : ScoreMechanism(cfg),
-        "VickreyMechanism"   : VickreyMechanism(cfg),
-    }[mname]
-
-
-def load_seeds(path="seeds/master_seeds.json"):
-    with open(path) as fh:
-        return json.load(fh)["seeds"]
-
-
-def run_e4(seeds: list[int]) -> list[dict]:
-    results = []
-    dists   = {
-        "uniform": dict(valuation_dist="uniform"),
-        "mixed"  : dict(valuation_dist="mixed"),
-    }
-
-    for dist_name, dist_kwargs in dists.items():
-        mu = (np.full(50, 0.5) if dist_name == "uniform"
-              else per_user_mu(50))
-
-        for mname in MECH_NAMES:
-            cfg = Config(n=50, k=10, T=1000, rho=0.0, **dist_kwargs)
-            per_seed = []
-
-            for seed in seeds:
-                pkg     = SeedPackage.generate(seed, cfg)
-                mech    = make_mech(mname, cfg, pkg)
-                history = run_single(mech, pkg, cfg)
-
-                row = M.compute_all(history, pkg.valuations, cfg, mu=mu)
-                row["seed"] = seed
-                per_seed.append(row)
-
-            summary = summarise_seeds(per_seed, METRIC_KEYS)
-            summary.update({"mechanism": mname, "dist": dist_name})
-            results.append(summary)
-            print(f"  E4 {dist_name} {mname} "
-                  f"J_A={summary['J_A']['mean']:.3f} J_B={summary['J_B']['mean']:.3f}")
-
-    return results
+def run_e4(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=True, k=None) -> list:
+    k = k if k is not None else max(1, round(0.2 * n))
+    summaries, paired = [], []
+    for dname, dist in DISTS.items():
+        cfg = Config(n=n, k=k, T=T, rho=0.0, valuation_dist=dist)
+        per_mech = {}
+        for mname in MECHANISM_NAMES:
+            rows, summary = run_cell(lambda pkg, m=mname, c=cfg: truthful_row(m, c, pkg),
+                                     seeds, cfg, TRUTHFUL_KEYS, n_bootstrap)
+            summary.update({"mechanism": mname, "dist": dname, "n_seeds": len(seeds)})
+            summaries.append(summary)
+            per_mech[mname] = rows
+            if results_dir:
+                save_raw(results_dir, "e4", f"{mname}_{dname}", rows, cfg.to_dict())
+            if verbose:
+                print(f"  E4 {dname:<8s} {mname:<20s} J_A={summary['J_A']['mean']:.3f} "
+                      f"J_B={summary['J_B']['mean']:.3f} WR={summary['WR']['mean']:.3f}", flush=True)
+        diffs = paired_differences(per_mech, REFERENCE, TRUTHFUL_KEYS, n_resamples=n_bootstrap)
+        paired += [{"dist": dname, "mechanism": m, "reference": REFERENCE, "metrics": d}
+                   for m, d in diffs.items()]
+    if results_dir:
+        save_outputs(results_dir, "e4", summaries,
+                     {"n": n, "k": k, "T": T, "dists": list(DISTS), "lambda_": 1.0,
+                      "paired_reference": REFERENCE}, seeds, paired)
+    return summaries
 
 
 if __name__ == "__main__":
-    seeds = load_seeds()
+    args = build_parser(__doc__).parse_args()
+    seeds = load_seeds(n=args.seeds)
     print(f"Running E4 heterogeneous users with {len(seeds)} seeds")
-    results = run_e4(seeds)
-
-    out = Path("results/e4")
-    out.mkdir(parents=True, exist_ok=True)
-    with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2, allow_nan=False)
-    print("E4 complete. Summary saved to results/e4/summary.json")
+    run_e4(seeds, args.results_dir, **overrides_from_args(args))
+    print(f"E4 complete. Summary saved to {args.results_dir}/e4/summary.json")

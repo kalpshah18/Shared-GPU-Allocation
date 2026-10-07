@@ -3,176 +3,150 @@ sim/policies/strategic.py
 ==========================
 Strategic reporting policies — Owner: Raj Modi
 
-Four bounded policies from proposal §4.2:
+Four bounded policies from proposal section 4.2:
 
-1. Truthful          : v̂ = v
-2. Capped exaggeration: v̂ = min(c·v, v_max)   for c ∈ {1.25, 1.5, 2}
-3. Maximum claim     : v̂ = v_max               (worst-case priority inflation)
-4. Rollout attack    : finite-horizon Monte Carlo search (diagnostic only,
-                       n=10 small-instance setting, H=5 rounds ahead,
-                       100 rollouts, report grid G={0, 0.1, ..., 1})
+1. Truthful            : v_hat = v
+2. Capped exaggeration : v_hat = min(c v, v_max)   for c in {1.25, 1.5, 2}
+3. Maximum claim       : v_hat = v_max             (worst-case priority inflation)
+4. Finite-horizon rollout attack : Monte Carlo search over the report grid
+   G = {0, 0.1, ..., 1} using H = 5 rounds and 100 rollouts per candidate
+   (a diagnostic for small n, see experiments/e3b_rollout.py).
 
-All policies expose a uniform call signature:
+Call contract
+-------------
+Scalable policies share one signature
 
-    report(true_value, history, cfg, **kwargs) -> float
+    policy(true_value, history, cfg, **kwargs) -> report
 
-so they can be stored in a dict and called uniformly by the runner.
+and are *elementwise*: `true_value` may be a float or an ndarray of values,
+and the report has the same shape.  Reports always lie in [0, v_max].
 
 Notes
 -----
 * The rollout attack is a unilateral heuristic, not an equilibrium
-  computation or a proof of manipulability.  It is separated from the
-  scalable policies (used in E2–E3).  The proposal (§4.2, §4.3) planned it
-  for selected E3 settings on M3–M5; it is implemented and unit-tested but
-  not run by any experiment script, so no rollout results are reported.
-* Policies operate on scalar values; vectorisation across users is done in
-  the runner.
+  computation and not a proof of manipulability.
+* Future rounds in a rollout are simulated from the i.i.d. marginals D_i,
+  with all other users following `opponent_policy`; the focal user reports
+  truthfully after the first simulated round (the standard rollout base
+  policy).  Candidates share common random numbers, so differences between
+  candidate reports are not Monte Carlo noise.
 """
 
 from __future__ import annotations
 
-from typing import Callable, Protocol
+from typing import Callable
 
 import numpy as np
 
 from sim.config import Config
-from sim.environment import History
+from sim.environment import History, sample_iid_values
+from sim.mechanisms.base import Mechanism
 
-
-# ── Policy protocol ──────────────────────────────────────────────────────────
-
-class Policy(Protocol):
-    """Callable protocol: (true_value, history, cfg, **kw) -> reported_value."""
-
-    def __call__(
-        self,
-        true_value: float,
-        history: History,
-        cfg: Config,
-        **kwargs,
-    ) -> float: ...
+ROLLOUT_GRID = tuple(round(0.1 * i, 1) for i in range(11))
 
 
 # ── 1. Truthful ───────────────────────────────────────────────────────────────
 
-def truthful(true_value: float, history: History, cfg: Config, **_) -> float:
-    """Report true value exactly."""
+def truthful(true_value, history: History | None, cfg: Config, **_):
+    """Report the true value exactly."""
     return true_value
 
 
 # ── 2. Capped exaggeration ───────────────────────────────────────────────────
 
-def capped_exaggeration(
-    true_value: float,
-    history: History,
-    cfg: Config,
-    c: float = 2.0,
-    **_,
-) -> float:
-    """
-    v̂ = min(c · v, v_max).
+def capped_exaggeration(true_value, history: History | None, cfg: Config, c: float = 2.0, **_):
+    """v_hat = min(c * v, v_max), elementwise."""
+    return np.minimum(c * np.asarray(true_value, dtype=np.float64), cfg.v_max)[()]
 
-    c ∈ {1.25, 1.5, 2} (pass via kwargs when building the policy).
-    """
-    return min(c * true_value, cfg.v_max)
+
+def make_capped(c: float) -> Callable:
+    """Capped-exaggeration policy with multiplier `c` bound in."""
+    def policy(true_value, history, cfg, **_):
+        return capped_exaggeration(true_value, history, cfg, c=c)
+    policy.__name__ = f"cap_{c:g}"
+    return policy
 
 
 # ── 3. Maximum claim ─────────────────────────────────────────────────────────
 
-def maximum_claim(true_value: float, history: History, cfg: Config, **_) -> float:
-    """Always report v_max — worst-case priority inflation baseline."""
-    return cfg.v_max
+def maximum_claim(true_value, history: History | None, cfg: Config, **_):
+    """Always report v_max (worst-case priority inflation)."""
+    return np.full(np.shape(true_value), cfg.v_max, dtype=np.float64)[()]
 
 
 # ── 4. Rollout attack (diagnostic) ───────────────────────────────────────────
 
-def rollout_attack(
+def rollout_report(
     true_value: float,
     history: History,
+    mechanism: Mechanism,
     cfg: Config,
-    focal_user: int,
-    opponent_policies: list,
-    mechanism_factory: Callable,
+    focal: int,
+    opponent_policy: Callable,
     rng: np.random.Generator,
     H: int = 5,
     n_rollouts: int = 100,
-    grid: tuple[float, ...] = tuple(round(x * 0.1, 1) for x in range(11)),
-    **_,
+    grid: tuple = ROLLOUT_GRID,
 ) -> float:
     """
-    Finite-horizon rollout attack (diagnostic, small n ≤ 10 only).
+    Choose the focal user's report for the current round.
 
-    For each candidate report r ∈ grid, run `n_rollouts` Monte Carlo
-    simulations of the next H rounds, holding opponent policies fixed.
-    Select the report with the highest estimated cumulative utility.
+    For every candidate report r in `grid` (scaled by v_max), simulate the
+    next H rounds `n_rollouts` times: the current round uses r and the focal
+    user's known `true_value`; the other users' values are drawn from their
+    marginals and reported through `opponent_policy`; later rounds use fresh
+    values with a truthful focal user.  The candidate with the highest mean
+    cumulative focal utility wins; ties go to the candidate closest to the
+    true value.
 
-    Parameters
-    ----------
-    focal_user      : index of the attacking user
-    opponent_policies : list of policy callables, length n; entry for
-                        focal_user is ignored (replaced by constant r).
-    mechanism_factory : callable() -> Mechanism  (fresh instance each rollout)
-    rng             : np.random.Generator for rollout randomness
-    H               : horizon (rounds ahead), default 5
-    n_rollouts      : Monte Carlo rollouts per candidate report, default 100
-    grid            : discrete report candidates, default {0, 0.1, ..., 1}
+    `mechanism` must implement ``allocate_batch`` (M3, M4, M5).
     """
-    best_report   = true_value
-    best_utility  = -np.inf
+    n = cfg.n
+    cand = np.asarray(grid, dtype=np.float64) * cfg.v_max
+    G, R = len(cand), n_rollouts
 
-    for r in grid:
-        total_utility = 0.0
-        for _ in range(n_rollouts):
-            mech     = mechanism_factory()
-            hist_sim = _clone_history(history, cfg.n)
-            utility  = 0.0
+    vals = sample_iid_values(rng, cfg, (H, R))              # (H, R, n)
+    vals[0, :, focal] = true_value
+    tiebreak = rng.random((H, R, n))
 
-            for h in range(H):
-                # Sample valuations for this rollout step
-                vals = rng.uniform(0.0, cfg.v_max, size=cfg.n)
-                vals[focal_user] = true_value  # keep focal user's true value
+    cum = np.tile(history.cumulative[None, None, :], (G, R, 1)).astype(np.int64)
+    util = np.zeros((G, R))
+    for h in range(H):
+        opp = np.asarray(opponent_policy(vals[h], history, cfg), dtype=np.float64)   # (R, n)
+        reports = np.broadcast_to(opp, (G, R, n)).copy()
+        reports[:, :, focal] = cand[:, None] if h == 0 else vals[h, :, focal][None, :]
+        x, p = mechanism.allocate_batch(
+            reports.reshape(G * R, n),
+            cum.reshape(G * R, n),
+            np.broadcast_to(tiebreak[h], (G, R, n)).reshape(G * R, n),
+        )
+        x = x.reshape(G, R, n)
+        p = p.reshape(G, R, n)
+        util += vals[h, :, focal][None, :] * x[:, :, focal] - p[:, :, focal]
+        cum += x
 
-                # Build reports: opponents use their policies
-                reports = np.array([
-                    opponent_policies[i](vals[i], hist_sim, cfg)
-                    if i != focal_user else r
-                    for i in range(cfg.n)
-                ])
-
-                tie_seed = int(rng.integers(0, 2**63))
-                x, p = mech.allocate(reports, hist_sim, tie_seed)
-                utility += vals[focal_user] * x[focal_user] - p[focal_user]
-                hist_sim.update(x, p)
-
-            total_utility += utility
-
-        mean_utility = total_utility / n_rollouts
-        if mean_utility > best_utility:
-            best_utility = mean_utility
-            best_report  = r
-
-    return best_report
-
-
-def _clone_history(history: History, n: int) -> History:
-    """Shallow-copy the relevant fields of History for a rollout simulation."""
-    from sim.environment import History as H
-    h2 = H(n)
-    h2.cumulative[:]       = history.cumulative
-    h2.consecutive_wait[:] = history.consecutive_wait
-    h2.round               = history.round
-    # Don't copy raw allocation lists — they're not needed for mechanisms
-    return h2
+    mean_util = util.mean(axis=1)
+    best = np.flatnonzero(mean_util >= mean_util.max() - 1e-12)
+    return float(cand[best[np.argmin(np.abs(cand[best] - true_value))]])
 
 
 # ── Policy registry ──────────────────────────────────────────────────────────
 
-POLICY_REGISTRY: dict[str, Policy] = {
-    "truthful"   : truthful,       # type: ignore[dict-item]
-    "cap_1.25"   : lambda v, h, c, **kw: capped_exaggeration(v, h, c, c=1.25),
-    "cap_1.5"    : lambda v, h, c, **kw: capped_exaggeration(v, h, c, c=1.5),
-    "cap_2"      : lambda v, h, c, **kw: capped_exaggeration(v, h, c, c=2.0),
-    "max_claim"  : maximum_claim,  # type: ignore[dict-item]
-    # "rollout" is not in the registry because it requires extra keyword args;
-    # instantiate it directly in the experiment script.
+POLICY_REGISTRY: dict = {
+    "truthful" : truthful,
+    "cap_1.25" : make_capped(1.25),
+    "cap_1.5"  : make_capped(1.5),
+    "cap_2"    : make_capped(2.0),
+    "max_claim": maximum_claim,
+    # "rollout" needs a mechanism, RNG and opponent profile; see rollout_report
+    # and sim.runner.run_rollout.
 }
+
+
+def get_policy(name: str) -> Callable:
+    """Look up a policy by name; ``cap_<c>`` builds a capped policy on the fly."""
+    if name in POLICY_REGISTRY:
+        return POLICY_REGISTRY[name]
+    if name.startswith("cap_"):
+        return make_capped(float(name[4:]))
+    raise KeyError(f"Unknown policy '{name}'. Known: {sorted(POLICY_REGISTRY)}")

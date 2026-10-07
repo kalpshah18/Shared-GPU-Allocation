@@ -2,6 +2,13 @@
 sim/mechanisms/_utils.py
 =========================
 Shared utilities for mechanism implementations.
+
+Tie-breaking
+------------
+Winners are the k largest scores.  Exact ties are broken uniformly at random
+with a *secondary sort key*, never by perturbing the scores: an additive
+jitter would distort orderings whenever scores are tiny (for example M4 with a
+large lambda and large cumulative allocations).
 """
 
 from __future__ import annotations
@@ -11,33 +18,25 @@ import numpy as np
 
 def seeded_top_k(scores: np.ndarray, k: int, tie_seed: int) -> np.ndarray:
     """
-    Return the indices of the k largest scores, with ties broken uniformly
-    using a seeded RNG.
+    Indices of the k largest scores, ties broken uniformly using `tie_seed`.
 
-    Algorithm
-    ---------
-    1. Add a tiny uniform jitter (from `tie_seed`) to every score.
-    2. Take argpartition for efficiency, then sort the top-k subset.
-
-    The jitter is on the order of 1e-12 relative to scores in [0, 1], so
-    it never changes a strict ordering — it only resolves exact ties.
-
-    Parameters
-    ----------
-    scores : ndarray, shape (n,)
-    k : int
-    tie_seed : int  — per-round seed from the pre-generated tie_seeds array
-
-    Returns
-    -------
-    winners : ndarray, shape (k,)  — indices of the k selected users
+    The primary key is the score (exact comparison); the secondary key is an
+    i.i.d. uniform draw from ``default_rng(tie_seed)``.  The result is ordered
+    from highest to lowest.
     """
-    rng    = np.random.default_rng(tie_seed)
-    jitter = rng.uniform(0.0, 1e-12, size=len(scores))
-    jittered = scores + jitter
+    tiebreak = np.random.default_rng(tie_seed).random(len(scores))
+    order = np.lexsort((tiebreak, scores))        # ascending by score, then tiebreak
+    return order[::-1][:k]
 
-    # argpartition is O(n); the top-k are in arbitrary order, so we sort them
-    top_k_unsorted = np.argpartition(jittered, -k)[-k:]
-    # Sort by descending score so the "winner" ordering is deterministic
-    top_k = top_k_unsorted[np.argsort(jittered[top_k_unsorted])[::-1]]
-    return top_k
+
+def batch_top_k_mask(scores: np.ndarray, tiebreak: np.ndarray, k: int) -> np.ndarray:
+    """
+    Vectorised ``seeded_top_k``: for every row of `scores` (shape (B, n)) return
+    a 0/1 int64 matrix with exactly k ones marking the winners.  `tiebreak` has
+    the same shape and supplies the secondary key.
+    """
+    order = np.lexsort((tiebreak, scores), axis=-1)     # ascending along last axis
+    winners = order[..., -k:]
+    x = np.zeros(scores.shape, dtype=np.int64)
+    np.put_along_axis(x, winners, 1, axis=-1)
+    return x

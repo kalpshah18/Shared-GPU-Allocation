@@ -1,125 +1,86 @@
 """
 experiments/e2_frontier.py
 ===========================
-E2 — Fairness and Strategic-Vulnerability Frontier — Owner: Kalp Shah
+E2 — Fairness and strategic-vulnerability frontier — Owner: Kalp Shah
 
-Sweep λ ∈ {0, 0.05, 0.1, 0.25, 0.5, 1, 2, 5} for M4 (Score mechanism).
-Also runs M1–M3 and M5 at λ=N/A for comparison on the same scatter.
+Sweep lambda in {0, 0.05, 0.1, 0.25, 0.5, 1, 2, 5} for M4 and add M1, M2, M3,
+M5 as reference points.  Every setting runs with rho = 0.25 users using capped
+exaggeration (c = 2) and reports WR, J_A, J_B, SR_Delta, the coalition gain
+(M_mean, M_max, frac_pos), the unilateral gains (M_uni, M_uni_max,
+frac_pos_uni) and PoS.  All non-dominated settings on (WR max, J_A max,
+SR_Delta min, M_uni min) are flagged in the summary (``pareto``).
 
-For each (mechanism, λ) setting:
-  - Run 30 seeds under capped-exaggeration (c=2) for strategic users (ρ=0.25)
-  - Report WR, J_A, SR_Δ, coalition gain M_mean (all strategic users deviate
-    together vs. all truthful) and unilateral gain M_uni (one strategic user
-    switches to truthful while the others keep inflating)
-  - Identify non-dominated settings on the WR vs J_A frontier coloured by M
-
-Output: results/e2/summary.json
+Outputs: results/e2/{summary,paired,config}.json and results/e2/raw/*.json
+Usage:   python experiments/e2_frontier.py [--seeds N] [--results-dir DIR]
 """
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
-import numpy as np
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-sys.path.insert(0, ".")
-
-from sim.config import Config
-from sim.environment import SeedPackage, save_seed_result
-from sim.mechanisms import (
-    RandomMechanism, RoundRobinMechanism,
-    GreedyMechanism, ScoreMechanism, VickreyMechanism,
+from analysis.bootstrap import paired_differences
+from analysis.pareto import pareto_flags
+from experiments.common import (
+    STRATEGIC_KEYS, build_parser, load_seeds, overrides_from_args, run_cell,
+    save_outputs, save_raw, strategic_row,
 )
-from sim.policies import capped_exaggeration
-from sim.runner import run_paired, run_unilateral
-from sim import metrics as M
-from analysis.bootstrap import summarise_seeds
-from analysis.pareto import filter_e2_results
+from sim.config import Config
+from sim.policies import make_capped
 
 LAMBDA_VALUES = [0.0, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
-BASE_CFG_KWARGS = dict(n=50, k=10, T=1000, rho=0.25)
-METRIC_KEYS = ["WR", "J_A", "SR_delta", "M_mean", "M_uni"]
+STATIC_MECHS = ["RandomMechanism", "RoundRobinMechanism", "GreedyMechanism", "VickreyMechanism"]
+PAIRED_KEYS = ["WR", "J_A", "SR_delta", "M_mean", "M_uni", "PoS"]
 
 
-def load_seeds(path="seeds/master_seeds.json"):
-    with open(path) as fh:
-        return json.load(fh)["seeds"]
+def _cell_name(mname, lam):
+    return mname if lam is None else f"{mname}_lam_{lam:g}"
 
 
-def run_e2(seeds: list[int]) -> list[dict]:
-    results = []
-    cap2 = lambda v, h, c: capped_exaggeration(v, h, c, c=2.0)
+def run_e2(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=True,
+           k=None, c=2.0) -> list:
+    k = k if k is not None else max(1, round(0.2 * n))
+    policy = make_capped(c)
+    settings = [(m, None) for m in STATIC_MECHS] + [("ScoreMechanism", lam) for lam in LAMBDA_VALUES]
 
-    # Non-M4 mechanisms (λ is irrelevant; run once)
-    static_mechs = {
-        "RandomMechanism"    : lambda cfg, pkg: RandomMechanism(cfg),
-        "RoundRobinMechanism": lambda cfg, pkg: RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
-        "GreedyMechanism"    : lambda cfg, pkg: GreedyMechanism(cfg),
-        "VickreyMechanism"   : lambda cfg, pkg: VickreyMechanism(cfg),
-    }
+    summaries, per_cell = [], {}
+    for mname, lam in settings:
+        cfg = Config(n=n, k=k, T=T, rho=0.25, lambda_=1.0 if lam is None else lam, c=c)
+        rows, summary = run_cell(lambda pkg, m=mname, cf=cfg: strategic_row(m, cf, pkg, policy),
+                                 seeds, cfg, STRATEGIC_KEYS, n_bootstrap)
+        summary.update({"mechanism": mname, "lambda_": lam, "n_seeds": len(seeds)})
+        summaries.append(summary)
+        per_cell[_cell_name(mname, lam)] = rows
+        if results_dir:
+            save_raw(results_dir, "e2", _cell_name(mname, lam), rows, cfg.to_dict())
+        if verbose:
+            tag = mname if lam is None else f"M4 lambda={lam:g}"
+            print(f"  E2 {tag:<24s} WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f} "
+                  f"M={summary['M_mean']['mean']:+.1f} M_uni={summary['M_uni']['mean']:+.1f}", flush=True)
 
-    for mname, mfactory in static_mechs.items():
-        cfg = Config(**BASE_CFG_KWARGS)
-        per_seed = []
-        for seed in seeds:
-            pkg = SeedPackage.generate(seed, cfg)
-            mech = mfactory(cfg, pkg)
-            h_truth, h_strat = run_paired(mech, pkg, cfg, cap2)
-            row = M.compute_all(h_strat, pkg.valuations, cfg)
-            mgain = M.manipulation_gain(h_strat, h_truth, pkg.valuations, pkg.strategic_set)
-            row.update(mgain)
-            h_dev, h_uni, f = run_unilateral(mech, pkg, cfg, cap2)
-            row["M_uni"] = M.unilateral_gain(h_dev, h_uni, pkg.valuations, f)
-            row["seed"] = seed
-            per_seed.append(row)
+    flags = pareto_flags(summaries, gain_key="M_uni")
+    for s, f in zip(summaries, flags):
+        s["pareto"] = bool(f)
+    if verbose:
+        print(f"\n  E2: {sum(flags)} non-dominated settings out of {len(flags)}.")
 
-        summary = summarise_seeds(per_seed, METRIC_KEYS)
-        summary.update({"mechanism": mname, "lambda_": None})
-        results.append(summary)
-        print(f"  E2 {mname} WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f}")
-
-    # M4 sweep over λ
-    for lam in LAMBDA_VALUES:
-        cfg = Config(**BASE_CFG_KWARGS, lambda_=lam)
-        per_seed = []
-        for seed in seeds:
-            pkg  = SeedPackage.generate(seed, cfg)
-            mech = ScoreMechanism(cfg)
-            h_truth, h_strat = run_paired(mech, pkg, cfg, cap2)
-            row = M.compute_all(h_strat, pkg.valuations, cfg)
-            mgain = M.manipulation_gain(h_strat, h_truth, pkg.valuations, pkg.strategic_set)
-            row.update(mgain)
-            h_dev, h_uni, f = run_unilateral(mech, pkg, cfg, cap2)
-            row["M_uni"] = M.unilateral_gain(h_dev, h_uni, pkg.valuations, f)
-            row["seed"] = seed
-            per_seed.append(row)
-
-        summary = summarise_seeds(per_seed, METRIC_KEYS)
-        summary.update({"mechanism": "ScoreMechanism", "lambda_": lam})
-        results.append(summary)
-        print(f"  E2 M4 λ={lam} WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f} "
-              f"M={summary['M_mean']['mean']:.2f} M_uni={summary['M_uni']['mean']:.2f}")
-
-    # Identify Pareto front
-    pareto = filter_e2_results([
-        {k: r[k]["mean"] for k in METRIC_KEYS} | {"mechanism": r["mechanism"], "lambda_": r["lambda_"]}
-        for r in results
-    ])
-    print(f"\n  E2: {len(pareto)} non-dominated settings on the frontier.")
-    return results
+    reference = _cell_name("ScoreMechanism", 0.0)
+    diffs = paired_differences(per_cell, reference, PAIRED_KEYS, n_resamples=n_bootstrap)
+    paired = [{"cell": cell, "reference": reference, "metrics": d} for cell, d in diffs.items()]
+    if results_dir:
+        save_outputs(results_dir, "e2", summaries,
+                     {"n": n, "k": k, "T": T, "rho": 0.25, "policy": f"cap_{c:g}",
+                      "lambda_values": LAMBDA_VALUES, "paired_reference": reference,
+                      "pareto_objectives": "WR max, J_A max, SR_delta min, M_uni min"},
+                     seeds, paired)
+    return summaries
 
 
 if __name__ == "__main__":
-    seeds = load_seeds()
-    print(f"Running E2 with {len(seeds)} seeds, λ sweep {LAMBDA_VALUES}")
-    results = run_e2(seeds)
-
-    out = Path("results/e2")
-    out.mkdir(parents=True, exist_ok=True)
-    with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2, allow_nan=False)
-    print("E2 complete. Summary saved to results/e2/summary.json")
+    args = build_parser(__doc__).parse_args()
+    seeds = load_seeds(n=args.seeds)
+    print(f"Running E2 with {len(seeds)} seeds, lambda sweep {LAMBDA_VALUES}")
+    run_e2(seeds, args.results_dir, **overrides_from_args(args))
+    print(f"E2 complete. Summary saved to {args.results_dir}/e2/summary.json")

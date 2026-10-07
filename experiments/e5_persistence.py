@@ -1,103 +1,85 @@
 """
 experiments/e5_persistence.py
 ==============================
-E5 — Temporal Persistence (Stretch Experiment) — Owner: Kalp Shah
+E5 — Temporally persistent demand (stretch) — Owner: Kalp Shah
 
-Sweep AR(1) persistence coefficient α ∈ {0.0, 0.5, 0.9} under base parameters:
-  n=50, k=10, T=1000, rho=0.0 (truthful reports).
+Replace i.i.d. values by the AR(1) process of proposal section 4.3,
 
-Evaluates how temporal autocorrelation in valuations impacts efficiency (WR),
-allocation fairness (J_A), starvation (SR_Δ), and tail waiting times.
+    v_{i,t} = alpha v_{i,t-1} + (1 - alpha) eps_{i,t},   eps ~ Uniform(0, 1),
 
-Output: results/e5/summary.json
+for alpha in {0, 0.5, 0.9} (truthful reports, n = 50, k = 10).
+
+Sensitivity check: that recursion also shrinks the marginal standard
+deviation by sqrt((1 - alpha)/(1 + alpha)), so "more persistent" also means
+"less spread out".  A second series (``ar1_mode = "copula"``) keeps every
+v_{i,t} exactly Uniform(0,1) and changes only the persistence, which
+separates the two effects.  alpha = 0 is shared by both series.
+
+Outputs: results/e5/{summary,paired,config}.json and results/e5/raw/*.json
+Usage:   python experiments/e5_persistence.py [--seeds N] [--results-dir DIR]
 """
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import numpy as np
-
-sys.path.insert(0, ".")
-
-from sim.config import Config
-from sim.environment import SeedPackage, save_seed_result
-from sim.mechanisms import (
-    RandomMechanism, RoundRobinMechanism,
-    GreedyMechanism, ScoreMechanism, VickreyMechanism,
+from analysis.bootstrap import paired_differences
+from experiments.common import (
+    TRUTHFUL_KEYS, build_parser, load_seeds, overrides_from_args, run_cell,
+    save_outputs, save_raw, truthful_row,
 )
-from sim.runner import run_single
-from sim import metrics as M
-from analysis.bootstrap import summarise_seeds
+from sim.config import Config
+from sim.mechanisms import MECHANISM_NAMES
 
 ALPHA_VALUES = [0.0, 0.5, 0.9]
-BASE_N = 50
-BASE_K = 10
-BASE_T = 1000
-METRIC_KEYS = ["WR", "J_A", "Q_max", "SR_delta", "pct95_wait", "PoF"]
-MECH_NAMES = [
-    "RandomMechanism", "RoundRobinMechanism",
-    "GreedyMechanism", "ScoreMechanism", "VickreyMechanism",
-]
+AR1_MODES = ["proposal", "copula"]
 
 
-def load_seeds(path: str = "seeds/master_seeds.json") -> list[int]:
-    with open(path) as fh:
-        return json.load(fh)["seeds"]
-
-
-def make_mech(mname: str, cfg: Config, pkg: SeedPackage):
-    return {
-        "RandomMechanism"    : RandomMechanism(cfg),
-        "RoundRobinMechanism": RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
-        "GreedyMechanism"    : GreedyMechanism(cfg),
-        "ScoreMechanism"     : ScoreMechanism(cfg),
-        "VickreyMechanism"   : VickreyMechanism(cfg),
-    }[mname]
-
-
-def run_e5(seeds: list[int]) -> list[dict]:
-    all_results = []
-
-    for alpha in ALPHA_VALUES:
-        cfg = Config(n=BASE_N, k=BASE_K, T=BASE_T, rho=0.0, alpha=alpha)
-
-        for mname in MECH_NAMES:
-            per_seed = []
-            for seed in seeds:
-                pkg = SeedPackage.generate(seed, cfg)
-                mech = make_mech(mname, cfg, pkg)
-                history = run_single(mech, pkg, cfg, policy_fn=None)
-
-                result = M.compute_all(history, pkg.valuations, cfg)
-                result["seed"] = seed
-                result["alpha"] = alpha
-                result["mechanism"] = mname
-
-                save_seed_result(result, f"e5/{mname}/alpha_{alpha}", seed)
-                per_seed.append(result)
-
-            summary = summarise_seeds(per_seed, METRIC_KEYS)
-            summary["mechanism"] = mname
-            summary["alpha"] = alpha
-            all_results.append(summary)
-            print(f"  E5 α={alpha:.1f} {mname} WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f}")
-
-    return all_results
+def run_e5(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=True, k=None) -> list:
+    k = k if k is not None else max(1, round(0.2 * n))
+    summaries, paired = [], []
+    iid_rows = {}                           # mechanism -> alpha=0 rows ('proposal' pass runs first)
+    for mode in AR1_MODES:
+        per_alpha = {}                      # (mechanism, alpha) -> rows
+        for alpha in ALPHA_VALUES:
+            if alpha == 0.0 and mode != "proposal":
+                continue                    # i.i.d. is identical in both modes
+            cfg = Config(n=n, k=k, T=T, rho=0.0, alpha=alpha, ar1_mode=mode)
+            for mname in MECHANISM_NAMES:
+                rows, summary = run_cell(lambda pkg, m=mname, c=cfg: truthful_row(m, c, pkg),
+                                         seeds, cfg, TRUTHFUL_KEYS, n_bootstrap)
+                summary.update({"mechanism": mname, "alpha": alpha, "ar1_mode": mode,
+                                "n_seeds": len(seeds)})
+                summaries.append(summary)
+                per_alpha[(mname, alpha)] = rows
+                if alpha == 0.0:
+                    iid_rows[mname] = rows
+                if results_dir:
+                    save_raw(results_dir, "e5", f"{mname}_{mode}_alpha_{alpha:g}", rows, cfg.to_dict())
+                if verbose:
+                    print(f"  E5 {mode:<8s} alpha={alpha:.1f} {mname:<20s} "
+                          f"WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f}", flush=True)
+        # paired vs the i.i.d. cell of the same mechanism (same master seeds)
+        for (mname, alpha), rows in per_alpha.items():
+            if alpha == 0.0:
+                continue
+            d = paired_differences({"x": rows, "ref": iid_rows[mname]}, "ref",
+                                   TRUTHFUL_KEYS, n_resamples=n_bootstrap)["x"]
+            paired.append({"mechanism": mname, "alpha": alpha, "ar1_mode": mode,
+                           "reference": "alpha=0", "metrics": d})
+    if results_dir:
+        save_outputs(results_dir, "e5", summaries,
+                     {"n": n, "k": k, "T": T, "alpha_values": ALPHA_VALUES, "ar1_modes": AR1_MODES,
+                      "lambda_": 1.0}, seeds, paired)
+    return summaries
 
 
 if __name__ == "__main__":
-    seeds = load_seeds()
-    print(f"Running E5 with {len(seeds)} seeds across α values {ALPHA_VALUES}")
-    results = run_e5(seeds)
-
-    out = Path("results/e5")
-    out.mkdir(parents=True, exist_ok=True)
-    with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2, allow_nan=False)
-    print("E5 complete. Summary saved to results/e5/summary.json")
+    args = build_parser(__doc__).parse_args()
+    seeds = load_seeds(n=args.seeds)
+    print(f"Running E5 with {len(seeds)} seeds across alpha {ALPHA_VALUES}, modes {AR1_MODES}")
+    run_e5(seeds, args.results_dir, **overrides_from_args(args))
+    print(f"E5 complete. Summary saved to {args.results_dir}/e5/summary.json")

@@ -3,8 +3,11 @@ k: 10               # number of GPUs per round (scarcity ratio = 0.2)
 T: 1000             # number of rounds
 v_max: 1.0          # upper bound on valuations and reports
 rho: 0.25           # fraction of strategic users
+n_focal: 5          # focal strategic users per seed for the unilateral gain M_i
 lambda_: 1.0        # history-penalty exponent for M4 (sweep in E2; 0 reduces M4 to M3)
+c: 2.0              # capped-exaggeration multiplier
 alpha: 0.0          # AR(1) persistence coefficient (sweep in E5; 0 = i.i.d.)
+ar1_mode: proposal  # "proposal" (v = a*v' + (1-a)*eps) | "copula" (marginal-preserving)
 n_seeds: 30         # master seeds per condition
 n_bootstrap: 10000  # resamples for paired 95% CI
 delta_multiplier: 2 # starvation threshold Δ = delta_multiplier * ceil(n/k)
