@@ -108,7 +108,7 @@ def run_e6(seeds: list[int]) -> list[dict]:
             all_results.append(summary)
             print(f"  E6 n={n:3d} {mname:<20s} "
                   f"Time/round: {summary['time_per_round_us']['mean']:6.1f} µs | "
-                  f"State RAM: {summary['peak_memory_kib']['mean']:6.1f} KiB", flush=True)
+                  f"Peak mem: {summary['peak_memory_kib']['mean']:6.1f} KiB", flush=True)
 
     return all_results
 

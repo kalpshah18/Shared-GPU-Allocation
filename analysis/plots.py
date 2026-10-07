@@ -205,9 +205,11 @@ def plot_e2(results: list[dict], save: bool = True) -> None:
 
 def plot_e2_truthful(results: list[dict], save: bool = True) -> None:
     """
-    H1 test: λ sweep under truthful reports.  Welfare ratio, 95th-percentile wait,
-    Q_max and starvation rate for M4 vs λ (symlog x-axis so λ = 0 is visible),
-    with M1–M3/M5 drawn as horizontal reference lines.
+    H1 test: λ sweep under truthful reports.  Welfare ratio, starvation rate,
+    95th-percentile wait and Q_max for M4 vs λ (λ values equally spaced, as in
+    the sweep grid), with M1–M3 drawn as horizontal reference lines.  The WR
+    panel is zoomed to M4's range; Random / Round-Robin (WR ≈ 0.56) are off-scale
+    there and noted in the legend.
     """
     metrics = [("WR", "Welfare Ratio (WR)"), ("SR_delta", "Starvation Rate (SR_Δ)"),
                ("pct95_wait", "95th-pct Consecutive Wait"), ("Q_max", "Max Consecutive Wait (Q_max)")]
@@ -215,32 +217,71 @@ def plot_e2_truthful(results: list[dict], save: bool = True) -> None:
     refs = [r for r in results if r["mechanism"] != "ScoreMechanism"]
     ref_style = {"RandomMechanism": ("#1f77b4", "-."), "RoundRobinMechanism": ("#ff7f0e", "--"),
                  "GreedyMechanism": ("#2ca02c", ":")}
+    pos = np.arange(len(score))
     fig, axes = plt.subplots(2, 2, figsize=(12, 8.5), constrained_layout=True)
     for ax, (key, ylabel) in zip(axes.flatten(), metrics):
-        xs = [r["lambda_"] for r in score]
         means = np.array([r[key]["mean"] for r in score])
         lo = np.array([r[key]["ci_lower"] for r in score])
         hi = np.array([r[key]["ci_upper"] for r in score])
-        ax.errorbar(xs, means, yerr=[np.maximum(0, means - lo), np.maximum(0, hi - means)],
+        ax.errorbar(pos, means, yerr=[np.maximum(0, means - lo), np.maximum(0, hi - means)],
                     color="#d62728", marker="D", capsize=3, linewidth=1.8, label="M4 Score")
         for r in refs:
-            if r["mechanism"] in ref_style:
-                c, ls = ref_style[r["mechanism"]]
-                ax.axhline(r[key]["mean"], color=c, linestyle=ls, linewidth=1.4,
-                           label=MECHANISM_LABELS[r["mechanism"]])
-        ax.set_xscale("symlog", linthresh=0.05)
-        ax.set_xticks([0, 0.05, 0.1, 0.25, 0.5, 1, 2, 5])
-        ax.get_xaxis().set_major_formatter(mticker.ScalarFormatter())
+            if r["mechanism"] not in ref_style:
+                continue
+            if key == "WR" and r["mechanism"] != "GreedyMechanism":
+                continue
+            c, ls = ref_style[r["mechanism"]]
+            ax.axhline(r[key]["mean"], color=c, linestyle=ls, linewidth=1.4,
+                       label=MECHANISM_LABELS[r["mechanism"]])
+        if key == "WR":
+            ax.set_ylim(0.975, 1.003)
+            ax.plot([], [], " ", label="M1/M2: WR ≈ 0.56 (off-scale)")
+        ax.set_xticks(pos)
+        ax.set_xticklabels([f"{r['lambda_']:g}" for r in score])
         ax.set_xlabel("History penalty λ")
         ax.set_ylabel(ylabel)
         ax.grid(True, linestyle="--", alpha=0.4)
-    axes[0, 0].legend(fontsize=9, frameon=True)
+    axes[0, 0].legend(fontsize=9, frameon=True, loc="lower left")
     fig.suptitle("E2 — λ sweep under truthful reports (H1: tail waiting vs. welfare loss)",
                  fontsize=13, fontweight="bold")
     if save:
         fig.savefig(FIGURES_DIR / "e2_truthful_sweep.pdf", bbox_inches="tight")
         fig.savefig(FIGURES_DIR / "e2_truthful_sweep.png", bbox_inches="tight")
         print("  Saved figures/e2_truthful_sweep.{pdf,png}")
+    plt.close(fig)
+
+
+def plot_e2_cap_sensitivity(results: list[dict], save: bool = True) -> None:
+    """
+    M4 unilateral manipulation gain vs λ for each exaggeration factor c.
+    Above the zero line a lone user profits from inflating; below it does not.
+    """
+    cs = sorted({r["c"] for r in results})
+    lams = sorted({r["lambda_"] for r in results})
+    colors = {1.25: "#1f77b4", 1.5: "#ff7f0e", 2.0: "#2ca02c"}
+    fig, ax = plt.subplots(figsize=(8, 5.5), constrained_layout=True)
+    for c in cs:
+        sub = sorted([r for r in results if r["c"] == c], key=lambda r: r["lambda_"])
+        xs = [lams.index(r["lambda_"]) for r in sub]
+        m = np.array([r["M_uni"]["mean"] for r in sub])
+        lo = np.array([r["M_uni"]["ci_lower"] for r in sub])
+        hi = np.array([r["M_uni"]["ci_upper"] for r in sub])
+        ax.errorbar(xs, m, yerr=[np.maximum(0, m - lo), np.maximum(0, hi - m)],
+                    marker="o", capsize=3, linewidth=1.8, color=colors.get(c),
+                    label=f"c = {c:g}")
+    ax.axhline(0, color="#444444", linewidth=1)
+    ax.set_yscale("symlog", linthresh=10)
+    ax.set_xticks(range(len(lams)))
+    ax.set_xticklabels([f"{l:g}" for l in lams])
+    ax.set_xlabel("History penalty λ")
+    ax.set_ylabel("Unilateral manipulation gain $M_{uni}$ (symlog)")
+    ax.set_title("E2b — Does inflating pay under M4? (ρ = 0.25)", fontsize=12, fontweight="bold")
+    ax.legend(title="Exaggeration (v̂ = min(c·v, 1))", frameon=True)
+    ax.grid(True, linestyle="--", alpha=0.4)
+    if save:
+        fig.savefig(FIGURES_DIR / "e2_cap_sensitivity.pdf", bbox_inches="tight")
+        fig.savefig(FIGURES_DIR / "e2_cap_sensitivity.png", bbox_inches="tight")
+        print("  Saved figures/e2_cap_sensitivity.{pdf,png}")
     plt.close(fig)
 
 
@@ -526,6 +567,11 @@ def run_all_plots() -> None:
     if e2t_path.exists():
         with open(e2t_path) as fh:
             plot_e2_truthful(json.load(fh))
+
+    e2b_path = results_dir / "e2" / "cap_sensitivity.json"
+    if e2b_path.exists():
+        with open(e2b_path) as fh:
+            plot_e2_cap_sensitivity(json.load(fh))
 
     # E3
     e3_path = results_dir / "e3" / "summary.json"
