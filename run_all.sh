@@ -54,7 +54,12 @@ echo ""
 echo "[E6] Computational scalability benchmark..."
 python experiments/e6_scalability.py
 
-# 7. Generate all figures
+# 7. E7 — Paired mechanism comparisons
+echo ""
+echo "[E7] Paired mechanism comparisons..."
+python experiments/e7_paired.py
+
+# 8. Generate all figures
 echo ""
 echo "[Figures] Generating all figures..."
 python analysis/plots.py --all

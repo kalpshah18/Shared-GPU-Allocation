@@ -203,9 +203,50 @@ def plot_e2(results: list[dict], save: bool = True) -> None:
     plt.close(fig)
 
 
+def plot_e2_truthful(results: list[dict], save: bool = True) -> None:
+    """
+    H1 test: λ sweep under truthful reports.  Welfare ratio, 95th-percentile wait,
+    Q_max and starvation rate for M4 vs λ (symlog x-axis so λ = 0 is visible),
+    with M1–M3/M5 drawn as horizontal reference lines.
+    """
+    metrics = [("WR", "Welfare Ratio (WR)"), ("SR_delta", "Starvation Rate (SR_Δ)"),
+               ("pct95_wait", "95th-pct Consecutive Wait"), ("Q_max", "Max Consecutive Wait (Q_max)")]
+    score = sorted([r for r in results if r["mechanism"] == "ScoreMechanism"], key=lambda r: r["lambda_"])
+    refs = [r for r in results if r["mechanism"] != "ScoreMechanism"]
+    ref_style = {"RandomMechanism": ("#1f77b4", "-."), "RoundRobinMechanism": ("#ff7f0e", "--"),
+                 "GreedyMechanism": ("#2ca02c", ":")}
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8.5), constrained_layout=True)
+    for ax, (key, ylabel) in zip(axes.flatten(), metrics):
+        xs = [r["lambda_"] for r in score]
+        means = np.array([r[key]["mean"] for r in score])
+        lo = np.array([r[key]["ci_lower"] for r in score])
+        hi = np.array([r[key]["ci_upper"] for r in score])
+        ax.errorbar(xs, means, yerr=[np.maximum(0, means - lo), np.maximum(0, hi - means)],
+                    color="#d62728", marker="D", capsize=3, linewidth=1.8, label="M4 Score")
+        for r in refs:
+            if r["mechanism"] in ref_style:
+                c, ls = ref_style[r["mechanism"]]
+                ax.axhline(r[key]["mean"], color=c, linestyle=ls, linewidth=1.4,
+                           label=MECHANISM_LABELS[r["mechanism"]])
+        ax.set_xscale("symlog", linthresh=0.05)
+        ax.set_xticks([0, 0.05, 0.1, 0.25, 0.5, 1, 2, 5])
+        ax.get_xaxis().set_major_formatter(mticker.ScalarFormatter())
+        ax.set_xlabel("History penalty λ")
+        ax.set_ylabel(ylabel)
+        ax.grid(True, linestyle="--", alpha=0.4)
+    axes[0, 0].legend(fontsize=9, frameon=True)
+    fig.suptitle("E2 — λ sweep under truthful reports (H1: tail waiting vs. welfare loss)",
+                 fontsize=13, fontweight="bold")
+    if save:
+        fig.savefig(FIGURES_DIR / "e2_truthful_sweep.pdf", bbox_inches="tight")
+        fig.savefig(FIGURES_DIR / "e2_truthful_sweep.png", bbox_inches="tight")
+        print("  Saved figures/e2_truthful_sweep.{pdf,png}")
+    plt.close(fig)
+
+
 # ── E3: Strategic Population Heatmap ─────────────────────────────────────────
 
-E3_POLICY_ORDER = ["truthful", "cap_2", "max_claim"]
+E3_POLICY_ORDER = ["truthful", "cap_1.25", "cap_1.5", "cap_2", "max_claim"]
 E3_TITLES = {
     "M_mean": "Coalition manipulation gain (strategic set vs. all truthful)",
     "M_uni" : "Unilateral manipulation gain (one user deviates, others fixed)",
@@ -445,8 +486,8 @@ def plot_e6(results: list[dict], save: bool = True) -> None:
     ax1.grid(True, linestyle="--", alpha=0.4, which="both")
 
     ax2.set_xlabel("Population Size n (k = 0.2·n)", fontweight="bold")
-    ax2.set_ylabel("State array size (KiB, analytic)", fontweight="bold")
-    ax2.set_title("Simulation State Size", fontweight="bold")
+    ax2.set_ylabel("Peak traced memory (KiB)", fontweight="bold")
+    ax2.set_title("Peak Memory (tracemalloc)", fontweight="bold")
     ax2.legend(fontsize=9, frameon=True)
     ax2.grid(True, linestyle="--", alpha=0.4, which="both")
 
@@ -480,6 +521,11 @@ def run_all_plots() -> None:
         plot_e2(data)
     else:
         print(f"[SKIP] {e2_path} not found.")
+
+    e2t_path = results_dir / "e2" / "truthful_sweep.json"
+    if e2t_path.exists():
+        with open(e2t_path) as fh:
+            plot_e2_truthful(json.load(fh))
 
     # E3
     e3_path = results_dir / "e3" / "summary.json"

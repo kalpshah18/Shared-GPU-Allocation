@@ -38,7 +38,7 @@ from sim.runner import run_single
 from sim import metrics as M
 from analysis.bootstrap import summarise_seeds
 
-METRIC_KEYS = ["WR", "J_A", "J_B", "SR_delta", "PoF"]
+METRIC_KEYS = ["WR", "J_A", "J_B", "SR_delta", "PoF", "NSW"]
 MECH_NAMES  = [
     "RandomMechanism", "RoundRobinMechanism",
     "GreedyMechanism", "ScoreMechanism", "VickreyMechanism",

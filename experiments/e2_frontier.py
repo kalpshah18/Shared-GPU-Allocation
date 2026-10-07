@@ -13,7 +13,9 @@ For each (mechanism, λ) setting:
     switches to truthful while the others keep inflating)
   - Identify non-dominated settings on the WR vs J_A frontier coloured by M
 
-Output: results/e2/summary.json
+Output: results/e2/summary.json         (strategic sweep, ρ = 0.25, cap_2)
+        results/e2/truthful_sweep.json  (same λ grid, truthful reports)
+        results/e2/pareto.json          (non-dominated settings over WR, J_A, SR_Δ, M_uni)
 """
 
 from __future__ import annotations
@@ -35,14 +37,15 @@ from sim.mechanisms import (
     GreedyMechanism, ScoreMechanism, VickreyMechanism,
 )
 from sim.policies import capped_exaggeration
-from sim.runner import run_paired, run_unilateral
+from sim.runner import run_paired, run_single, run_unilateral
 from sim import metrics as M
 from analysis.bootstrap import summarise_seeds
 from analysis.pareto import filter_e2_results
 
 LAMBDA_VALUES = [0.0, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
 BASE_CFG_KWARGS = dict(n=50, k=10, T=1000, rho=0.25)
-METRIC_KEYS = ["WR", "J_A", "SR_delta", "M_mean", "M_uni"]
+METRIC_KEYS = ["WR", "J_A", "SR_delta", "Q_max", "pct95_wait", "M_mean", "M_uni"]
+TRUTHFUL_KEYS = ["WR", "J_A", "SR_delta", "Q_max", "pct95_wait", "PoF", "NSW"]
 
 
 def load_seeds(path="seeds/master_seeds.json"):
@@ -104,22 +107,65 @@ def run_e2(seeds: list[int]) -> list[dict]:
         print(f"  E2 M4 λ={lam} WR={summary['WR']['mean']:.3f} J_A={summary['J_A']['mean']:.3f} "
               f"M={summary['M_mean']['mean']:.2f} M_uni={summary['M_uni']['mean']:.2f}")
 
-    # Identify Pareto front
-    pareto = filter_e2_results([
-        {k: r[k]["mean"] for k in METRIC_KEYS} | {"mechanism": r["mechanism"], "lambda_": r["lambda_"]}
-        for r in results
-    ])
-    print(f"\n  E2: {len(pareto)} non-dominated settings on the frontier.")
     return results
+
+
+def run_e2_truthful(seeds: list[int]) -> list[dict]:
+    """λ sweep under truthful reports (ρ = 0): the clean test of H1 (tail waiting
+    and starvation vs. welfare loss) with no strategic behaviour."""
+    results = []
+    static_mechs = {
+        "RandomMechanism"    : lambda cfg, pkg: RandomMechanism(cfg),
+        "RoundRobinMechanism": lambda cfg, pkg: RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
+        "GreedyMechanism"    : lambda cfg, pkg: GreedyMechanism(cfg),
+        "VickreyMechanism"   : lambda cfg, pkg: VickreyMechanism(cfg),
+    }
+    settings = [(m, None, f, Config(n=50, k=10, T=1000, rho=0.0)) for m, f in static_mechs.items()]
+    settings += [("ScoreMechanism", lam, lambda cfg, pkg: ScoreMechanism(cfg),
+                  Config(n=50, k=10, T=1000, rho=0.0, lambda_=lam)) for lam in LAMBDA_VALUES]
+
+    for mname, lam, mfactory, cfg in settings:
+        per_seed = []
+        for seed in seeds:
+            pkg = SeedPackage.generate(seed, cfg)
+            h = run_single(mfactory(cfg, pkg), pkg, cfg)
+            per_seed.append(M.compute_all(h, pkg.valuations, cfg))
+        summary = summarise_seeds(per_seed, TRUTHFUL_KEYS)
+        summary.update({"mechanism": mname, "lambda_": lam})
+        results.append(summary)
+        print(f"  E2-truthful {mname} λ={lam} WR={summary['WR']['mean']:.3f} "
+              f"Q_max={summary['Q_max']['mean']:.1f} SR={summary['SR_delta']['mean']:.4f}", flush=True)
+    return results
+
+
+def pareto_table(results: list[dict]) -> list[dict]:
+    """Non-dominated settings over (WR, J_A, SR_Δ, M_uni) as flat rows."""
+    front = filter_e2_results(results, "M_uni")
+    rows = []
+    for r in front:
+        rows.append({
+            "mechanism": r["mechanism"], "lambda_": r["lambda_"],
+            **{k: r[k]["mean"] for k in ("WR", "J_A", "SR_delta", "M_uni")},
+        })
+    rows.sort(key=lambda r: -r["WR"])
+    return rows
 
 
 if __name__ == "__main__":
     seeds = load_seeds()
     print(f"Running E2 with {len(seeds)} seeds, λ sweep {LAMBDA_VALUES}")
     results = run_e2(seeds)
+    truthful = run_e2_truthful(seeds)
+    front = pareto_table(results)
+    print(f"\n  E2: {len(front)} non-dominated settings on the (WR, J_A, SR_Δ, M_uni) frontier:")
+    for r in front:
+        lam = "-" if r["lambda_"] is None else f"{r['lambda_']:g}"
+        print(f"    {r['mechanism']:<20s} λ={lam:<5s} WR={r['WR']:.3f} J_A={r['J_A']:.3f} "
+              f"SR={r['SR_delta']:.3f} M_uni={r['M_uni']:.1f}")
 
     out = Path("results/e2")
     out.mkdir(parents=True, exist_ok=True)
-    with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2, allow_nan=False)
-    print("E2 complete. Summary saved to results/e2/summary.json")
+    for name, obj in [("summary", results), ("truthful_sweep", truthful), ("pareto", front)]:
+        with open(out / f"{name}.json", "w") as fh:
+            json.dump(obj, fh, indent=2, allow_nan=False)
+    print("E2 complete. Saved summary.json, truthful_sweep.json, pareto.json in results/e2/")

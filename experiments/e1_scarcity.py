@@ -37,7 +37,7 @@ from analysis.bootstrap import summarise_seeds
 KN_RATIOS  = [0.1, 0.2, 0.4, 0.6, 0.8]
 BASE_N     = 50
 BASE_T     = 1000
-METRIC_KEYS = ["WR", "J_A", "Q_max", "SR_delta", "pct95_wait", "PoF"]
+METRIC_KEYS = ["WR", "J_A", "Q_max", "SR_delta", "pct95_wait", "PoF", "NSW"]
 
 
 def load_seeds(seeds_file: str = "seeds/master_seeds.json") -> list[int]:

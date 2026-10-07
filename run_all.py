@@ -62,7 +62,10 @@ def main() -> None:
     # 7. E6 Scalability
     run_step("E6 — Scalability Benchmark (Stretch)", ["experiments/e6_scalability.py"])
 
-    # 8. Figures
+    # 8. E7 Paired comparisons
+    run_step("E7 — Paired Mechanism Comparisons", ["experiments/e7_paired.py"])
+
+    # 9. Figures
     run_step("Figures — Regenerating All Figures", ["analysis/plots.py", "--all"])
 
     print("\n" + "=" * 60)

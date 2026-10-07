@@ -67,25 +67,37 @@ def pareto_front(
     return np.where(~is_dominated)[0]
 
 
-def filter_e2_results(rows: list[dict]) -> list[dict]:
+def _mean(v) -> float:
+    return v["mean"] if isinstance(v, dict) and "mean" in v else float(v)
+
+
+def filter_results(rows: list[dict], keys: list[str], maximize: list[bool]) -> list[dict]:
+    """Return the non-dominated rows over the named objectives.
+
+    Each row maps key -> {"mean": ...} (a summary entry) or a plain number.
     """
-    Convenience wrapper for experiment E2.
+    points = np.array([[_mean(r[k]) for k in keys] for r in rows], dtype=np.float64)
+    return [rows[i] for i in pareto_front(points, maximize)]
 
-    Each row must contain keys: 'WR', 'J_A', 'SR_delta', 'M_mean'.
-    Returns only the non-dominated rows.
 
-    Objective directions:
-        WR       → maximize
-        J_A      → maximize
-        SR_delta → minimize
-        M_mean   → minimize
+E2_OBJECTIVES = {
+    "WR"      : True,    # maximize
+    "J_A"     : True,    # maximize
+    "SR_delta": False,   # minimize
+    "M_uni"   : False,   # minimize (individual incentive to inflate)
+}
+
+
+def filter_e2_results(rows: list[dict], manipulation_key: str = "M_uni") -> list[dict]:
     """
-    keys     = ["WR", "J_A", "SR_delta", "M_mean"]
-    maximize = [True, True, False, False]
+    Convenience wrapper for experiment E2: non-dominated rows over
+    (WR ↑, J_A ↑, SR_Δ ↓, manipulation gain ↓).
 
-    points = np.array([
-        [r[k]["mean"] if isinstance(r[k], dict) and "mean" in r[k] else float(r[k]) for k in keys]
-        for r in rows
-    ], dtype=np.float64)
-    front  = pareto_front(points, maximize)
-    return [rows[i] for i in front]
+    `manipulation_key` is "M_uni" (unilateral gain, default) or "M_mean"
+    (coalition gain).  J_B equals J_A in the homogeneous E2 population, so it
+    is not a separate objective here.
+    """
+    objectives = dict(E2_OBJECTIVES)
+    del objectives["M_uni"]
+    objectives[manipulation_key] = False
+    return filter_results(rows, list(objectives), list(objectives.values()))

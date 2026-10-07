@@ -8,7 +8,8 @@ k/n = 0.2 (k = round(0.2 * n)), T = 1000 rounds.
 
 Measures:
   - Wall-clock runtime per round (microseconds)
-  - Peak memory allocated during simulation (KiB)
+  - Peak traced memory (tracemalloc) while generating the seed package and
+    simulating T rounds (KiB), measured in a separate run from the timing
 for mechanisms M1–M5.
 
 Output: results/e6/summary.json
@@ -78,25 +79,21 @@ def run_e6(seeds: list[int]) -> list[dict]:
             per_seed = []
             for seed in seeds:
                 pkg = SeedPackage.generate(seed, cfg)
-                mech = make_mech(mname, cfg, pkg)
 
+                # Timing run (tracemalloc off: it slows allocation-heavy code).
                 t0 = time.perf_counter()
-                history = run_single(mech, pkg, cfg, policy_fn=None)
+                run_single(make_mech(mname, cfg, pkg), pkg, cfg, policy_fn=None)
                 elapsed_s = time.perf_counter() - t0
-
                 time_per_round_us = (elapsed_s / cfg.T) * 1e6
-                # Analytic size of the simulation state arrays (valuations, tie
-                # seeds, history vectors, per-round allocation + payment records).
-                # Computed from array sizes, not measured with a profiler, so it is
-                # identical across mechanisms by construction.
-                state_bytes = (
-                    pkg.valuations.nbytes
-                    + pkg.tie_seeds.nbytes
-                    + history.cumulative.nbytes
-                    + history.consecutive_wait.nbytes
-                    + (cfg.T * cfg.n * 16)  # allocations (int64) + payments (float64)
-                )
-                peak_memory_kib = state_bytes / 1024.0
+
+                # Memory run: peak traced Python/NumPy allocation while generating
+                # the seed package and simulating all T rounds (state + history).
+                tracemalloc.start()
+                pkg_m = SeedPackage.generate(seed, cfg)
+                run_single(make_mech(mname, cfg, pkg_m), pkg_m, cfg, policy_fn=None)
+                _, peak_bytes = tracemalloc.get_traced_memory()
+                tracemalloc.stop()
+                peak_memory_kib = peak_bytes / 1024.0
 
                 per_seed.append({
                     "time_per_round_us": time_per_round_us,
