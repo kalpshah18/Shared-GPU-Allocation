@@ -50,6 +50,8 @@ def main() -> None:
     # 3. E2 Frontier
     run_step("E2 — Fairness-Strategy Frontier", ["experiments/e2_frontier.py"])
 
+    run_step("E2b — Exaggeration Sensitivity", ["experiments/e2b_cap_sensitivity.py"])
+
     # 4. E3 Strategic
     run_step("E3 — Strategic Factorial Design", ["experiments/e3_strategic.py"])
 

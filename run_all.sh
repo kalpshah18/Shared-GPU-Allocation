@@ -34,6 +34,11 @@ echo ""
 echo "[E2] Fairness-frontier sweep (lambda x mechanisms)..."
 python experiments/e2_frontier.py
 
+# 2b. E2b — Exaggeration-strength sensitivity
+echo ""
+echo "[E2b] Exaggeration-strength sensitivity..."
+python experiments/e2b_cap_sensitivity.py
+
 # 3. E3 — Strategic Population (factorial)
 echo ""
 echo "[E3] Strategic population factorial design..."
