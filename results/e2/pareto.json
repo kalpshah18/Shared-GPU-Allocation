@@ -1,0 +1,42 @@
+[
+  {
+    "mechanism": "ScoreMechanism",
+    "lambda_": 1.0,
+    "WR": 0.9597524009861748,
+    "J_A": 0.9905936216434199,
+    "SR_delta": 0.069522,
+    "M_uni": 2.479804308537342
+  },
+  {
+    "mechanism": "ScoreMechanism",
+    "lambda_": 2.0,
+    "WR": 0.9572470196077499,
+    "J_A": 0.9974681287552652,
+    "SR_delta": 0.05985,
+    "M_uni": -12.974754478537834
+  },
+  {
+    "mechanism": "ScoreMechanism",
+    "lambda_": 5.0,
+    "WR": 0.9462414794124404,
+    "J_A": 0.9994110833006087,
+    "SR_delta": 0.047235333333333324,
+    "M_uni": -20.882266422055704
+  },
+  {
+    "mechanism": "VickreyMechanism",
+    "lambda_": null,
+    "WR": 0.8931322570566157,
+    "J_A": 0.5064135171071193,
+    "SR_delta": 0.2697053333333333,
+    "M_uni": -100.86381260502665
+  },
+  {
+    "mechanism": "RoundRobinMechanism",
+    "lambda_": null,
+    "WR": 0.5602731570701805,
+    "J_A": 1.0,
+    "SR_delta": 0.0,
+    "M_uni": 0.0
+  }
+]
