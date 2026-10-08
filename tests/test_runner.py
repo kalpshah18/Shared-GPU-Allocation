@@ -240,3 +240,58 @@ def test_run_rollout_leaves_other_users_on_the_opponent_policy():
     run_rollout(Spy(cfg), pkg, cfg, 0, make_capped(2.0), np.random.default_rng(0), n_rollouts=10)
     for t, rep in enumerate(seen):
         np.testing.assert_allclose(rep[1:], np.minimum(2 * pkg.valuations[1:, t], 1.0))
+
+
+# ── history-dependent (timed) policies through the runners ───────────────────
+
+def test_runner_passes_strategic_indices_to_history_dependent_policies():
+    from sim.policies import make_timed
+    cfg = Config(n=8, k=2, T=3, rho=0.5)
+    pkg = SeedPackage.generate(2, cfg)
+    seen = []
+    pol = make_timed(2.0)
+    inner = pol
+
+    def spy(v, h, c, users=None):
+        seen.append(None if users is None else np.asarray(users).copy())
+        return inner(v, h, c, users=users)
+
+    spy.needs_users = True
+    run_mixed(GreedyMechanism(cfg), pkg, cfg, spy)
+    assert len(seen) == cfg.T
+    for u in seen:
+        np.testing.assert_array_equal(u, pkg.strategic_set)
+
+
+def test_timed_policy_changes_outcomes_only_for_users_below_the_mean():
+    from sim.policies import make_timed
+    cfg = Config(n=10, k=3, T=40, rho=0.5, lambda_=1.0)
+    pkg = SeedPackage.generate(3, cfg)
+    always = run_mixed(ScoreMechanism(cfg), pkg, cfg, make_capped(2.0))
+    timed = run_mixed(ScoreMechanism(cfg), pkg, cfg, make_timed(2.0))
+    assert not np.array_equal(np.stack(always.allocations), np.stack(timed.allocations))
+    # a timed run with threshold above every history is identical to always inflating
+    all_fav = make_timed(2.0, 1.0)
+    h = run_mixed(ScoreMechanism(cfg), pkg, cfg, all_fav)
+    np.testing.assert_array_equal(np.stack(h.allocations), np.stack(always.allocations))
+
+
+def test_unilateral_gains_support_timed_policies_and_are_deterministic():
+    from sim.policies import make_timed
+    cfg = Config(n=12, k=3, T=40, rho=0.5, n_focal=3)
+    pkg = SeedPackage.generate(4, cfg)
+    pol = make_timed(2.0, 0.25)
+    f1, g1 = unilateral_gains(ScoreMechanism(cfg), pkg, cfg, pol)
+    f2, g2 = unilateral_gains(ScoreMechanism(cfg), pkg, cfg, pol)
+    np.testing.assert_array_equal(f1, f2)
+    np.testing.assert_allclose(g1, g2)
+    assert np.all(np.isfinite(g1))
+
+
+def test_rollout_runner_accepts_a_history_dependent_opponent_policy():
+    from sim.policies import make_timed
+    cfg = Config(n=6, k=2, T=6, rho=0.0, lambda_=1.0)
+    pkg = SeedPackage.generate(5, cfg)
+    h, reports = run_rollout(ScoreMechanism(cfg), pkg, cfg, 0, make_timed(2.0),
+                             np.random.default_rng(0), n_rollouts=10, H=3)
+    assert h.round == 6 and np.all((reports >= 0) & (reports <= cfg.v_max))

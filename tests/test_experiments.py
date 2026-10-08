@@ -14,8 +14,8 @@ import numpy as np
 import pytest
 
 from experiments import (
-    e0_validation, e1_scarcity, e2_frontier, e3_strategic, e3b_rollout,
-    e4_heterogeneous, e5_persistence, e6_scalability, e7_sensitivity,
+    e0_validation, e1_scarcity, e2_frontier, e3_strategic, e3b_rollout, e3c_rollout_horizon,
+    e4_heterogeneous, e5_persistence, e6_scalability, e7_sensitivity, e8_timing,
 )
 from experiments.common import (
     STRATEGIC_KEYS, TRUTHFUL_KEYS, load_seeds, scaled_k, strategic_row, truthful_row,
@@ -401,17 +401,104 @@ def test_e6_measures_time_and_heap(tmp_path):
 
 # ── E7 ────────────────────────────────────────────────────────────────────────
 
-def test_e7_sensitivity_to_c(tmp_path):
+def test_e7_lambda_by_c_grid(tmp_path):
     rows = e7_sensitivity.run_e7(SEEDS, str(tmp_path), **KW)
-    assert len(rows) == 4 * 3
+    assert len(rows) == 6 * 3
     assert_strict_json(tmp_path / "e7" / "summary.json")
+    labels = ["M3", "M4 lambda=0.5", "M4 lambda=1", "M4 lambda=2", "M4 lambda=5", "M5"]
+    assert [s[2] for s in e7_sensitivity.SETTINGS] == labels
     # more aggressive exaggeration costs welfare (PoS grows with c) under every mechanism
-    for lab in ("M3", "M4 lambda=1", "M4 lambda=2", "M5"):
+    for lab in labels:
         pos = [mean(by(rows, label=lab, c=c), "PoS") for c in (1.25, 1.5, 2.0)]
         assert pos == sorted(pos)
-    g = [mean(by(rows, label="M3", c=c), "M_uni") for c in (1.25, 1.5, 2.0)]
-    assert all(x > 0 for x in g)
+    # the individual gain falls monotonically with the penalty lambda, for every c
+    for c in (1.25, 1.5, 2.0):
+        gain = [mean(by(rows, label=f"M4 lambda={l}", c=c), "M_uni") for l in (0.5, 1, 2, 5)]
+        assert gain == sorted(gain, reverse=True)
+    assert all(mean(by(rows, label="M3", c=c), "M_uni") > 0 for c in (1.25, 1.5, 2.0))
     assert all(mean(by(rows, label="M5", c=c), "M_uni") < 0 for c in (1.25, 1.5, 2.0))
+
+
+# ── E8: timing attack ─────────────────────────────────────────────────────────
+
+@pytest.fixture(scope="module")
+def e8(tmp_path_factory):
+    d = tmp_path_factory.mktemp("e8")
+    return e8_timing.run_e8(SEEDS, str(d), **KW), d
+
+
+def test_e8_structure_and_files(e8):
+    rows, d = e8
+    assert len(rows) == 6 * 2 * 4                                   # settings x c x variants
+    assert {r["variant"] for r in rows} == {"always", "timed", "timed_q25", "timed_q75"}
+    for f in ("summary.json", "paired.json", "config.json"):
+        assert_strict_json(d / "e8" / f)
+    paired = read(d / "e8" / "paired.json")
+    assert len(paired) == 6 * 2 * 3 and all(p["reference"] == "always" for p in paired)
+    assert len(list((d / "e8" / "raw").glob("*.json"))) == len(rows)
+
+
+def test_e8_timed_policy_inflates_less_than_always_inflating_under_greedy(e8):
+    """Greedy ignores history, so timing only withholds inflation: the gain can only shrink."""
+    rows, _ = e8
+    for c in (1.25, 2.0):
+        always = mean(by(rows, label="M3", c=c, variant="always"), "M_uni")
+        for v in ("timed", "timed_q25", "timed_q75"):
+            assert 0 < mean(by(rows, label="M3", c=c, variant=v), "M_uni") < always
+
+
+def test_e8_vickrey_punishes_every_variant(e8):
+    rows, _ = e8
+    for r in (r for r in rows if r["label"] == "M5"):
+        assert mean(r, "M_uni") <= 1e-9
+
+
+def test_e8_timing_premium_is_a_paired_difference(e8):
+    rows, d = e8
+    paired = read(d / "e8" / "paired.json")
+    p = next(p for p in paired if p["label"] == "M3" and p["c"] == 2.0 and p["variant"] == "timed")
+    expected = (mean(by(rows, label="M3", c=2.0, variant="timed"), "M_uni")
+                - mean(by(rows, label="M3", c=2.0, variant="always"), "M_uni"))
+    assert p["metrics"]["M_uni"]["mean_diff"] == pytest.approx(expected)
+    assert p["metrics"]["M_uni"]["mean_diff"] < 0
+
+
+# ── E3c: rollout horizon ──────────────────────────────────────────────────────
+
+@pytest.fixture(scope="module")
+def e3c(tmp_path_factory):
+    d = tmp_path_factory.mktemp("e3c")
+    rows = e3c_rollout_horizon.run_e3c(SEEDS[:2], str(d), n=10, T=40, n_bootstrap=100,
+                                       verbose=False, n_rollouts=20, horizons=[2, 6])
+    return rows, d
+
+
+def test_e3c_structure(e3c):
+    rows, d = e3c
+    assert len(rows) == 2 * 2
+    assert {(r["lambda_"], r["H"]) for r in rows} == {(1.0, 2), (1.0, 6), (2.0, 2), (2.0, 6)}
+    for r in rows:
+        for key in e3c_rollout_horizon.METRIC_KEYS:
+            assert r[key]["mean"] is not None
+        assert 0.0 <= mean(r, "frac_max_report") <= 1.0
+    for f in ("summary.json", "config.json"):
+        assert_strict_json(d / "e3c" / f)
+    cfg = read(d / "e3c" / "config.json")
+    assert cfg["horizons"] == [2, 6] and cfg["opponents"] == "truthful"
+
+
+def test_e3c_capped_reference_is_independent_of_the_horizon(e3c):
+    rows, _ = e3c
+    for lam in (1.0, 2.0):
+        a, b = by(rows, lambda_=lam, H=2), by(rows, lambda_=lam, H=6)
+        assert mean(a, "M_cap2") == mean(b, "M_cap2") and mean(a, "M_cap1.25") == mean(b, "M_cap1.25")
+
+
+def test_e3c_is_deterministic():
+    kw = dict(n=10, T=25, n_bootstrap=50, verbose=False, n_rollouts=15, horizons=[3])
+    a = e3c_rollout_horizon.run_e3c(SEEDS[:1], None, **kw)
+    b = e3c_rollout_horizon.run_e3c(SEEDS[:1], None, **kw)
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────

@@ -156,8 +156,34 @@ def section_e7(rows) -> str:
             + _table(["Mechanism", "c", "WR", "PoS", "M_uni [95% CI]", "frac M_i>0"], body))
 
 
-SECTIONS = [("e1", section_e1), ("e2", section_e2), ("e3", section_e3), ("e3b", section_e3b),
-            ("e4", section_e4), ("e5", section_e5), ("e6", section_e6), ("e7", section_e7)]
+def section_e3c(rows) -> str:
+    body = [[r["label"], str(r["H"]), _f(r, "M_rollout", 2, ci=True, signed=True),
+             _f(r, "M_cap2", 2, signed=True), _f(r, "M_cap1.25", 2, signed=True),
+             _f(r, "frac_max_report", 2), _f(r, "mean_inflation", 3, signed=True)] for r in rows]
+    return ("## E3c — Rollout attack vs horizon (n=10, opponents truthful)\n\n"
+            + _table(["Mechanism", "H", "M_rollout [95% CI]", "M_cap2", "M_cap1.25",
+                      "frac rounds at v_max", "mean (report - v)"], body))
+
+
+def section_e8(rows) -> str:
+    out = ["## E8 — Timing attack (ρ=0.25); premium = M_uni(timed) - M_uni(always)\n"]
+    for c in sorted({r["c"] for r in rows}):
+        out.append(f"\n**c = {c:g}**\n")
+        body = []
+        for lab in dict.fromkeys(r["label"] for r in rows):
+            base = _pick(rows, label=lab, c=c, variant="always")
+            for v in ("always", "timed", "timed_q25", "timed_q75"):
+                r = _pick(rows, label=lab, c=c, variant=v)
+                if r and base:
+                    prem = "—" if v == "always" else f"{r['M_uni']['mean'] - base['M_uni']['mean']:+.2f}"
+                    body.append([lab, v, _f(r, "M_uni", 2, ci=True, signed=True), prem,
+                                 _f(r, "frac_pos_uni", 2), _f(r, "PoS", 3)])
+        out.append(_table(["Mechanism", "Policy", "M_uni [95% CI]", "Premium", "frac M_i>0", "PoS"], body))
+    return "\n".join(out)
+
+
+SECTIONS = [("e1", section_e1), ("e2", section_e2), ("e3", section_e3), ("e3b", section_e3b), ("e3c", section_e3c),
+            ("e4", section_e4), ("e5", section_e5), ("e6", section_e6), ("e7", section_e7), ("e8", section_e8)]
 
 
 def build_report(results_dir: str = "results") -> str:

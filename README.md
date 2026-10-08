@@ -11,6 +11,23 @@
 
 ---
 
+## Read this first: what the results do and do not show
+
+1. **"λ≈2 deters manipulation" is true only for one lie.** Against capped exaggeration with c=2, individual inflation stops
+   paying at λ=2 (E2). The deterrence threshold moves *up* as the lie gets milder: c=1.5 needs λ between 2 and 5, and
+   at c=1.25 inflation is still (slightly) profitable at λ=5 (E7). Mild lies are the dangerous ones for Score.
+2. **A sufficiently far-sighted attacker beats Score even at λ=2.** The proposal's 5-round rollout attack finds nothing
+   on Score (E3b), but that is a horizon artefact: with a 40–80-round horizon the same search earns a significant gain
+   at λ=1 and λ=2 (E3c), including where capped exaggeration loses. The null result in E3b is *not* evidence of robustness.
+3. **Simple "timing" does not pay** (E8): inflating only when one's own history is favourable earns less than inflating
+   always wherever inflation is profitable. The profitable attack in (2) is selective in a way these rules are not.
+4. **The effects at λ≥1 are small in absolute terms** (a few utility units per user over 1000 rounds, against +306 for
+   Greedy). They are statistically clear, but whether they matter in practice is a modelling question, not a result.
+5. **E5:** the proposal's AR(1) recursion also narrows the value spread; its welfare trend for report-blind rules is that
+   artefact, not persistence (a marginal-preserving control is included).
+
+---
+
 ## Repository structure
 
 ```
@@ -25,14 +42,15 @@ experiments/
   e0_validation.py           Exhaustive checks on small discrete instances (67k instances)
   e1_scarcity.py             k/n sweep                       e5_persistence.py   AR(1) persistence (+ sensitivity)
   e2_frontier.py             λ sweep, Pareto frontier        e6_scalability.py   time per round, measured heap
-  e3_strategic.py            ρ × policy factorial            e7_sensitivity.py   exaggeration factor c
-  e3b_rollout.py             finite-horizon rollout attack   e4_heterogeneous.py equal service vs equal benefit
+  e3_strategic.py            ρ × policy factorial            e7_sensitivity.py   λ × exaggeration-factor grid
+  e3b_rollout.py             rollout attack (H=5)            e4_heterogeneous.py equal service vs equal benefit
+  e3c_rollout_horizon.py     rollout attack vs horizon       e8_timing.py        timing attack (hypothesis H2)
   common.py                  Seeds, CLI, raw/summary persistence, strategic-cell measurement
 analysis/
   bootstrap.py               95% bootstrap CIs (10,000 resamples) and paired-difference CIs
   pareto.py                  Multi-objective dominance filter
   plots.py                   All figures (PDF + PNG)             report.py   results/RESULTS.md tables
-tests/                       329 tests (see "Tests")
+tests/                       350 tests (see "Tests")
 config/base.yaml             Base configuration (n=50, k=10, T=1000, ρ=0.25, …)
 seeds/                       generate_seeds.py + the 30 locked master seeds
 results/  figures/           Generated outputs  (results/RESULTS.md = every table)
@@ -52,7 +70,7 @@ pip install -r requirements.txt   # exact versions used for the reported results
 ## Quick start
 
 ```bash
-python -m pytest                  # 329 tests (~2.5 min; add -m "not slow" to skip the end-to-end pipeline test)
+python -m pytest                  # 350 tests (~2.5 min; add -m "not slow" to skip the end-to-end pipeline test)
 python experiments/e0_validation.py
 python run_all.py                 # everything, from the locked seeds → results/ and figures/  (tens of minutes)
 python run_all.py --quick         # 2-seed smoke run on tiny instances, for development only
@@ -63,7 +81,7 @@ Every experiment script accepts `--seeds N`, `--results-dir DIR`, `--n`, `--T`, 
 
 ## Tests
 
-`python -m pytest` runs 329 tests (`-m "not slow"` skips the one end-to-end pipeline test). They are organised by component:
+`python -m pytest` runs 350 tests (`-m "not slow"` skips the one end-to-end pipeline test). They are organised by component:
 
 | File | What it pins down |
 |---|---|
@@ -71,7 +89,7 @@ Every experiment script accepts `--seeds N`, `--results-dir DIR`, `--n`, `--T`, 
 | `test_environment.py` | determinism, paired randomness, nested strategic sets, bounds, marginal means, AR(1) autocorrelation / variance (both variants), History bookkeeping, strict JSON |
 | `test_mechanisms.py` | capacity/payment invariants for every mechanism and size, report-invariance, uniform tie-breaking, scale-free ties (regression for the jitter bug), M2 wait bound, M3 oracle, M4 formula and monotonicity, M5 payments and **exhaustive DSIC**, negative controls, batch ≡ single allocation, determinism |
 | `test_metrics.py`, `test_metrics_extra.py` | hand-computed 2-user cases, pre-round waiting semantics, Jain-index properties, J_B, NSW, payments excluded from welfare, coalition / unilateral / PoS / PoF |
-| `test_policies.py` | elementwise bounded policies, registry, rollout attack (inflates under Greedy, exactly truthful under Vickrey, deterministic, side-effect free, scales with `v_max`) |
+| `test_policies.py` | elementwise bounded policies, timed policy (thresholds, per-user history, never above always-inflating), registry, rollout attack (inflates under Greedy, exactly truthful under Vickrey, deterministic, side-effect free, scales with `v_max`) |
 | `test_runner.py` | mixed / paired / unilateral runners vs manual counterfactuals, stateful-mechanism reset, report validation, rollout runner |
 | `test_analysis.py` | bootstrap CI coverage, pairing benefit, NaN handling, paired differences, Pareto filter vs brute force |
 | `test_experiments.py` | every experiment end to end on tiny instances: schema, strict JSON, raw files, determinism, and the qualitative findings (Greedy rewarded / Vickrey punished, E5 variance confound, E7 monotonicity, …); E0 **fault injection** (a broken Vickrey / capacity bug must be caught) |
@@ -120,10 +138,12 @@ between cells that share seeds use the **paired** bootstrap (`results/*/paired.j
 | E2 | Fairness / strategy frontier | `λ ∈ {0,0.05,0.1,0.25,0.5,1,2,5}` + M1,M2,M3,M5; ρ=0.25, cap_2; Pareto flags on (WR↑, J_A↑, SR_Δ↓, M_uni↓) |
 | E3 | Population × attack | `ρ ∈ {0,0.1,0.25,0.5,1}` × {truthful, cap_2, max_claim} × 5 mechanisms |
 | E3b | Rollout attack (diagnostic) | n=10, T=500, H=5, 100 rollouts, grid {0,0.1,…,1}; M3, M4(λ=1,2), M5; opponents truthful or cap_2 |
+| E3c | Rollout horizon | M4 (λ=1,2), opponents truthful, `H ∈ {5,10,20,40,80}`, n=10, T=300, vs capped c=2 and c=1.25 |
 | E4 | Heterogeneous users | uniform vs `Beta(2,5)` / `Beta(5,2)` halves; J_A vs J_B |
 | E5 | Persistence (stretch) | `α ∈ {0,0.5,0.9}`; proposal AR(1) **and** a marginal-preserving copula variant |
 | E6 | Scalability (stretch) | `n ∈ {10,…,500}`, `k/n=0.2`; µs per round, **measured** (`tracemalloc`) peak heap |
-| E7 | Sensitivity | `c ∈ {1.25,1.5,2}` for M3, M4(λ=1,2), M5 |
+| E7 | λ × c sensitivity | `c ∈ {1.25,1.5,2}` × M4 `λ ∈ {0.5,1,2,5}`, plus M3, M5 |
+| E8 | Timing attack (H2) | M4 `λ ∈ {0.5,1,2,5}`, `c ∈ {1.25,2}`; inflate only when own history is favourable (`a_i ≤` mean / 25th / 75th percentile) vs always; paired premium |
 
 Outputs per experiment `eX`: `summary.json` (means + CIs, one row per cell), `paired.json`, `config.json`
 (configuration + master seeds), and `raw/<cell>.json` (every per-seed row).
@@ -160,6 +180,7 @@ All results: n=50, k=10, T=1000, 30 master seeds, M4 at λ=1 unless stated (E3b:
 - **λ=1 does not make inflation unprofitable for an individual:** the coalition gain is slightly negative (−3.2) only
   because the 12 inflaters crowd each other out; one user inflating alone still gains +3.5 (82% of focal users
   gain). The unilateral gain turns negative between λ=1 and λ=2.
+- **Caveat:** this threshold is specific to c=2 — see E7 for milder lies and E3c for a far-sighted attacker.
 - Pareto-non-dominated settings: M2, M5, and M4 at λ∈{1, 2, 5} (M4 λ=1 is not dominated because it has the best WR
   among settings with J_A>0.99).
 
@@ -183,10 +204,28 @@ All results: n=50, k=10, T=1000, 30 master seeds, M4 at λ=1 unless stated (E3b:
 | M4 λ=2 | −23.3 / −6.2 | −24.2 / −6.8 | 86–92% |
 | M5 Vickrey | −0.2 / −41.6 | −0.0 / −24.0 | 0–6% |
 
-The finite-horizon search finds a *stronger* attack than capped exaggeration on Greedy, rediscovers truth-telling
-on Vickrey (gain ≈0, report ≈ value), and — notably — **does not find a profitable attack on Score**: a five-round
-horizon sees the immediate win from reporting v_max but not the penalty that persists afterwards, so it over-inflates and loses.
-This is a finite search heuristic, not a best response; the proposal's caveat applies (it does not show Score is unmanipulable).
+With the proposal's 5-round horizon the search finds a *stronger* attack than capped exaggeration on Greedy,
+rediscovers truth-telling on Vickrey (gain ≈0, report ≈ value), and finds **no profitable attack on Score**.
+That last result does not hold up: it is a horizon artefact (E3c below). Five rounds see the immediate win from
+reporting v_max but not the history penalty that persists afterwards, so the attacker over-inflates and loses.
+It is a finite search heuristic, not a best response, and never proves anything is unmanipulable.
+
+### E3c — rollout attack versus planning horizon (n=10, M4, opponents truthful)
+
+| H | λ=1: rollout | λ=2: rollout | frac. rounds at v_max (λ=1 / 2) |
+|---|---|---|---|
+| 5 | −9.6 [−10.3, −8.9] | −12.5 [−13.2, −11.8] | 0.93 / 0.88 |
+| 10 | −7.0 | −8.6 | 0.85 / 0.74 |
+| 20 | −2.9 | −2.7 | 0.72 / 0.53 |
+| 40 | **+3.0 [+2.4, +3.6]** | **+3.2 [+2.8, +3.6]** | 0.52 / 0.29 |
+| 80 | **+7.2 [+6.8, +7.6]** | **+3.2 [+2.8, +3.7]** | 0.31 / 0.19 |
+| *reference: capped c=2 / c=1.25* | *+0.9 / +3.9* | *−3.5 / +1.3* | |
+
+The gain rises monotonically with the horizon and turns significantly positive once the attacker can see the
+penalty's cost (H≥40). At λ=2 it plateaus near +3.2 and beats both capped rules, including c=1.25; at λ=1 it is still
+rising at H=80 (+7.2, above both capped rules). The mean report converges to the true value (−0.03 at λ=2, H=80):
+the attack is *selective* — it inflates in a few well-chosen rounds rather than every round. So λ=2 stops the simple lie
+but not a planner. This is a lower bound on what a sophisticated attacker can do (it is a heuristic search at n=10).
 
 ### E4 — heterogeneous users (Beta(2,5) / Beta(5,2) halves)
 
@@ -217,40 +256,66 @@ Time per round grows gently from ≈20–55 µs (n=10) to ≈40–110 µs (n=500
 (n=10) to 11.7 MiB (n=500) and is identical across mechanisms to within 0.1%. Timings are machine-dependent
 (best of 3 after a warm-up, one core).
 
-### E7 — sensitivity to the exaggeration factor (ρ=0.25; unilateral gain)
+### E7 — λ × exaggeration-factor grid (ρ=0.25; unilateral gain, M4 unless noted)
 
-| c | M3 | M4 λ=1 | M4 λ=2 | M5 |
-|---|---|---|---|---|
-| 1.25 | +126.7 | +21.0 | +9.0 | −14.0 |
-| 1.5 | +208.8 | +17.5 | +2.0 | −41.8 |
-| 2 | +305.7 | +3.5 | **−12.5** | −101.8 |
+| | c=1.25 | c=1.5 | c=2 |
+|---|---|---|---|
+| M3 Greedy | +126.7 | +208.7 | +305.7 |
+| M4 λ=0.5 | +41.1 | +45.7 | +33.7 |
+| M4 λ=1 | +21.0 | +17.5 | +3.5 |
+| M4 λ=2 | +9.0 | +2.0 | **−12.5** |
+| M4 λ=5 | +1.1 (77% of users gain) | **−7.2** | −21.3 |
+| M5 Vickrey | −14.0 | −41.8 | −101.8 |
 
-The λ=2 "deterrence" found in E2 depends on the attack: against milder exaggeration (c=1.25, 1.5) an individual
-still profits at λ=2 (+9.0, +2.0), and at λ=1 every focal user gains for c≤1.5 (frac=1.00). Mild lies are the more
-dangerous ones for Score; Vickrey punishes all of them.
+The penalty needed to deter a lie *grows as the lie gets milder*: λ=2 suffices for c=2, λ∈(2,5] for c=1.5, and at
+c=1.25 even λ=5 still leaves a (small) positive gain for 77% of focal users. Vickrey deters every lie at every size.
+This is the main qualification of the "Score with λ≈2 is a non-monetary alternative to Vickrey" conclusion.
+
+### E8 — does timing reports pay? (hypothesis H2)
+
+The timed policy inflates (capped, factor c) only while the user's own cumulative allocation is at or below the
+population mean (`timed`), 25th percentile (`timed_q25`) or 75th percentile (`timed_q75`); otherwise it is truthful.
+
+| M4 | c | always | timed | timed_q25 | timed_q75 |
+|---|---|---|---|---|---|
+| λ=1 | 1.25 | +21.0 | +0.7 | +0.2 | +2.6 |
+| λ=2 | 1.25 | +9.0 | −0.5 | −0.7 | +0.4 |
+| λ=1 | 2 | +3.5 | −2.8 | −2.4 | −5.0 |
+| λ=2 | 2 | −12.5 | −5.4 | −4.5 | −10.3 |
+| λ=5 | 2 | −21.3 | −9.1 | −8.0 | −16.5 |
+
+Timing never beats indiscriminate inflation where inflation is profitable (premium −3 to −39), and its own gain is
+≤ +5.6 for M4 across the grid above (about 0 or negative for λ≥2). The premium becomes positive only at c=2, λ≥2, i.e. only
+because always-inflating has become expensive and timing means *lying less*. **H2 in its simple form is not
+supported**: the value of this kind of timing does not rise with λ. The far-sighted rollout attack (E3c) shows the
+vulnerability is real but needs planning, not a fixed rule.
 
 ### Research questions and hypotheses
 - **Q1 (history penalty vs starvation / welfare).** Under truthful i.i.d. values, a moderate penalty costs <1% welfare
   but reduces starvation only slightly (7.5% vs 8.4%; 37.7% vs 49.2% under strong persistence). Its large effect appears when users are strategic
   (SR_Δ 27%→6.9% at λ=0→1) or heterogeneous (J_B 0.52→0.995). **H1 supported for fairness, weak for starvation.**
-- **Q2 (does the penalty change the value of manipulating?).** Yes — it removes most of it (+306→+3.5 at λ=1), but
-  only a stronger penalty makes inflation unprofitable, and only against c=2 (E7). **H2 as stated (penalty may *increase*
-  the value of timing reports) is not supported against the tested policies**; the rollout search finds no profitable attack on Score either.
+- **Q2 (does the penalty change the value of manipulating?).** Yes — it removes most of it (+306→+3.5 at λ=1 against c=2),
+  but how much penalty is needed depends on the lie (E7: λ=2 for c=2, more for milder lies) and on the attacker: a
+  far-sighted rollout attacker still gains at λ=2 (E3c), while simple timing does not (E8). **H2 (timing becomes more
+  valuable with λ) is not supported for the fixed timing rules tested**; it is not refuted for planning attackers.
 - **Q3 (do equal-count conclusions survive heterogeneity / persistence?).** No for the value-aware rules (E4, E5).
   **H3 is only partly supported:** Round-Robin scores best on J_A and, perhaps surprisingly, *also* on J_B (0.999):
   value-blind rules equalise expected normalised benefit as well, so J_A and J_B diverge only for rules that read values (Greedy/Vickrey/Score).
 - **H4.** M5 has a negative unilateral gain in every tested setting (supported); M3 is vulnerable (supported); M4 is
-  vulnerable at λ=1 and for mild lies at λ=2, but not to c=2 at λ≥2 (partly supported).
+  vulnerable at λ=1, to mild lies at λ≥2, and to a far-sighted attacker even at λ=2 (supported, more strongly than the
+  proposal expected).
 
 ### Conclusions
 1. The extremes each fail on one axis: Round-Robin kills starvation and manipulation but loses 44% of welfare at k/n=0.2;
    Greedy is first-best and the most manipulable (+306), and concentrates service under heterogeneous or persistent values.
 2. A history penalty buys fairness almost for free (Score λ=1: WR≥0.99 truthful, 0.96 against 25% inflaters, 0.90 heterogeneous).
-3. Strategy-resistance needs a stronger penalty than fairness does, and depends on the attack (λ≈2 against c=2 only).
+3. Strategy-resistance needs a stronger penalty than fairness does, and the required strength depends on the attack:
+   λ≈2 against c=2, more against milder lies, and no fixed λ tested here stops a far-sighted attacker.
 4. A cumulative-allocation penalty does not bound waiting; only Round-Robin's explicit service guarantee does.
-5. Vickrey is the only rule with a negative individual gain in every setting, but needs real transfers; Score with λ≈2 is a
-   non-monetary alternative that deters the tested policies while retaining ≈96% welfare — an empirical result for these
-   bounded policies, **not** a truthfulness guarantee (simulation cannot establish dynamic strategyproofness).
+5. Vickrey is the only rule with a negative individual gain in every setting, but needs real transfers. Score with λ≈2
+   deters the *simple* tested policies while retaining ≈96% welfare, but E7 and E3c show the deterrence is partial.
+   These are empirical results for bounded policies and a heuristic search, **not** truthfulness guarantees
+   (simulation cannot establish dynamic strategyproofness).
 
 ## Proposal coverage
 
@@ -265,7 +330,7 @@ dangerous ones for Score; Vickrey punishes all of them.
 | Pareto-dominance over (WR, J_A, SR_Δ, M) | `analysis/pareto.py`, E2 `pareto` flag | `test_analysis` |
 | 30 locked seeds, paired 95% bootstrap CIs (10,000 resamples), raw per-seed results, config files, seed list | `seeds/`, `analysis/bootstrap.py`, `experiments/common.py` | `test_analysis`, `test_experiments` |
 | E0 exhaustive validation | `experiments/e0_validation.py` | `test_experiments` (incl. fault-injection tests) |
-| E1–E4 (required), E5, E6 (stretch), rollout (stretch) | `experiments/` | `test_experiments`, `test_plots_and_pipeline` |
+| E1–E4 (required), E5, E6 (stretch), rollout (stretch) | `experiments/` (+ E3c horizon study, E7 λ×c grid, E8 timing) | `test_experiments`, `test_plots_and_pipeline` |
 | One command regenerates every main figure | `run_all.py`, `run_all.sh` | `test_run_all_quick_pipeline_end_to_end` |
 | Hypotheses H1–H4 evaluated, including contradicted ones | "Research questions and hypotheses" above | — |
 | Anticipated limitations | "Limitations" below | — |
@@ -282,9 +347,9 @@ Defects fixed and additions beyond the first version (all results regenerated):
 - **E0** is exhaustive (it previously sampled random profiles) and includes negative controls and fault-injection tests.
 - **E6 memory** is measured with `tracemalloc` (it was an analytic array-size estimate); timing is best-of-3.
 - **E5** exposes the variance-shrinkage confound of the proposal's AR(1) recursion and adds a marginal-preserving control.
-- **E7** (sensitivity to `c`) is new; E2–E4/E6 now save raw per-seed results and configs; paired CIs are produced.
+- **E7** (λ × c sensitivity grid), **E3c** (rollout horizon) and **E8** (timing attack for H2) are new; E2–E4/E6 now save raw per-seed results and configs; paired CIs are produced.
 - Deterministic mechanism order in E3 (it iterated over a `set`), strict JSON output (no `NaN`), validated configs,
-  a mechanism factory replacing five duplicated copies, and 329 tests (previously 63).
+  a mechanism factory replacing five duplicated copies, and 350 tests (previously 63).
 
 ## Limitations
 The model omits job duration, multi-GPU jobs, placement and preemption; findings concern repeated unit-demand

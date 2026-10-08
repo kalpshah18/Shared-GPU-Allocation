@@ -4,10 +4,12 @@ experiments/e7_sensitivity.py
 E7 — Sensitivity to the exaggeration factor c — Owner: Kalp Shah
 
 The proposal lists capped exaggeration with c in {1.25, 1.5, 2}, but E2/E3
-use c = 2 only.  This sensitivity check repeats the base strategic setting
+use c = 2 only.  This lambda x c grid repeats the base strategic setting
 (n = 50, k = 10, rho = 0.25) for every c and for the mechanisms whose
-manipulation incentive is non-trivial: M3, M4 (lambda = 1 and 2) and M5.
-(M1 and M2 are report-invariant, hence insensitive to c by construction.)
+manipulation incentive is non-trivial: M3, M4 (lambda in {0.5, 1, 2, 5}) and
+M5.  (M1 and M2 are report-invariant, hence insensitive to c by construction.)
+It answers: how much history penalty is needed to deter an individual from
+each exaggeration level?
 
 Outputs: results/e7/{summary,config}.json and results/e7/raw/*.json
 Usage:   python experiments/e7_sensitivity.py [--seeds N] [--results-dir DIR]
@@ -30,8 +32,10 @@ from sim.policies import make_capped
 C_VALUES = [1.25, 1.5, 2.0]
 SETTINGS = [                      # (mechanism, lambda or None, label)
     ("GreedyMechanism",  None, "M3"),
+    ("ScoreMechanism",   0.5,  "M4 lambda=0.5"),
     ("ScoreMechanism",   1.0,  "M4 lambda=1"),
     ("ScoreMechanism",   2.0,  "M4 lambda=2"),
+    ("ScoreMechanism",   5.0,  "M4 lambda=5"),
     ("VickreyMechanism", None, "M5"),
 ]
 

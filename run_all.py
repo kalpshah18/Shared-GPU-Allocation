@@ -33,10 +33,12 @@ STEPS = [
     ("E2  — Fairness / strategy frontier",           "experiments/e2_frontier.py",      ["--n", "20", "--T", "80"]),
     ("E3  — Strategic factorial",                    "experiments/e3_strategic.py",     ["--n", "20", "--T", "80"]),
     ("E3b — Rollout attack (n=10)",                  "experiments/e3b_rollout.py",      ["--n", "10", "--T", "30"]),
+    ("E3c — Rollout horizon study (n=10)",          "experiments/e3c_rollout_horizon.py", ["--n", "10", "--T", "25"]),
     ("E4  — Heterogeneous users",                    "experiments/e4_heterogeneous.py", ["--n", "20", "--T", "80"]),
     ("E5  — Temporal persistence (stretch)",         "experiments/e5_persistence.py",   ["--n", "20", "--T", "80"]),
     ("E6  — Scalability benchmark (stretch)",        "experiments/e6_scalability.py",   ["--T", "50"]),
-    ("E7  — Sensitivity to the exaggeration factor", "experiments/e7_sensitivity.py",   ["--n", "20", "--T", "80"]),
+    ("E7  — λ × c sensitivity grid",                 "experiments/e7_sensitivity.py",   ["--n", "20", "--T", "80"]),
+    ("E8  — Timing attack (hypothesis H2)",          "experiments/e8_timing.py",        ["--n", "20", "--T", "80"]),
 ]
 
 

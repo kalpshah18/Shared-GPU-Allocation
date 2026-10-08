@@ -24,6 +24,7 @@ import matplotlib
 matplotlib.use("Agg")                       # headless: figures are written to files
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize, TwoSlopeNorm
+from matplotlib.ticker import NullFormatter, ScalarFormatter
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -452,27 +453,127 @@ def plot_e6(results: list, save: bool = True) -> None:
     plt.close(fig)
 
 
-# ── E7: Sensitivity to the exaggeration factor ───────────────────────────────
+# ── E3c: Rollout horizon ──────────────────────────────────────────────────────
 
-def plot_e7(results: list, save: bool = True) -> None:
-    """Unilateral gain and PoS as functions of the exaggeration factor c."""
-    labels = list(dict.fromkeys(r["label"] for r in results))
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5), tight_layout=True)
-    for idx, lab in enumerate(labels):
-        subset = sorted((r for r in results if r["label"] == lab), key=lambda r: r["c"])
-        for ax, key in ((ax1, "M_uni"), (ax2, "PoS")):
-            means, yerr = _errbars(subset, key)
-            ax.errorbar([r["c"] for r in subset], means, yerr=yerr, label=lab,
-                        color=COLORS[idx % len(COLORS)], marker=MARKERS[idx % len(MARKERS)],
-                        capsize=3, linewidth=1.8, markersize=6)
-    ax1.axhline(0, color="#333333", linewidth=0.8)
-    ax1.set_ylabel("Unilateral gain $M_{uni}$ (> 0: inflating pays)")
-    ax2.set_ylabel("Price of Strategy (PoS)")
-    for ax in (ax1, ax2):
-        ax.set_xlabel("Exaggeration factor c")
-        ax.set_xticks(sorted({r["c"] for r in results}))
+def plot_e3c(results: list, save: bool = True) -> None:
+    """Rollout-attack gain on M4 versus planning horizon H, against capped exaggeration."""
+    lams = sorted({r["lambda_"] for r in results})
+    fig, axes = plt.subplots(1, len(lams), figsize=(6.5 * len(lams), 5), sharey=True, tight_layout=True)
+    axes = np.atleast_1d(axes)
+    for ax, lam in zip(axes, lams):
+        rows = sorted((r for r in results if r["lambda_"] == lam), key=lambda r: r["H"])
+        means, yerr = _errbars(rows, "M_rollout")
+        ax.errorbar([r["H"] for r in rows], means, yerr=yerr, color="#b8322f", marker="o",
+                    capsize=3, linewidth=2, label="rollout attack")
+        for key, color, name in (("M_cap2", "#1c5cab", "capped c=2"), ("M_cap1.25", "#2ca02c", "capped c=1.25")):
+            ax.axhline(rows[0][key]["mean"], color=color, linestyle="--", linewidth=1.5, label=name)
+        ax.axhline(0, color="#333333", linewidth=0.8)
+        ax.set_xscale("log")
+        ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.set_xticks([r["H"] for r in rows])
+        ax.set_xticklabels([str(r["H"]) for r in rows])
+        ax.set_xlabel("Rollout horizon H (rounds)")
+        ax.set_title(f"M4 λ={lam:g}, opponents truthful", fontweight="bold")
         ax.grid(True, linestyle="--", alpha=0.4)
         ax.legend(fontsize=9)
+    axes[0].set_ylabel("Unilateral gain of the focal user")
+    fig.suptitle("E3c — Does a longer horizon find a profitable attack on Score? (n=10)",
+                 fontsize=13, fontweight="bold")
+    if save:
+        _save(fig, "e3c_rollout_horizon")
+    plt.close(fig)
+
+
+# ── E8: Timing attack ─────────────────────────────────────────────────────────
+
+E8_STYLES = {"always": ("#333333", "-", "o"), "timed": ("#b8322f", "-", "s"),
+             "timed_q25": ("#ff7f0e", "--", "^"), "timed_q75": ("#1c5cab", "--", "v")}
+
+
+def plot_e8(results: list, save: bool = True) -> None:
+    """
+    Top row: unilateral gain of M4 vs lambda for always-inflating and three timed
+    variants.  Bottom row: the timing premium (timed minus always, same omega).
+    One column per exaggeration factor c; a positive premium means timing helps.
+    """
+    cs = sorted({r["c"] for r in results})
+    fig, axes = plt.subplots(2, len(cs), figsize=(6.5 * len(cs), 9), sharex=True, tight_layout=True,
+                             squeeze=False)
+    m4 = [r for r in results if r["mechanism"] == "ScoreMechanism"]
+    for j, c in enumerate(cs):
+        top, bottom = axes[0, j], axes[1, j]
+        base = {r["lambda_"]: r["M_uni"]["mean"] for r in m4 if r["c"] == c and r["variant"] == "always"}
+        for vname, (color, ls, mk) in E8_STYLES.items():
+            rows = sorted((r for r in m4 if r["c"] == c and r["variant"] == vname), key=lambda r: r["lambda_"])
+            if not rows:
+                continue
+            xs = [r["lambda_"] for r in rows]
+            means, yerr = _errbars(rows, "M_uni")
+            top.errorbar(xs, means, yerr=yerr, color=color, linestyle=ls, marker=mk, capsize=3,
+                         linewidth=1.8, label=vname)
+            if vname != "always":
+                bottom.plot(xs, [m - base[x] for m, x in zip(means, xs)], color=color, linestyle=ls,
+                            marker=mk, linewidth=1.8, label=vname)
+        for ax in (top, bottom):
+            ax.axhline(0, color="#333333", linewidth=0.8)
+            ax.set_xscale("log")
+            ax.set_xticks([0.5, 1, 2, 5])
+            ax.xaxis.set_major_formatter(ScalarFormatter())
+            ax.xaxis.set_minor_formatter(NullFormatter())
+            ax.grid(True, linestyle="--", alpha=0.4)
+        top.set_title(f"c = {c:g}", fontweight="bold")
+        top.set_ylabel("Unilateral gain $M_{uni}$")
+        top.legend(fontsize=9)
+        bottom.set_ylabel("Timing premium  M(timed) - M(always)")
+        bottom.set_xlabel("History penalty λ")
+        bottom.legend(fontsize=9)
+    fig.suptitle("E8 — Does timing reports pay? (M4, ρ=0.25).  Premium > 0 would support H2",
+                 fontsize=13, fontweight="bold")
+    if save:
+        _save(fig, "e8_timing")
+    plt.close(fig)
+
+
+def plot_e7(results: list, save: bool = True) -> None:
+    """
+    Left: unilateral gain of M4 vs lambda, one line per exaggeration factor c.
+    Right: PoS vs c for every mechanism.
+    """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5), tight_layout=True)
+    m4 = [r for r in results if r["mechanism"] == "ScoreMechanism"]
+    cs = sorted({r["c"] for r in results})
+    palette = {c: col for c, col in zip(cs, ["#2ca02c", "#ff7f0e", "#b8322f", "#1c5cab"])}
+    for c in cs:
+        rows = sorted((r for r in m4 if r["c"] == c), key=lambda r: r["lambda_"])
+        if not rows:
+            continue
+        means, yerr = _errbars(rows, "M_uni")
+        ax1.errorbar([r["lambda_"] for r in rows], means, yerr=yerr, color=palette[c], marker="o",
+                     capsize=3, linewidth=1.8, label=f"c = {c:g}")
+    ax1.axhline(0, color="#333333", linewidth=0.8)
+    ax1.set_xscale("log")
+    ax1.set_xticks(sorted({r["lambda_"] for r in m4}))
+    ax1.xaxis.set_major_formatter(ScalarFormatter())
+    ax1.xaxis.set_minor_formatter(NullFormatter())
+    ax1.set_xlabel("History penalty λ (M4)")
+    ax1.set_ylabel("Unilateral gain $M_{uni}$ (> 0: inflating pays)")
+    ax1.set_title("How much penalty deters each lie?", fontweight="bold")
+    ax1.legend(title="exaggeration", fontsize=9)
+    ax1.grid(True, linestyle="--", alpha=0.4)
+
+    labels = list(dict.fromkeys(r["label"] for r in results))
+    for idx, lab in enumerate(labels):
+        subset = sorted((r for r in results if r["label"] == lab), key=lambda r: r["c"])
+        means, yerr = _errbars(subset, "PoS")
+        ax2.errorbar([r["c"] for r in subset], means, yerr=yerr, label=lab,
+                     color=COLORS[idx % len(COLORS)], marker=MARKERS[idx % len(MARKERS)],
+                     capsize=3, linewidth=1.6, markersize=5)
+    ax2.set_xlabel("Exaggeration factor c")
+    ax2.set_ylabel("Price of Strategy (PoS)")
+    ax2.set_xticks(cs)
+    ax2.set_title("Welfare cost of the lie", fontweight="bold")
+    ax2.legend(fontsize=8, ncol=2)
+    ax2.grid(True, linestyle="--", alpha=0.4)
     fig.suptitle("E7 — Sensitivity to the capped-exaggeration factor (ρ = 0.25)",
                  fontsize=14, fontweight="bold")
     if save:
@@ -505,6 +606,8 @@ def run_all_plots(results_dir: str = "results", figures_dir: str = "figures") ->
             plot_e3(d, metric=metric)
     if (d := _load(rd / "e3b" / "summary.json")) is not None:
         plot_e3b(d)
+    if (d := _load(rd / "e3c" / "summary.json")) is not None:
+        plot_e3c(d)
     if (d := _load(rd / "e4" / "summary.json")) is not None:
         plot_e4(d)
     if (d := _load(rd / "e5" / "summary.json")) is not None:
@@ -513,6 +616,8 @@ def run_all_plots(results_dir: str = "results", figures_dir: str = "figures") ->
         plot_e6(d)
     if (d := _load(rd / "e7" / "summary.json")) is not None:
         plot_e7(d)
+    if (d := _load(rd / "e8" / "summary.json")) is not None:
+        plot_e8(d)
 
 
 if __name__ == "__main__":

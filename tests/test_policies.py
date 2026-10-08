@@ -13,8 +13,8 @@ from sim.mechanisms import (
     GreedyMechanism, RandomMechanism, ScoreMechanism, VickreyMechanism,
 )
 from sim.policies import (
-    POLICY_REGISTRY, ROLLOUT_GRID, capped_exaggeration, get_policy, make_capped,
-    maximum_claim, rollout_report, truthful,
+    POLICY_REGISTRY, ROLLOUT_GRID, call_policy, capped_exaggeration, get_policy, make_capped,
+    make_timed, maximum_claim, rollout_report, truthful,
 )
 
 CFG = Config(n=6, k=2, T=10)
@@ -65,7 +65,8 @@ def test_make_capped_binds_c_and_names_itself():
 # ── Registry / lookup ─────────────────────────────────────────────────────────
 
 def test_registry_keys_and_lookup():
-    assert {"truthful", "cap_1.25", "cap_1.5", "cap_2", "max_claim"} == set(POLICY_REGISTRY)
+    assert {"truthful", "cap_1.25", "cap_1.5", "cap_2", "max_claim",
+            "timed_cap_1.25", "timed_cap_2"} == set(POLICY_REGISTRY)
     assert get_policy("cap_2")(0.3, H0, CFG) == pytest.approx(0.6)
     assert get_policy("cap_1.5")(0.4, H0, CFG) == pytest.approx(0.6)
     assert get_policy("cap_3")(0.2, H0, CFG) == pytest.approx(0.6)       # built on the fly
@@ -76,11 +77,15 @@ def test_registry_keys_and_lookup():
 @pytest.mark.parametrize("name", sorted(POLICY_REGISTRY))
 def test_every_policy_reports_within_bounds(name):
     pol = POLICY_REGISTRY[name]
-    v = np.random.default_rng(0).random(500) * CFG.v_max
+    needs_users = getattr(pol, "needs_users", False)
+    # history-dependent policies read one column per user: feed (draws, n) blocks
+    v = np.random.default_rng(0).random((500, CFG.n) if needs_users else 500) * CFG.v_max
     r = pol(v, H0, CFG)
+    assert r.shape == v.shape
     assert np.all(r >= 0.0) and np.all(r <= CFG.v_max + 1e-12)
-    for x in v[:25]:
-        assert 0.0 <= pol(float(x), H0, CFG) <= CFG.v_max + 1e-12
+    if not needs_users:
+        for x in v[:25]:
+            assert 0.0 <= pol(float(x), H0, CFG) <= CFG.v_max + 1e-12
 
 
 @pytest.mark.parametrize("name", ["cap_1.25", "cap_1.5", "cap_2", "max_claim"])
@@ -166,3 +171,90 @@ def test_rollout_respects_opponent_policy():
     opp = lambda v, h, c: np.where(np.arange(c.n) == 0, v, c.v_max)   # everyone else reports v_max
     r = _roll(GreedyMechanism(RCFG), 0.3, opp=opp, n_rollouts=50)
     assert r in ROLLOUT_GRID
+
+
+# ── Timed exaggeration (extension) ────────────────────────────────────────────
+
+def _hist(cum):
+    h = History(len(cum))
+    h.cumulative[:] = cum
+    return h
+
+
+def test_timed_inflates_only_when_own_history_is_at_or_below_the_mean():
+    cfg = Config(n=4, k=1, T=1)
+    h = _hist([0, 2, 4, 6])                                  # mean 3
+    pol = make_timed(2.0)
+    out = call_policy(pol, np.array([0.3, 0.3, 0.3, 0.3]), h, cfg, users=np.array([0, 1, 2, 3]))
+    np.testing.assert_allclose(out, [0.6, 0.6, 0.3, 0.3])
+
+
+def test_timed_uses_the_controlled_users_own_history():
+    cfg = Config(n=4, k=1, T=1)
+    h = _hist([0, 2, 4, 6])
+    out = call_policy(make_timed(2.0), np.array([0.4, 0.4]), h, cfg, users=np.array([3, 0]))
+    np.testing.assert_allclose(out, [0.4, 0.8])              # user 3 is over-served, user 0 under-served
+
+
+def test_timed_quantile_threshold():
+    cfg = Config(n=5, k=1, T=1)
+    h = _hist([0, 1, 2, 3, 4])
+    users = np.arange(5)
+    v = np.full(5, 0.2)
+    q25 = call_policy(make_timed(2.0, 0.25), v, h, cfg, users=users)     # threshold 1 -> users 0, 1
+    q75 = call_policy(make_timed(2.0, 0.75), v, h, cfg, users=users)     # threshold 3 -> users 0..3
+    np.testing.assert_allclose(q25, [0.4, 0.4, 0.2, 0.2, 0.2])
+    np.testing.assert_allclose(q75, [0.4, 0.4, 0.4, 0.4, 0.2])
+
+
+def test_timed_without_users_treats_columns_as_users():
+    cfg = Config(n=4, k=1, T=1)
+    h = _hist([0, 2, 4, 6])
+    out = make_timed(2.0)(np.full((3, 4), 0.3), h, cfg)                  # a (rollouts, n) block
+    assert out.shape == (3, 4)
+    np.testing.assert_allclose(out[0], [0.6, 0.6, 0.3, 0.3])
+
+
+def test_timed_is_bounded_never_underreports_and_never_beats_always_inflating():
+    cfg = Config(n=6, k=2, T=1)
+    h = _hist([3, 0, 5, 1, 1, 9])
+    v = np.random.default_rng(0).random(6)
+    always = make_capped(2.0)(v, h, cfg)
+    for q in (None, 0.25, 0.75):
+        out = call_policy(make_timed(2.0, q), v, h, cfg, users=np.arange(6))
+        assert np.all(out >= v - 1e-12) and np.all(out <= always + 1e-12) and np.all(out <= cfg.v_max)
+
+
+def test_timed_with_everyone_favourable_equals_capped():
+    cfg = Config(n=3, k=1, T=1)
+    h = _hist([0, 0, 0])
+    v = np.array([0.1, 0.4, 0.9])
+    np.testing.assert_allclose(call_policy(make_timed(1.5), v, h, cfg, users=np.arange(3)),
+                               make_capped(1.5)(v, h, cfg))
+
+
+def test_timed_registry_lookup_and_names():
+    assert get_policy("timed_cap_2").__name__ == "timed_cap_2"
+    assert get_policy("timed_cap_1.25").__name__ == "timed_cap_1.25"
+    q = get_policy("timed_cap_2_q25")
+    assert q.__name__ == "timed_cap_2_q25" and q.needs_users
+    assert make_timed(1.5, 0.75).__name__ == "timed_cap_1.5_q75"
+    assert POLICY_REGISTRY["timed_cap_2"].needs_users
+
+
+def test_call_policy_passes_users_only_when_declared():
+    cfg = Config(n=4, k=1, T=1)
+    seen = {}
+
+    def plain(v, h, c):
+        seen["plain"] = True
+        return v
+
+    def needy(v, h, c, users=None):
+        seen["users"] = users
+        return v
+
+    needy.needs_users = True
+    call_policy(plain, np.ones(2), H0, cfg, users=np.array([1, 2]))
+    call_policy(needy, np.ones(2), H0, cfg, users=np.array([1, 2]))
+    assert seen["plain"] and list(seen["users"]) == [1, 2]

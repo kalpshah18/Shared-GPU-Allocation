@@ -3,7 +3,7 @@ sim/policies/strategic.py
 ==========================
 Strategic reporting policies — Owner: Raj Modi
 
-Four bounded policies from proposal section 4.2:
+Four bounded policies from proposal section 4.2, plus one extension:
 
 1. Truthful            : v_hat = v
 2. Capped exaggeration : v_hat = min(c v, v_max)   for c in {1.25, 1.5, 2}
@@ -11,6 +11,12 @@ Four bounded policies from proposal section 4.2:
 4. Finite-horizon rollout attack : Monte Carlo search over the report grid
    G = {0, 0.1, ..., 1} using H = 5 rounds and 100 rollouts per candidate
    (a diagnostic for small n, see experiments/e3b_rollout.py).
+5. Timed exaggeration (extension, tests hypothesis H2): inflate by the capped
+   rule only in rounds where the user's own cumulative allocation is at or
+   below the population mean, i.e. when the history penalty is smallest, and
+   report truthfully otherwise.  It needs to know *which* user it controls, so
+   it declares ``needs_users`` and receives ``users=<indices>`` (see
+   ``call_policy``).
 
 Call contract
 -------------
@@ -112,7 +118,8 @@ def rollout_report(
     cum = np.tile(history.cumulative[None, None, :], (G, R, 1)).astype(np.int64)
     util = np.zeros((G, R))
     for h in range(H):
-        opp = np.asarray(opponent_policy(vals[h], history, cfg), dtype=np.float64)   # (R, n)
+        opp = np.asarray(call_policy(opponent_policy, vals[h], history, cfg),
+                         dtype=np.float64)                                     # (R, n)
         reports = np.broadcast_to(opp, (G, R, n)).copy()
         reports[:, :, focal] = cand[:, None] if h == 0 else vals[h, :, focal][None, :]
         x, p = mechanism.allocate_batch(
@@ -130,6 +137,36 @@ def rollout_report(
     return float(cand[best[np.argmin(np.abs(cand[best] - true_value))]])
 
 
+# ── 5. Timed exaggeration (extension) ────────────────────────────────────────
+
+def make_timed(c: float = 2.0, quantile: float | None = None) -> Callable:
+    """
+    Capped exaggeration applied only while the user's own cumulative allocation
+    a_i(t) is at or below a population threshold (low history penalty), and
+    truthful otherwise.  The threshold is the population mean of a(t) by
+    default, or its `quantile` (e.g. 0.25 = inflate only when among the
+    least-served quarter).  Works elementwise: `true_value` has one entry per
+    controlled user (indices passed as ``users``) or one column per user when
+    ``users`` is None (shape (..., n)).
+    """
+    def policy(true_value, history, cfg, users=None, **_):
+        v = np.asarray(true_value, dtype=np.float64)
+        cum = history.cumulative if users is None else history.cumulative[np.asarray(users)]
+        threshold = (history.cumulative.mean() if quantile is None
+                     else np.quantile(history.cumulative, quantile))
+        return np.where(cum <= threshold, np.minimum(c * v, cfg.v_max), v)[()]
+    policy.needs_users = True
+    policy.__name__ = f"timed_cap_{c:g}" + ("" if quantile is None else f"_q{round(100 * quantile)}")
+    return policy
+
+
+def call_policy(policy: Callable, values, history, cfg, users=None):
+    """Invoke `policy`, passing ``users`` only to policies that declare ``needs_users``."""
+    if getattr(policy, "needs_users", False):
+        return policy(values, history, cfg, users=users)
+    return policy(values, history, cfg)
+
+
 # ── Policy registry ──────────────────────────────────────────────────────────
 
 POLICY_REGISTRY: dict = {
@@ -138,6 +175,8 @@ POLICY_REGISTRY: dict = {
     "cap_1.5"  : make_capped(1.5),
     "cap_2"    : make_capped(2.0),
     "max_claim": maximum_claim,
+    "timed_cap_1.25": make_timed(1.25),
+    "timed_cap_2"   : make_timed(2.0),
     # "rollout" needs a mechanism, RNG and opponent profile; see rollout_report
     # and sim.runner.run_rollout.
 }
@@ -149,4 +188,7 @@ def get_policy(name: str) -> Callable:
         return POLICY_REGISTRY[name]
     if name.startswith("cap_"):
         return make_capped(float(name[4:]))
+    if name.startswith("timed_cap_"):
+        c, _, q = name[10:].partition("_q")
+        return make_timed(float(c), None if not q else int(q) / 100)
     raise KeyError(f"Unknown policy '{name}'. Known: {sorted(POLICY_REGISTRY)}")

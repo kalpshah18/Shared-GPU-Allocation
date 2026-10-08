@@ -28,7 +28,7 @@ from sim.config import Config
 from sim.environment import History, SeedPackage
 from sim.mechanisms.base import Mechanism
 from sim.metrics import utilities
-from sim.policies.strategic import rollout_report
+from sim.policies.strategic import call_policy, rollout_report
 
 
 def _checked(reports, cfg: Config) -> np.ndarray:
@@ -61,7 +61,8 @@ def run_mixed(
         v_t = pkg.valuations[:, t]
         reports = v_t.copy()
         if active:
-            reports[strategic_set] = strategic_policy(v_t[strategic_set], history, cfg)
+            reports[strategic_set] = call_policy(strategic_policy, v_t[strategic_set], history, cfg,
+                                                 users=strategic_set)
         x, p = mechanism.allocate(_checked(reports, cfg), history, int(pkg.tie_seeds[t]))
         history.update(x, p)
     return history
@@ -178,7 +179,8 @@ def run_rollout(
         v_t = pkg.valuations[:, t]
         reports = v_t.copy()
         if opponent_policy is not None:
-            reports = np.asarray(opponent_policy(v_t, history, cfg), dtype=np.float64).copy()
+            reports = np.asarray(call_policy(opponent_policy, v_t, history, cfg),
+                                 dtype=np.float64).copy()
         reports[focal] = rollout_report(
             float(v_t[focal]), history, mechanism, cfg, focal,
             opponent_policy if opponent_policy is not None else (lambda v, h, c: v),
