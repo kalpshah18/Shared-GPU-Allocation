@@ -35,6 +35,12 @@ class Config:
     lambda_: float = 1.0  # history-penalty exponent for M4 (0 ≡ M3 Greedy)
     c: float = 2.0        # capped-exaggeration multiplier (1.25, 1.5, or 2)
 
+    # ── Proposed mechanisms (M6 Karma-Cap, M7 Rank-Cap) ───────────────────────
+    wait_cap: int | None = None   # hard waiting bound W (None -> Delta = 2*ceil(n/k))
+    karma_init: float = 2.0       # initial / mean karma balance per user (M6)
+    karma_cap_mult: float = 3.0   # balance ceiling = karma_cap_mult * karma_init (M6)
+    rank_blend: float = 0.0       # M7 score = (1-b)*rank + b*report, b in [0, 1]
+
     # ── Valuation process ────────────────────────────────────────────────────
     # "uniform"   → Uniform(0, v_max)        (base case)
     # "beta_low"  → Beta(2, 5)               (low-value group, E4)
@@ -58,6 +64,7 @@ class Config:
 
     # ── Derived (not set by user) ─────────────────────────────────────────────
     delta: int = field(init=False)
+    wait_limit: int = field(init=False)   # effective waiting cap W
 
     def __post_init__(self) -> None:
         if self.n < 2:
@@ -84,7 +91,16 @@ class Config:
             raise ValueError(f"ar1_mode='{self.ar1_mode}' not in {AR1_MODES}.")
         if self.n_focal < 1:
             raise ValueError(f"n_focal={self.n_focal} must be at least 1.")
+        if self.wait_cap is not None and self.wait_cap < 1:
+            raise ValueError(f"wait_cap={self.wait_cap} must be >= 1 (or None).")
+        if self.karma_init <= 0:
+            raise ValueError(f"karma_init={self.karma_init} must be positive.")
+        if self.karma_cap_mult < 1:
+            raise ValueError(f"karma_cap_mult={self.karma_cap_mult} must be >= 1.")
+        if not (0.0 <= self.rank_blend <= 1.0):
+            raise ValueError(f"rank_blend={self.rank_blend} must be in [0, 1].")
         self.delta = self.delta_multiplier * math.ceil(self.n / self.k)
+        self.wait_limit = self.delta if self.wait_cap is None else int(self.wait_cap)
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def replace(self, **changes) -> "Config":

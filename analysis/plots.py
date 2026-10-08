@@ -581,6 +581,150 @@ def plot_e7(results: list, save: bool = True) -> None:
     plt.close(fig)
 
 
+# ── E9-E11: proposed mechanisms ───────────────────────────────────────────────
+
+PROPOSED_COLORS = {
+    "M1 Random": "#b0b0b0", "M2 Round-Robin": "#8c8c8c", "M3 Greedy": "#2ca02c",
+    "M4 Score λ=1": "#6baed6", "M4 Score λ=2": "#2171b5", "M5 Vickrey": "#9467bd",
+    "M6 Karma-Cap": "#d62728", "M7 Rank-Cap": "#ff7f0e", "M7 Rank-Cap β=0.25": "#fdae6b",
+}
+
+
+def _label_order(results: list) -> list:
+    return [lab for lab in PROPOSED_COLORS if any(r.get("label") == lab for r in results)]
+
+
+def plot_e9(results: list, save: bool = True) -> None:
+    """Truthful comparison of baselines and proposed mechanisms across conditions."""
+    conds = [c for c in ("base", "scarce", "loose", "mixed", "persist_proposal", "persist_copula")
+             if any(r["condition"] == c for r in results)]
+    labels = _label_order([r for r in results if r["condition"] in conds])
+    metrics = [("WR", "Welfare Ratio (WR)"), ("J_B", "Jain benefit fairness (J_B)"),
+               ("Q_max", "Maximum consecutive wait Q_max"), ("SR_delta", "Starvation rate SR_Δ")]
+    fig, axes = plt.subplots(2, 2, figsize=(17, 9.5), tight_layout=True)
+    width = 0.85 / max(len(labels), 1)
+    for ax, (metric, title) in zip(axes.flatten(), metrics):
+        for j, lab in enumerate(labels):
+            rows = [next((r for r in results if r["condition"] == c and r["label"] == lab), None) for c in conds]
+            vals = [r[metric]["mean"] if r else np.nan for r in rows]
+            errs = [max(0.0, (r[metric]["ci_upper"] - r[metric]["ci_lower"]) / 2) if r else 0.0 for r in rows]
+            ax.bar(np.arange(len(conds)) + (j - (len(labels) - 1) / 2) * width, vals, width, yerr=errs,
+                   color=PROPOSED_COLORS[lab], label=lab, edgecolor="black", linewidth=0.4, capsize=1.5)
+        ax.set_xticks(np.arange(len(conds)))
+        ax.set_xticklabels(conds, rotation=15)
+        ax.set_title(title, fontweight="bold")
+        ax.grid(True, linestyle="--", alpha=0.4, axis="y")
+    axes[0, 0].legend(fontsize=7, ncol=3, loc="lower left")
+    fig.suptitle("E9 — Proposed mechanisms vs baselines under truthful reports (95% bootstrap CIs)",
+                 fontsize=14, fontweight="bold")
+    if save:
+        _save(fig, "e9_proposed_truthful")
+    plt.close(fig)
+
+
+def plot_e9_frontier(results: list, save: bool = True) -> None:
+    """Welfare vs worst-case wait: baselines as points, M6/M7 as curves over the cap W."""
+    base = [r for r in results if r["condition"] == "base"]
+    fig, ax = plt.subplots(figsize=(10, 6.5), tight_layout=True)
+    for r in base:
+        lab = r["label"]
+        if lab in ("M6 Karma-Cap", "M7 Rank-Cap", "M7 Rank-Cap β=0.25"):
+            continue
+        ax.scatter(r["Q_max"]["mean"], r["WR"]["mean"], s=110, color=PROPOSED_COLORS[lab],
+                   edgecolor="black", zorder=3)
+        ax.annotate(lab, (r["Q_max"]["mean"], r["WR"]["mean"]), xytext=(7, 5), textcoords="offset points",
+                    fontsize=9)
+    for lab, mk in (("M6 Karma-Cap", "o"), ("M7 Rank-Cap", "s")):
+        pts = sorted((r for r in results if r["condition"] == "wait_frontier" and r["label"] == lab),
+                     key=lambda r: r["wait_cap"])
+        if not pts:
+            continue
+        ax.plot([r["Q_max"]["mean"] for r in pts], [r["WR"]["mean"] for r in pts], marker=mk,
+                color=PROPOSED_COLORS[lab], linewidth=2, markersize=7, label=f"{lab} (cap W swept)")
+        for r in pts:
+            ax.annotate(f"W={r['wait_cap']}", (r["Q_max"]["mean"], r["WR"]["mean"]), xytext=(4, -12),
+                        textcoords="offset points", fontsize=7, color=PROPOSED_COLORS[lab])
+    ax.set_xscale("log")
+    ax.set_xlabel("Worst-case wait Q_max (log scale; lower is better)")
+    ax.set_ylabel("Welfare ratio WR (higher is better)")
+    ax.set_title("E9 — Welfare vs guaranteed waiting (truthful, n=50, k=10)", fontweight="bold")
+    ax.grid(True, linestyle="--", alpha=0.4, which="both")
+    ax.legend(fontsize=9, loc="center right")
+    if save:
+        _save(fig, "e9_wait_frontier")
+    plt.close(fig)
+
+
+E10_POLICIES = ["cap_1.25", "cap_1.5", "cap_2", "max_claim", "timed_cap_1.25", "timed_cap_2"]
+
+
+def plot_e10(results: list, save: bool = True) -> None:
+    """Heatmap of the unilateral gain: mechanism x lie (rho = 0.25), plus rho = 1 stress columns."""
+    cols = [(p, 0.25) for p in E10_POLICIES] + [("cap_2", 1.0), ("max_claim", 1.0)]
+    cols = [c for c in cols if any(r["policy"] == c[0] and r["rho"] == c[1] for r in results)]
+    labels = _label_order([r for r in results if r["policy"] in E10_POLICIES])
+    labels += [lab for lab in dict.fromkeys(r["label"] for r in results) if lab not in labels]
+    data = np.full((len(labels), len(cols)), np.nan)
+    for i, lab in enumerate(labels):
+        for j, (pol, rho) in enumerate(cols):
+            r = next((r for r in results if r["label"] == lab and r["policy"] == pol and r["rho"] == rho), None)
+            if r and r["M_uni"]["mean"] is not None:
+                data[i, j] = r["M_uni"]["mean"]
+    # signed log scale so +306 (Greedy) does not wash out the +/-few differences that matter
+    shown = np.sign(data) * np.log1p(np.abs(data))
+    lim = np.nanmax(np.abs(shown)) if np.isfinite(shown).any() else 1.0
+    fig, ax = plt.subplots(figsize=(12.5, 0.55 * len(labels) + 3), tight_layout=True)
+    im = ax.imshow(np.ma.masked_invalid(shown), aspect="auto", cmap=DIVERGING_CMAP,
+                   norm=TwoSlopeNorm(vmin=-lim, vcenter=0.0, vmax=lim))
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([f"{p}\nρ={r:g}" for p, r in cols], fontsize=9)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    for i in range(len(labels)):
+        for j in range(len(cols)):
+            if np.isfinite(data[i, j]):
+                ax.text(j, i, f"{data[i, j]:+.1f}", ha="center", va="center", fontsize=8.5,
+                        fontweight="bold" if data[i, j] > 0 else "normal")
+    fig.colorbar(im, ax=ax, label="signed log colour scale (red: lying pays, blue: lying loses)")
+    ax.set_title("E10 — Unilateral gain from lying, by mechanism and lie (numbers = utility units; bold = lying pays)",
+                 fontsize=11, fontweight="bold")
+    if save:
+        _save(fig, "e10_proposed_strategic")
+    plt.close(fig)
+
+
+def plot_e11(results: list, score_ref: list | None = None, save: bool = True) -> None:
+    """Rollout-attack gain versus horizon for the proposed mechanisms (and Score from E3c)."""
+    fig, ax = plt.subplots(figsize=(9, 5.5), tight_layout=True)
+    series = []
+    for lab in dict.fromkeys(r["label"] for r in results):
+        series.append((lab, sorted((r for r in results if r["label"] == lab), key=lambda r: r["H"]),
+                       PROPOSED_COLORS.get(lab, "#333333"), "o"))
+    if score_ref:
+        for lam, color in ((1.0, "#6baed6"), (2.0, "#2171b5")):
+            rows = sorted((r for r in score_ref if r["lambda_"] == lam), key=lambda r: r["H"])
+            if rows:
+                series.append((f"M4 Score λ={lam:g} (E3c)", rows, color, "s"))
+    for lab, rows, color, mk in series:
+        means, yerr = _errbars(rows, "M_rollout")
+        ax.errorbar([r["H"] for r in rows], means, yerr=yerr, color=color, marker=mk, capsize=3,
+                    linewidth=2, label=lab)
+    ax.axhline(0, color="#333333", linewidth=0.9)
+    ax.set_xscale("log")
+    hs = sorted({r["H"] for r in results})
+    ax.set_xticks(hs)
+    ax.set_xticklabels([str(h) for h in hs])
+    ax.xaxis.set_minor_formatter(NullFormatter())
+    ax.set_xlabel("Rollout horizon H (rounds)")
+    ax.set_ylabel("Unilateral gain of the far-sighted attacker")
+    ax.set_title("E11 — Far-sighted attacker vs proposed mechanisms (n=10, T=300)", fontweight="bold")
+    ax.grid(True, linestyle="--", alpha=0.4)
+    ax.legend(fontsize=9)
+    if save:
+        _save(fig, "e11_proposed_rollout")
+    plt.close(fig)
+
+
 # ── Master loader and CLI entry point ─────────────────────────────────────────
 
 def _load(path: Path):
@@ -618,6 +762,14 @@ def run_all_plots(results_dir: str = "results", figures_dir: str = "figures") ->
         plot_e7(d)
     if (d := _load(rd / "e8" / "summary.json")) is not None:
         plot_e8(d)
+    if (d := _load(rd / "e9" / "summary.json")) is not None:
+        plot_e9(d)
+        plot_e9_frontier(d)
+    if (d := _load(rd / "e10" / "summary.json")) is not None:
+        plot_e10(d)
+    if (d := _load(rd / "e11" / "summary.json")) is not None:
+        e3c = rd / "e3c" / "summary.json"
+        plot_e11(d, json.loads(e3c.read_text()) if e3c.exists() else None)
 
 
 if __name__ == "__main__":

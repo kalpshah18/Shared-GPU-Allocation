@@ -14,7 +14,7 @@ import pytest
 from sim.config import Config
 from sim.environment import History, SeedPackage
 from sim.mechanisms import (
-    MECHANISM_LABELS, MECHANISM_NAMES, GreedyMechanism, RandomMechanism,
+    ALL_MECHANISM_NAMES, MECHANISM_LABELS, MECHANISM_NAMES, GreedyMechanism, RandomMechanism,
     RoundRobinMechanism, ScoreMechanism, VickreyMechanism, make_mechanism,
 )
 from sim.mechanisms._utils import batch_top_k_mask, seeded_top_k
@@ -40,7 +40,7 @@ def test_factory_names_labels_and_types():
     cfg = Config(n=6, k=2, T=3)
     pkg = SeedPackage.generate(1, cfg)
     assert MECHANISM_NAMES == [c.__name__ for c in ALL]
-    assert set(MECHANISM_LABELS) == set(MECHANISM_NAMES)
+    assert set(MECHANISM_LABELS) == set(ALL_MECHANISM_NAMES)
     for name, cls in zip(MECHANISM_NAMES, ALL):
         m = make_mechanism(name, cfg, pkg)
         assert type(m) is cls and m.name == name

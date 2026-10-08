@@ -82,6 +82,27 @@ class Mechanism(ABC):
         """
         raise NotImplementedError(f"{self.name} has no batch allocation rule.")
 
+    # ── Rollout interface (used by the finite-horizon rollout attack) ─────────
+    # A rollout simulates B hypothetical futures of the *current* state.  The
+    # default implementation covers mechanisms whose decision depends on the
+    # past only through cumulative allocations (M3, M4, M5); stateful
+    # mechanisms override both methods.
+
+    def rollout_init(self, history: History, B: int) -> dict:
+        """Mutable simulation state for B rollouts, copied from the current state."""
+        return {"cum": np.tile(history.cumulative[None, :], (B, 1)).astype(np.int64)}
+
+    def rollout_step(
+        self,
+        reports: np.ndarray,
+        state: dict,
+        tiebreak: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Allocate one simulated round for every rollout, advancing `state`."""
+        x, p = self.allocate_batch(reports, state["cum"], tiebreak)
+        state["cum"] = state["cum"] + x
+        return x, p
+
     @property
     def name(self) -> str:
         return self.__class__.__name__

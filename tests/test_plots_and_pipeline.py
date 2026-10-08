@@ -13,7 +13,8 @@ import pytest
 import analysis.plots as plots
 from experiments import (
     e1_scarcity, e2_frontier, e3_strategic, e3b_rollout, e3c_rollout_horizon, e4_heterogeneous,
-    e5_persistence, e6_scalability, e7_sensitivity, e8_timing,
+    e5_persistence, e6_scalability, e7_sensitivity, e8_timing, e9_proposed_truthful,
+    e10_proposed_strategic, e11_proposed_rollout,
 )
 from experiments.common import load_seeds
 
@@ -23,7 +24,8 @@ KW = dict(n=20, T=80, n_bootstrap=100, verbose=False)
 
 EXPECTED_STEMS = (
     ["e1_scarcity", "e2_frontier", "e3b_rollout", "e3c_rollout_horizon", "e4_heterogeneous",
-     "e5_persistence", "e6_scalability", "e7_sensitivity", "e8_timing"]
+     "e5_persistence", "e6_scalability", "e7_sensitivity", "e8_timing", "e9_proposed_truthful",
+     "e9_wait_frontier", "e10_proposed_strategic", "e11_proposed_rollout"]
     + [f"e3_all_mechs_{m}" for m in ("M_mean", "M_uni", "M_uni_max", "frac_pos_uni", "PoS", "WR", "J_A")]
 )
 
@@ -42,6 +44,10 @@ def smoke_results(tmp_path_factory):
     e6_scalability.run_e6(SEEDS, str(d), T=30, n_bootstrap=100, verbose=False, n_values=[10, 20])
     e7_sensitivity.run_e7(SEEDS, str(d), **KW)
     e8_timing.run_e8(SEEDS, str(d), **KW)
+    e9_proposed_truthful.run_e9(SEEDS, str(d), **KW)
+    e10_proposed_strategic.run_e10(SEEDS, str(d), **KW)
+    e11_proposed_rollout.run_e11(SEEDS, str(d), n=10, T=30, n_bootstrap=100, verbose=False,
+                                 n_rollouts=15, horizons=[2, 4])
     return d
 
 
@@ -72,7 +78,7 @@ def test_e3_plot_skips_unknown_and_empty_metrics(smoke_results, tmp_path, monkey
 
 def test_missing_results_are_skipped_not_fatal(tmp_path, capsys):
     plots.run_all_plots(str(tmp_path / "nothing"), str(tmp_path / "figs"))
-    assert capsys.readouterr().out.count("[SKIP]") == 10
+    assert capsys.readouterr().out.count("[SKIP]") == 13
 
 
 def test_plots_cli(smoke_results, tmp_path):
@@ -91,7 +97,7 @@ def test_run_all_quick_pipeline_end_to_end(tmp_path):
                          cwd=ROOT, capture_output=True, text=True, timeout=900)
     assert out.returncode == 0, out.stdout[-2000:] + out.stderr[-2000:]
     assert "All 10 E0" in out.stdout or "all 10 E0" in out.stdout
-    for exp in ("e1", "e2", "e3", "e3b", "e3c", "e4", "e5", "e6", "e7", "e8"):
+    for exp in ("e1", "e2", "e3", "e3b", "e3c", "e4", "e5", "e6", "e7", "e8", "e9", "e10", "e11"):
         assert (res / exp / "summary.json").exists(), exp
         assert (res / exp / "config.json").exists() and (res / exp / "raw").is_dir()
     for stem in EXPECTED_STEMS:
@@ -104,14 +110,14 @@ def test_report_renders_every_section(smoke_results):
     from analysis.report import build_report
     text = build_report(str(smoke_results))
     for heading in ("## E1", "## E2", "## E3 ", "## E3b", "## E3c", "## E4", "## E5", "## E6",
-                    "## E7", "## E8"):
+                    "## E7", "## E8", "## E9", "## E10", "## E11"):
         assert heading in text, heading
     assert "no summary found" not in text and "★" in text and "n/a" in text   # rho=0 coalition gain is n/a
 
 
 def test_report_handles_missing_results(tmp_path):
     from analysis.report import build_report
-    assert build_report(str(tmp_path)).count("no summary found") == 10
+    assert build_report(str(tmp_path)).count("no summary found") == 13
 
 
 def test_report_cli_writes_file(smoke_results, tmp_path):

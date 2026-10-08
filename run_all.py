@@ -39,6 +39,9 @@ STEPS = [
     ("E6  — Scalability benchmark (stretch)",        "experiments/e6_scalability.py",   ["--T", "50"]),
     ("E7  — λ × c sensitivity grid",                 "experiments/e7_sensitivity.py",   ["--n", "20", "--T", "80"]),
     ("E8  — Timing attack (hypothesis H2)",          "experiments/e8_timing.py",        ["--n", "20", "--T", "80"]),
+    ("E9  — Proposed mechanisms, truthful",          "experiments/e9_proposed_truthful.py",   ["--n", "20", "--T", "80"]),
+    ("E10 — Proposed mechanisms, strategic",         "experiments/e10_proposed_strategic.py", ["--n", "20", "--T", "80"]),
+    ("E11 — Proposed mechanisms vs rollout attacker", "experiments/e11_proposed_rollout.py",  ["--n", "10", "--T", "25"]),
 ]
 
 

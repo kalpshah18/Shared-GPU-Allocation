@@ -105,7 +105,8 @@ def rollout_report(
     cumulative focal utility wins; ties go to the candidate closest to the
     true value.
 
-    `mechanism` must implement ``allocate_batch`` (M3, M4, M5).
+    `mechanism` must support the rollout interface (``rollout_init`` /
+    ``rollout_step``): M3, M4, M5 via ``allocate_batch``; M6, M7 natively.
     """
     n = cfg.n
     cand = np.asarray(grid, dtype=np.float64) * cfg.v_max
@@ -115,22 +116,18 @@ def rollout_report(
     vals[0, :, focal] = true_value
     tiebreak = rng.random((H, R, n))
 
-    cum = np.tile(history.cumulative[None, None, :], (G, R, 1)).astype(np.int64)
+    state = mechanism.rollout_init(history, G * R)
     util = np.zeros((G, R))
     for h in range(H):
         opp = np.asarray(call_policy(opponent_policy, vals[h], history, cfg),
                          dtype=np.float64)                                     # (R, n)
         reports = np.broadcast_to(opp, (G, R, n)).copy()
         reports[:, :, focal] = cand[:, None] if h == 0 else vals[h, :, focal][None, :]
-        x, p = mechanism.allocate_batch(
-            reports.reshape(G * R, n),
-            cum.reshape(G * R, n),
-            np.broadcast_to(tiebreak[h], (G, R, n)).reshape(G * R, n),
-        )
+        x, p = mechanism.rollout_step(reports.reshape(G * R, n), state,
+                                      np.broadcast_to(tiebreak[h], (G, R, n)).reshape(G * R, n))
         x = x.reshape(G, R, n)
         p = p.reshape(G, R, n)
         util += vals[h, :, focal][None, :] * x[:, :, focal] - p[:, :, focal]
-        cum += x
 
     mean_util = util.mean(axis=1)
     best = np.flatnonzero(mean_util >= mean_util.max() - 1e-12)

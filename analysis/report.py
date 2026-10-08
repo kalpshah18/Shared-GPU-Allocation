@@ -182,8 +182,45 @@ def section_e8(rows) -> str:
     return "\n".join(out)
 
 
+def section_e9(rows) -> str:
+    out = ["## E9 — Proposed mechanisms under truthful reports\n"]
+    for cond in dict.fromkeys(r["condition"] for r in rows if r["condition"] != "wait_frontier"):
+        out.append(f"\n**{cond}**\n")
+        body = [[r["label"], _f(r, "WR"), _f(r, "J_A", 4), _f(r, "J_B", 4), _f(r, "Q_max", 1),
+                 _f(r, "pct95_wait", 1), _f(r, "SR_delta", 4)]
+                for r in rows if r["condition"] == cond]
+        out.append(_table(["Mechanism", "WR", "J_A", "J_B", "Q_max", "p95 wait", "SR_Δ"], body))
+    fr = [r for r in rows if r["condition"] == "wait_frontier"]
+    if fr:
+        out.append("\n**Waiting-cap frontier (base condition)**\n")
+        body = [[r["label"], str(r["wait_cap"]), _f(r, "WR"), _f(r, "Q_max", 1), _f(r, "SR_delta", 4),
+                 _f(r, "J_A", 4)] for r in fr]
+        out.append(_table(["Mechanism", "W", "WR", "Q_max", "SR_Δ", "J_A"], body))
+    return "\n".join(out)
+
+
+def section_e10(rows) -> str:
+    out = ["## E10 — Proposed mechanisms under strategic reporting (unilateral gain M_uni)\n"]
+    for rho in sorted({r["rho"] for r in rows}):
+        out.append(f"\n**ρ = {rho:g}**\n")
+        body = [[r["label"], r["policy"], _f(r, "M_uni", 2, ci=True, signed=True), _f(r, "M_uni_max", 1, signed=True),
+                 _f(r, "frac_pos_uni", 2), _f(r, "WR"), _f(r, "PoS")]
+                for r in rows if r["rho"] == rho]
+        out.append(_table(["Mechanism", "Lie", "M_uni [95% CI]", "max M_i", "frac M_i>0", "WR", "PoS"], body))
+    return "\n".join(out)
+
+
+def section_e11(rows) -> str:
+    body = [[r["label"], str(r["H"]), _f(r, "M_rollout", 2, ci=True, signed=True),
+             _f(r, "M_cap2", 2, signed=True), _f(r, "M_cap1.25", 2, signed=True),
+             _f(r, "frac_max_report", 2), _f(r, "mean_inflation", 3, signed=True)] for r in rows]
+    return ("## E11 — Far-sighted attacker vs proposed mechanisms (n=10, T=300, opponents truthful)\n\n"
+            + _table(["Mechanism", "H", "M_rollout [95% CI]", "M_cap2", "M_cap1.25",
+                      "frac rounds at v_max", "mean (report - v)"], body))
+
+
 SECTIONS = [("e1", section_e1), ("e2", section_e2), ("e3", section_e3), ("e3b", section_e3b), ("e3c", section_e3c),
-            ("e4", section_e4), ("e5", section_e5), ("e6", section_e6), ("e7", section_e7), ("e8", section_e8)]
+            ("e4", section_e4), ("e5", section_e5), ("e6", section_e6), ("e7", section_e7), ("e8", section_e8), ("e9", section_e9), ("e10", section_e10), ("e11", section_e11)]
 
 
 def build_report(results_dir: str = "results") -> str:
