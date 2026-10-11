@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> A simulation study comparing five repeated GPU-allocation mechanisms on allocative efficiency (welfare ratio WR),
+> A simulation study comparing repeated GPU-allocation mechanisms on allocative efficiency (welfare ratio WR),
 > long-run fairness (Jain indices J_A, J_B; waiting and starvation), and resistance to bounded strategic
 > misreporting (paired manipulation gain M, price of strategy). The full design is in
 > [`FAI_Project_Proposal.pdf`](FAI_Project_Proposal.pdf); every item it asks for is implemented, tested and
@@ -11,7 +11,93 @@
 
 ---
 
-## Read this first: what the results do and do not show
+## Course extension: component effects and strategic policy choice
+
+The current research question is: **how much welfare must online GPU allocation
+sacrifice to guarantee service while limiting profitable manipulation?**
+
+The extension adds a **Score-Cap baseline**, explicit uncapped Karma and Rank
+ablations, adaptive episode-long policy choice, an offline welfare oracle with
+the same certified service requirement, and a stronger planning attacker.
+E12-E15 use **30 fresh heldout seeds**. Policies are trained on five separate
+development seeds; the earlier results are development evidence for this extension.
+The fixed design and seed roles are documented in
+[EXTENSION_PROTOCOL.md](docs/EXTENSION_PROTOCOL.md).
+
+- **E12:** isolate caps from incentive components at identical W; test truthful,
+  heterogeneous, persistent and strategic workloads.
+- **E13:** asynchronous best responses within eight reporting policies; freeze
+  trained profiles, then audit every unilateral switch on heldout workloads.
+- **E14:** a binary offline optimisation benchmark with capacity and service
+  windows, including terminal waiting; separate unavoidable service cost from
+  the remaining online algorithm loss.
+- **E15:** exact truth among report candidates, horizons truncated at episode
+  end, evolving Rank-Cap report histories, multiple computation budgets, and
+  matched frozen-history controls.
+
+[THEORY.md](docs/THEORY.md) gives proofs of the service bound and pure-rank
+invariance under fixed strictly increasing report transformations. These are
+distinct from dynamic strategyproofness. The full course report is generated
+from the saved data in [COURSE_REPORT.md](docs/COURSE_REPORT.md).
+
+The fresh evaluation gives three useful findings:
+
+- **A cap alone does not deter mild exaggeration.** At W=10, c=1.25 and rho=0.25,
+  mean unilateral gain is +20.77 for Score-Cap, -8.16 for Karma-Cap, and +2.16
+  for Rank-Cap over 1,000 rounds. Identical caps isolate the incentive component.
+- **Rank-Cap is vulnerable to history-aware planning.** At H=40 with 80 sampled
+  futures per candidate, the corrected attacker gains +2.58 utility over 120
+  rounds, with a 95% interval [2.19, 2.98]. Fixed-monotone rank invariance does
+  not protect against selective report-history manipulation.
+- **Welfare loss extends beyond the service requirement.** All 270 small oracle
+  instances are certified optimal. In heterogeneous demand at W=6, Score-Cap
+  attains about 92% of constrained optimal welfare, versus about 82-83% for
+  Karma-Cap and Rank-Cap. Adaptive policy training also leaves residual training
+  incentives after four sweeps for the capped rules; heldout regret bands include
+  zero, so their positive estimates need qualification.
+
+```bash
+python run_all.py --extensions-only
+# Development outputs stay separate from the evaluated results:
+python run_all.py --extensions-only --quick --results-dir tmp/course-results --figures-dir tmp/course-figures
+```
+
+**Historical evidence:** E3b, E3c and E11 tables below retain checkpoint
+`1f54943`, which used grid-only candidates, horizons beyond episode end and
+frozen rank quantiles. E15 is the corrected fresh-seed evaluation. Re-running
+the older attack scripts now uses corrected code and changes their numbers.
+
+### Explaining the failures
+
+E16-E18 investigate the mechanisms behind the results: Rank-Cap trajectories and
+fixed-report truthful-reference replay, Karma's forced/auction benefit and credit
+accounting, and four-vs-twenty-sweep adaptive training. Rank and Karma diagnostics
+reuse the previous evaluation workloads; extended adaptation uses 30 separate
+evaluation seeds. The [follow-up protocol](docs/FOLLOWUP_PROTOCOL.md) defines the
+comparisons and the [case-study report](docs/FAILURE_CASE_STUDIES.md) presents the
+results, figures, and a course presentation outline. The runner audits seed
+separation, replay/service identities, and credit transitions; full diagnostic
+runs also reproduce all 180 corresponding E12/E15 seed-level outcomes.
+
+- **Rank-Cap:** changing report history contributes +1.31 utility [0.88, 1.73]
+  to the updating attack in a fixed-report replay, but the attack also profits
+  with a truthful reference. Selective reporting matters; it is not explained
+  solely by sacrificing low-value rounds.
+- **Karma-Cap:** at rho=1, +66.96 auction benefit outweighs -20.90 forced-service
+  benefit. The reversal also occurs without the cap. Forced service is charged,
+  and inflated opponents make the deviator's credit constraint less binding.
+- **Longer adaptation:** Karma-Cap converges on the training game at sweep 18
+  from both initial profiles. Score-Cap and Rank-Cap still have residual training
+  incentives at sweep 20. One four-sweep Karma-Cap profile has positive regret
+  on the independent evaluation set; a training fixed point is a restricted claim.
+
+```bash
+python run_all.py --followups-only
+```
+
+---
+
+## Earlier study: what the results do and do not show
 
 1. **"λ≈2 deters manipulation" is true only for one lie.** Against capped exaggeration with c=2, individual inflation stops
    paying at λ=2 (E2). The deterrence threshold moves *up* as the lie gets milder: c=1.5 needs λ between 2 and 5, and
@@ -21,7 +107,7 @@
    at λ=1 and λ=2 (E3c), including where capped exaggeration loses. The null result in E3b is *not* evidence of robustness.
 3. **Simple "timing" does not pay** (E8): inflating only when one's own history is favourable earns less than inflating
    always wherever inflation is profitable. The profitable attack in (2) is selective in a way these rules are not.
-4. **The effects at λ≥1 are small in absolute terms** (a few utility units per user over 1000 rounds, against +306 for
+4. **For c=2, the effects at λ≥1 are small in absolute terms** (a few utility units per user over 1000 rounds, against +306 for
    Greedy). They are statistically clear, but whether they matter in practice is a modelling question, not a result.
 5. **E5:** the proposal's AR(1) recursion also narrows the value spread; its welfare trend for report-blind rules is that
    artefact, not persistence (a marginal-preserving control is included).
@@ -57,7 +143,8 @@ analysis/
   bootstrap.py               95% bootstrap CIs (10,000 resamples) and paired-difference CIs
   pareto.py                  Multi-objective dominance filter
   plots.py                   All figures (PDF + PNG)             report.py   results/RESULTS.md tables
-tests/                       463 tests (see "Tests")
+tests/                       501 tests (see "Tests")
+docs/                        Fixed extension protocol, proofs, generated course report
 config/base.yaml             Base configuration (n=50, k=10, T=1000, ρ=0.25, …)
 seeds/                       generate_seeds.py + the 30 locked master seeds
 results/  figures/           Generated outputs  (results/RESULTS.md = every table)
@@ -77,7 +164,7 @@ pip install -r requirements.txt   # exact versions used for the reported results
 ## Quick start
 
 ```bash
-python -m pytest                  # 463 tests (~2.5 min; add -m "not slow" to skip the end-to-end pipeline test)
+python -m pytest                  # 501 tests; add -m "not slow" to skip the end-to-end pipeline test
 python experiments/e0_validation.py
 python run_all.py                 # everything, from the locked seeds → results/ and figures/  (tens of minutes)
 python run_all.py --quick         # 2-seed smoke run on tiny instances, for development only
@@ -88,7 +175,7 @@ Every experiment script accepts `--seeds N`, `--results-dir DIR`, `--n`, `--T`, 
 
 ## Tests
 
-`python -m pytest` runs 463 tests (`-m "not slow"` skips the one end-to-end pipeline test). They are organised by component:
+`python -m pytest` runs 501 tests (`-m "not slow"` skips the one end-to-end pipeline test). They are organised by component:
 
 | File | What it pins down |
 |---|---|
@@ -103,6 +190,8 @@ Every experiment script accepts `--seeds N`, `--results-dir DIR`, `--n`, `--T`, 
 | `test_analysis.py` | bootstrap CI coverage, pairing benefit, NaN handling, paired differences, Pareto filter vs brute force |
 | `test_experiments.py` | every experiment end to end on tiny instances: schema, strict JSON, raw files, determinism, and the qualitative findings (Greedy rewarded / Vickrey punished, E5 variance confound, E7 monotonicity, …); E0 **fault injection** (a broken Vickrey / capacity bug must be caught) |
 | `test_plots_and_pipeline.py` | every figure is written, graceful skips, report tables, locked seed file, `run_all.py --quick` end to end |
+| `test_course_extensions.py` | multi-round real-vs-rollout trajectories; active-cap rank invariance; scale-independent service priority; exhaustive oracle schedules; training/evaluation separation; expected-gain audit; E12-E15 data, figures and tables |
+| `test_failure_diagnostics.py` | actual-vs-observed Rank/Karma trajectories; truthful-reference replay; exact credit accounting; recurrence continuation; follow-up seed roles, strict JSON and figures |
 
 ## Model in one paragraph
 
@@ -119,7 +208,7 @@ seed every mechanism and every counterfactual run reads the same valuation tenso
 | M4 | Score `s = v̂ / (1+a_i)^λ`, top-`k` (default λ = 1) | yes | yes | no | `λ = 0 ≡ M3`; empirically stress-tested |
 | M5 | `k`-unit Vickrey, winners pay the `(k+1)`-st bid | yes | no | yes | per-round DSIC (VCG) |
 | **M6** | **Karma-Cap** (proposed): karma auction + hard wait cap, below | yes | yes | no (internal karma) | `Q_max ≤ W + ⌈n/k⌉ − 1`; truthfulness empirical |
-| **M7** | **Rank-Cap** (proposed): rank-normalised score + wait cap, below | yes | yes | no | `Q_max ≤ W + ⌈n/k⌉ − 1`; invariant to increasing distortions; truthfulness empirical |
+| **M7** | **Rank-Cap** (proposed): rank-normalised score + wait cap, below | yes | yes | no | `Q_max ≤ W + ⌈n/k⌉ − 1`; invariant to fixed strictly increasing distortions in pure-rank mode; truthfulness empirical |
 
 ## Metrics
 
@@ -209,7 +298,7 @@ All results: n=50, k=10, T=1000, 30 master seeds, M4 at λ=1 unless stated (E3b:
   others inflate (+5.5 at ρ=0, +4.5 at 0.1, +3.5 at 0.25), is indistinguishable from 0 at ρ=0.5 (+0.41 [−0.22, 1.03]) and
   negative at ρ=1 (−2.7). Welfare degrades gracefully (cap_2: 0.996→0.838; max_claim: 0.996→0.560) and J_A stays ≥0.99.
 
-### E3b — rollout attack (n=10; gain of one focal user)
+### E3b — historical rollout attack (n=10; gain of one focal user)
 
 | Mechanism | opponents truthful: rollout / cap_2 | opponents cap_2: rollout / cap_2 | focal reports v_max in |
 |---|---|---|---|
@@ -224,7 +313,7 @@ That last result does not hold up: it is a horizon artefact (E3c below). Five ro
 reporting v_max but not the history penalty that persists afterwards, so the attacker over-inflates and loses.
 It is a finite search heuristic, not a best response, and never proves anything is unmanipulable.
 
-### E3c — rollout attack versus planning horizon (n=10, M4, opponents truthful)
+### E3c — historical rollout attack versus planning horizon (n=10, M4, opponents truthful)
 
 | H | λ=1: rollout | λ=2: rollout | frac. rounds at v_max (λ=1 / 2) |
 |---|---|---|---|
@@ -308,9 +397,7 @@ vulnerability is real but needs planning, not a fixed rule.
 
 ### Why, and how they work
 The analysis above shows three gaps in the baselines: a cumulative-allocation penalty (Score) does not bound waiting, only
-partly deters lying (milder lies pay, a far-sighted attacker gains), and Vickrey needs money. The literature search
-(see [Related work](#related-work)) says exact truthfulness without money is out of reach in repeated settings; every
-positive result is approximate, and none provides worst-case waiting. So the target is: **a hard waiting bound, plus
+partly deters lying (milder lies pay, a far-sighted attacker gains), and Vickrey needs money. The target is: **a hard waiting bound, plus
 lying that is costly in future priority, plus value-aware selection.** Both mechanisms share a *wait cap*: any user whose
 consecutive wait reaches `W` (default `W = Δ = 2⌈n/k⌉`) is served first, oldest first, at most `k` per round.
 
@@ -320,8 +407,8 @@ consecutive wait reaches `W` (default `W = Δ = 2⌈n/k⌉`) is served first, ol
   mechanism returns **zero payments**: welfare and utility are in value only. Exaggerating wins rounds you value less than
   the price, which drains the karma you need for the rounds you value most.
 - **M7 Rank-Cap.** The score uses the *quantile* of the report within the user's own past reports instead of the raw value,
-  `s = q_i / (1 + a_i)^λ`, plus the wait cap. Any increasing distortion of one's reports leaves the quantile unchanged, and
-  clipping at `v_max` creates ties that *lower* the quantile of one's best days. The price is that users with genuinely
+  `s = q_i / (1 + a_i)^λ`, plus the wait cap. A fixed strictly increasing transform of one's entire report sequence
+  leaves quantiles unchanged. Clipping can raise some quantiles and lower others. Users with
   different value scales are treated alike. (Idea: linking decisions, Jackson & Sonnenschein.)
 
 **Parameter selection** used five development seeds (101–105, disjoint from the 30 locked seeds, enforced by a test): the
@@ -344,7 +431,7 @@ sensitivity to the supply (`b0 = 1, 5`).
 | persistent α=0.9, copula | M4 Score λ=1 | 0.969 | 0.994 | 165.7 | 0.445 |
 | | M6 / M7 | 0.752 / 0.813 | 0.998 / 0.995 | 11.1 / 10.0 | 0 |
 
-**The wait cap is the price.** Truthful welfare as the cap `W` is swept (`Q_max` equals `W`):
+**The wait cap has a welfare cost.** Truthful welfare as `W` is swept (observed `Q_max` equals `W` in these cells):
 
 | W | 6 | 10 | 15 | 20 | 30 |
 |---|---|---|---|---|---|
@@ -352,8 +439,8 @@ sensitivity to the supply (`b0 = 1, 5`).
 | M7 Rank-Cap WR | 0.813 | 0.945 | 0.981 | 0.990 | 0.993 |
 
 For comparison Score has `Q_max≈38` at WR=0.996, Greedy `Q_max≈42`, Round-Robin `Q_max=4` at WR=0.56
-(figure `e9_wait_frontier`). M7 with W=15–20 gives WR 0.98–0.99 with a *guaranteed* maximum wait of 15–20 rounds, against
-≈38 rounds *observed* for Score. Under heterogeneous or strongly persistent demand the cap forces service to low-value
+(figure `e9_wait_frontier`). M7 with W=15–20 gives WR 0.98–0.99 with observed maximum waits of 15–20 rounds;
+its general guarantee is `W + ceil(n/k) - 1`, against ≈38 rounds observed for Score. Under heterogeneous or strongly persistent demand the cap forces service to low-value
 users, so the welfare cost is much larger (0.72–0.81 vs 0.90–0.97 for Score): the guarantee is expensive exactly when values differ.
 
 ### E10 — individual gain from lying (ρ=0.25; fraction of focal users who gain in brackets)
@@ -367,15 +454,16 @@ users, so the welfare cost is much larger (0.72–0.81 vs 0.90–0.97 for Score)
 | **M6 Karma-Cap** | **−8.3 (0.01)** | −17.1 | −29.1 | −69.0 | −2.3 (0.25) | −14.0 | **+46.1 (1.00)** | **+6.1 (0.89)** |
 | **M7 Rank-Cap** | **+1.8 (0.77)** | −10.6 | −35.9 | −113.9 | −1.3 (0.35) | −22.9 | −34.1 | −141.8 |
 
-- At ρ=0.25 **Karma-Cap makes every tested lie unprofitable, including the mild c=1.25 and the timed lies that Score and Greedy
-  reward.** Rank-Cap is unprofitable for all but the mildest lie (c=1.25, +1.8; versus +21.0 for Score λ=1).
+- At ρ=0.25 **Karma-Cap has negative mean individual gain for every tested scripted lie, including mild c=1.25 and timed lies.**
+  Some focal users still gain. Rank-Cap has negative mean gain for all but the mildest lie (c=1.25, +1.8; versus +21.0 for Score λ=1).
 - **Karma-Cap's deterrence reverses when everyone else already lies** (ρ=1: +46.1, every focal user gains; max claim +6.1).
   Truthful reporting is therefore not a robust equilibrium of Karma-Cap, a standard worry for karma economies. Score,
-  Vickrey and Rank-Cap stay negative at ρ=1. (We have not isolated the mechanism of the reversal.)
+  Vickrey and Rank-Cap stay negative at ρ=1. E17 traces the reversal to auction benefit and reduced budget binding;
+  it also occurs without the cap.
 - **Supply matters:** with `b0 = 5` timed lies pay again (+2.3, +0.9); `b0 = 1` is more deterring and less efficient.
 - Welfare under attack (cap 2, ρ=0.25): Karma 0.903, Rank 0.921, Score 0.960, Greedy/Vickrey 0.893.
 
-### E11 — the far-sighted attacker (n=10, T=300; gain of one focal user)
+### E11 — historical far-sighted attacker (n=10, T=300; gain of one focal user)
 
 | H | M6 Karma-Cap | M7 Rank-Cap | Score λ=1 (E3c) | Score λ=2 (E3c) |
 |---|---|---|---|---|
@@ -383,28 +471,27 @@ users, so the welfare cost is much larger (0.72–0.81 vs 0.90–0.97 for Score)
 | 40 | −2.32 | −11.85 | **+2.97** | **+3.19** |
 | 80 | −2.17 | −4.41 | **+7.20** | **+3.24** |
 
-Neither proposed mechanism is profitably attacked at any horizon tested, whereas Score is attacked from H=40. Karma-Cap's
+In the historical E11 results, neither proposed mechanism has positive mean attack gain, whereas Score is attacked from H=40. Karma-Cap's
 loss is flat (≈ −2.2); **Rank-Cap's loss is shrinking with the horizon (−20.9 → −11.9 → −4.4), so a longer horizon could
 turn it positive, as it did for Score.** In the rollout Rank-Cap's quantile functions are frozen at the current round (the
 attacker cannot reshape its own history within a rollout), which favours Rank-Cap; Karma-Cap's state is simulated exactly.
 
-### Scoreboard (criteria fixed before the locked-seed runs)
+### Historical scoreboard (criteria fixed before the original locked-seed runs)
 
 | criterion | Score λ=1 | M6 Karma-Cap | M7 Rank-Cap |
 |---|---|---|---|
 | 1. welfare near Greedy (truthful, homogeneous) | **0.996** | 0.942 (−5.8%) | 0.945 (−5.5%); 0.98–0.99 at W=15–20 |
-| 2. hard waiting bound / zero starvation | ✗ (Q_max≈38) | **✓** (=W) | **✓** (=W) |
-| 3. no profit from any lie at ρ=0.25 | ✗ (+21.0 at c=1.25) | **✓** (all ≤ 0) | ✗ narrowly (+1.8 at c=1.25) |
+| 2. hard waiting bound / observed zero starvation | ✗ (Q_max≈38) | **✓** (≤ W+⌈n/k⌉−1) | **✓** (≤ W+⌈n/k⌉−1) |
+| 3. non-positive mean gain from every scripted lie at ρ=0.25 | ✗ (+21.0 at c=1.25) | **✓** (all means ≤ 0) | ✗ (+1.8 at c=1.25) |
 | 4. no profit for a far-sighted attacker | ✗ (+3 … +7) | **✓** (≈ −2.2, flat) | ✓ so far (−4.4, rising) |
 | 5. welfare under heterogeneous / persistent demand | **0.90 / 0.97** | ✗ 0.72 / 0.75 | ✗ 0.80 / 0.81 |
 | 6. (extra) deterrence when everyone else lies (ρ=1) | ✓ | **✗ (+46)** | ✓ |
 
-**Verdict.** Neither mechanism "outperforms" every baseline: they buy a hard waiting guarantee and stronger deterrence with
-welfare, and the welfare cost is large when values are heterogeneous or persistent. **Rank-Cap is the safer compromise**
-(robust at ρ=1, welfare at least as good as Karma-Cap in every condition except scarcity, where they are within 0.003, and it nearly deters every lie); **Karma-Cap deters hardest at
-ρ=0.25 and against the far-sighted attacker but is fragile when others lie and the most expensive in welfare.** A user
-who needs *guaranteed* service and cannot tolerate gameable priorities should prefer them over Score; a user who mainly wants
-welfare should keep Score (λ=2 plus a cap near 20 is the obvious hybrid).
+The fresh E12-E15 evaluation qualifies this scoreboard. Score-Cap provides the same certified service bound, so the
+cap alone cannot explain Karma-Cap's lower scripted gains. Rank-Cap is profitably attacked by the corrected planner;
+Karma-Cap's mean scripted gain reverses when everyone lies. The constrained oracle also reveals additional welfare
+loss beyond the service requirement. Mechanism choice therefore depends on the workload and strategic policies;
+none of these capped rules establishes dynamic strategyproofness.
 
 ### Research questions and hypotheses
 - **Q1 (history penalty vs starvation / welfare).** Under truthful i.i.d. values, a moderate penalty costs <1% welfare
@@ -427,15 +514,15 @@ welfare should keep Score (λ=2 plus a cap near 20 is the obvious hybrid).
 2. A history penalty buys fairness almost for free (Score λ=1: WR≥0.99 truthful, 0.96 against 25% inflaters, 0.90 heterogeneous).
 3. Strategy-resistance needs a stronger penalty than fairness does, and the required strength depends on the attack:
    λ≈2 against c=2, more against milder lies, and no fixed λ tested here stops a far-sighted attacker.
-4. A cumulative-allocation penalty does not bound waiting; only Round-Robin's explicit service guarantee does.
-5. Vickrey is the only rule with a negative individual gain in every setting, but needs real transfers. Score with λ≈2
-   deters the *simple* tested policies while retaining ≈96% welfare, but E7 and E3c show the deterrence is partial.
+4. A cumulative-allocation penalty does not bound waiting. Round-Robin and the oldest-first cap supply explicit guarantees.
+5. Vickrey has non-positive gain for the tested deviations, but needs real transfers. Score with λ≈2
+   deters c=2 exaggeration while retaining ≈96% welfare; milder lies and planning still pay in the tested settings.
    These are empirical results for bounded policies and a heuristic search, **not** truthfulness guarantees
    (simulation cannot establish dynamic strategyproofness).
-6. A hard wait cap plus a *cost to lying* (karma, or rank normalisation) removes starvation and most of the profit from
+6. A hard wait cap plus an incentive component (karma, or rank normalisation) reduces observed starvation and much of the mean profit from
    lying, at a welfare price that is small for homogeneous demand (≈5%) and large for heterogeneous or persistent demand.
-   The two mechanisms fail differently (Karma-Cap when others lie, Rank-Cap for very mild lies and possibly for very
-   long horizons), so the choice is a design trade-off, not a dominance result.
+   The two mechanisms fail differently (Karma-Cap when others lie, Rank-Cap for mild lies and corrected history-aware
+   planning), so the choice is a design trade-off. The general wait bound includes overflow beyond W.
 
 ## Proposal coverage
 
@@ -479,6 +566,10 @@ Defects fixed and additions beyond the first version (all results regenerated):
 A literature search was run before designing M6/M7 (three parallel searches; claims below are from abstracts or search
 summaries unless stated, and have not been checked against the full papers).
 
+The course report makes the model distinction explicit: published Karma credits
+donated/borrowed capacity; our internal uniform-price auction is a different
+mechanism and does not inherit its online strategy-proofness guarantees.
+
 - **Fair GPU scheduling.** Tiresias (NSDI'19; attained-service priority, the shape of our Score rule), Themis (NSDI'20;
   finish-time fairness, a partial-allocation auction among the most-behind users with "hidden payments" paid in withheld
   resources; truthfulness proved per round for homogeneous valuations), Gavel (OSDI'20; priority = target/received share,
@@ -492,8 +583,8 @@ summaries unless stated, and have not been checked against the full papers).
 - **Non-monetary repeated mechanism design.** Artificial currencies (Gorokh, Banerjee & Iyer, Math. OR 2021; Elokda et al.
   karma games), linking decisions (Jackson & Sonnenschein, Econometrica 2007, with the 2022 Ball–Jackson–Kattwinkel
   comment), storable votes (Casella 2005), promised utility (Balseiro, Gurkan & Sun, Oper. Res. 2019; Blanchard & Jaillet
-  2024). **Every positive result is approximate or asymptotic and assumes known i.i.d. types; none gives worst-case
-  waiting; no exact "truthful + efficient + fair without money" result for this setting was found.**
+  2024). The initial search did not identify an exact truthful, efficient, fair mechanism with a service guarantee
+  for this private-value unit-demand model. This is a search limitation rather than an impossibility theorem.
 - **Bounded-lag schedulers.** Deficit Round Robin (Shreedhar & Varghese 1995), lottery and stride scheduling (Waldspurger
   & Weihl 1994/95): the origin of our wait cap; no incentive analysis.
 
@@ -505,20 +596,24 @@ all three for unit-demand GPU allocation, but the search was not exhaustive and 
 The model omits job duration, multi-GPU jobs, placement and preemption; findings concern repeated unit-demand
 allocation, not a production cluster. Synthetic values and utility-equivalent payments limit external validity.
 Jain's index is one notion of equality, so waiting and normalised-benefit metrics are reported alongside it. The attack
-policies are fixed rules plus a finite-horizon search heuristic, not an equilibrium analysis; replacing M5's payments by
+policies include fixed rules, a finite-horizon search heuristic, and an independently trained finite-policy game; replacing M5's payments by
 reusable credits would need a dynamic budget model and would void its DSIC guarantee. In the rollout attack the focal
 user reports truthfully after the first simulated round and futures are drawn i.i.d., even in the AR(1) setting.
 E6 timings depend on the machine.
 For M6/M7: the hyperparameters were chosen on development seeds against the same *families* of lies that E10 then
-evaluates (E11 was not used), the rollout attack is run only at n=10 and, for Rank-Cap, with frozen quantile
-functions; Rank-Cap's rollout loss is still shrinking at H=80; Karma-Cap's ρ=1 reversal is unexplained;
+evaluates (E11 was not used), and the rollout attack is run only at n=10. Historical Rank-Cap attacks froze quantile
+functions; E15 updates them and finds positive gains. Adaptive training uses five traces and eight policies;
+E18 extends the budget to twenty sweeps but Score-Cap and Rank-Cap still have training incentives.
+Karma-Cap's ρ=1 reversal is diagnosed for cap_2 in E17, rather than characterised for every strategic population;
 and `W = Δ` is a convention, not an optimum (the frontier shows how much welfare it costs).
 
 ## Reproducibility & seed policy
 - The 30 master seeds are fixed in `seeds/master_seeds.json` (regenerable bit-for-bit by `seeds/generate_seeds.py`; a test checks it).
 - Each seed derives independent valuation, tie-breaking and strategic-set streams via `SeedSequence.spawn`; strategic
   sets are nested in ρ. Mechanisms never mutate the seed package, and stateful mechanisms (M2) are deep-copied per run.
-- Re-running `python run_all.py` reproduces all `summary.json`, `paired.json`, and figures exactly (E6 timings excepted).
+- Re-running `python run_all.py --extensions-only` reproduces the fresh extension summaries, comparisons, figures and report
+  (solver certification is recorded). The full pipeline also reruns legacy attacks with corrected code; their checkpoint
+  numbers are historical, rather than bit-for-bit targets of the new attacker. E6 timings are machine-dependent.
 - Exact dependency versions: `requirements-lock.txt`.
 
 ## License
