@@ -1,0 +1,470 @@
+[
+  {
+    "condition": "base",
+    "wait_cap": 3,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.007165335276376587,
+        "ci_lower": -0.01844217531848365,
+        "ci_upper": 0.00437710885043816,
+        "std_diff": 0.03217796772030379
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.00728394753274898,
+        "ci_lower": -0.018737595325248133,
+        "ci_upper": 0.0044101111993337045,
+        "std_diff": 0.03261642470492238
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.007165335276376585,
+        "ci_lower": -0.004377108850438162,
+        "ci_upper": 0.018442175318483644,
+        "std_diff": 0.0321779677203038
+      }
+    }
+  },
+  {
+    "condition": "base",
+    "wait_cap": 3,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.04554863327900573,
+        "ci_lower": -0.06137702992836984,
+        "ci_upper": -0.029180747029363546,
+        "std_diff": 0.045398333997473735
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.04629657686521703,
+        "ci_lower": -0.062345325549766,
+        "ci_upper": -0.029703046898796426,
+        "std_diff": 0.046077911573872754
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.04554863327900571,
+        "ci_lower": 0.029180747029363553,
+        "ci_upper": 0.06137702992836983,
+        "std_diff": 0.045398333997473755
+      }
+    }
+  },
+  {
+    "condition": "base",
+    "wait_cap": 6,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.002033411528110655,
+        "ci_lower": -0.0030412213218370746,
+        "ci_upper": 0.006966582863560935,
+        "std_diff": 0.01419890263618825
+      },
+      "constrained_efficiency": {
+        "mean_diff": 0.0020263935074397426,
+        "ci_lower": -0.0030673144790184475,
+        "ci_upper": 0.006973841629466044,
+        "std_diff": 0.014247366581906666
+      },
+      "algorithm_loss": {
+        "mean_diff": -0.002033411528110695,
+        "ci_lower": -0.006966582863561001,
+        "ci_upper": 0.0030412213218370308,
+        "std_diff": 0.014198902636188277
+      }
+    }
+  },
+  {
+    "condition": "base",
+    "wait_cap": 6,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.039966955865553884,
+        "ci_lower": -0.047438228994012135,
+        "ci_upper": -0.03304604576645759,
+        "std_diff": 0.02039434896242418
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.04008394706167211,
+        "ci_lower": -0.047578488981900494,
+        "ci_upper": -0.03311733846264432,
+        "std_diff": 0.020493555107183856
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.03996695586555384,
+        "ci_lower": 0.03304604576645753,
+        "ci_upper": 0.04743822899401209,
+        "std_diff": 0.02039434896242418
+      }
+    }
+  },
+  {
+    "condition": "base",
+    "wait_cap": 9,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.005254673386953597,
+        "ci_lower": 0.0014560272236248746,
+        "ci_upper": 0.008927458605269662,
+        "std_diff": 0.010543134446020291
+      },
+      "constrained_efficiency": {
+        "mean_diff": 0.005253155303159895,
+        "ci_lower": 0.0014524950425187223,
+        "ci_upper": 0.008927075256545063,
+        "std_diff": 0.010548141018488518
+      },
+      "algorithm_loss": {
+        "mean_diff": -0.005254673386953622,
+        "ci_lower": -0.008927458605269683,
+        "ci_upper": -0.0014560272236248729,
+        "std_diff": 0.010543134446020279
+      }
+    }
+  },
+  {
+    "condition": "base",
+    "wait_cap": 9,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.03748944424412201,
+        "ci_lower": -0.04434798615455438,
+        "ci_upper": -0.031150511057916327,
+        "std_diff": 0.018911453371427477
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.03751167042487194,
+        "ci_lower": -0.04437605633765552,
+        "ci_upper": -0.03116380079832276,
+        "std_diff": 0.018930110048003858
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.03748944424412202,
+        "ci_lower": 0.031150511057916302,
+        "ci_upper": 0.04434798615455436,
+        "std_diff": 0.018911453371427484
+      }
+    }
+  },
+  {
+    "condition": "mixed",
+    "wait_cap": 3,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.03473493546664616,
+        "ci_lower": -0.042959348284663586,
+        "ci_upper": -0.0263046648942451,
+        "std_diff": 0.02376211156398262
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.038270083824411584,
+        "ci_lower": -0.04737008422614684,
+        "ci_upper": -0.029017588386297637,
+        "std_diff": 0.02627902083496781
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.03473493546664617,
+        "ci_lower": 0.026304664894245086,
+        "ci_upper": 0.042959348284663586,
+        "std_diff": 0.023762111563982648
+      }
+    }
+  },
+  {
+    "condition": "mixed",
+    "wait_cap": 3,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.05056665025083109,
+        "ci_lower": -0.05891645943236755,
+        "ci_upper": -0.04235468603524308,
+        "std_diff": 0.023685810229862627
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.055736538565956284,
+        "ci_lower": -0.06504124976534052,
+        "ci_upper": -0.04659663201050753,
+        "std_diff": 0.02637682374056331
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.05056665025083112,
+        "ci_lower": 0.04235468603524313,
+        "ci_upper": 0.05891645943236762,
+        "std_diff": 0.02368581022986264
+      }
+    }
+  },
+  {
+    "condition": "mixed",
+    "wait_cap": 6,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.0805771505728168,
+        "ci_lower": -0.08662273767014067,
+        "ci_upper": -0.07442127509645696,
+        "std_diff": 0.01748698278319606
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.08472262158884075,
+        "ci_lower": -0.0911209268616005,
+        "ci_upper": -0.07820511783846858,
+        "std_diff": 0.018496326817100683
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.08057715057281675,
+        "ci_lower": 0.07442127509645693,
+        "ci_upper": 0.08662273767014066,
+        "std_diff": 0.017486982783196083
+      }
+    }
+  },
+  {
+    "condition": "mixed",
+    "wait_cap": 6,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.08824438181591673,
+        "ci_lower": -0.09481705183421356,
+        "ci_upper": -0.08174333722712405,
+        "std_diff": 0.01865246524454134
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.09280394336061022,
+        "ci_lower": -0.09977178203557126,
+        "ci_upper": -0.08589198588226923,
+        "std_diff": 0.019829985259841587
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.08824438181591673,
+        "ci_lower": 0.08174333722712407,
+        "ci_upper": 0.09481705183421357,
+        "std_diff": 0.01865246524454133
+      }
+    }
+  },
+  {
+    "condition": "mixed",
+    "wait_cap": 9,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.09031951246577101,
+        "ci_lower": -0.09568115942712563,
+        "ci_upper": -0.08478899439655958,
+        "std_diff": 0.015580707234801858
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.09307560887958448,
+        "ci_lower": -0.0986054169447734,
+        "ci_upper": -0.08730774655182408,
+        "std_diff": 0.016156968975896302
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.09031951246577104,
+        "ci_lower": 0.08478899439655964,
+        "ci_upper": 0.09568115942712563,
+        "std_diff": 0.015580707234801837
+      }
+    }
+  },
+  {
+    "condition": "mixed",
+    "wait_cap": 9,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.09684119296830483,
+        "ci_lower": -0.10380156156812899,
+        "ci_upper": -0.08984895709367857,
+        "std_diff": 0.019925146236418806
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.09983250138949627,
+        "ci_lower": -0.10711003703105085,
+        "ci_upper": -0.09255290626310238,
+        "std_diff": 0.02079853385128691
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.09684119296830483,
+        "ci_lower": 0.08984895709367856,
+        "ci_upper": 0.10380156156812899,
+        "std_diff": 0.019925146236418795
+      }
+    }
+  },
+  {
+    "condition": "persistent",
+    "wait_cap": 3,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.002324388963620468,
+        "ci_lower": -0.008376471546660458,
+        "ci_upper": 0.003678166003230466,
+        "std_diff": 0.017170033948402264
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.0026486797647204,
+        "ci_lower": -0.009449896826934735,
+        "ci_upper": 0.004090571471730195,
+        "std_diff": 0.0192484847598321
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.0023243889636204787,
+        "ci_lower": -0.003678166003230449,
+        "ci_upper": 0.008376471546660484,
+        "std_diff": 0.0171700339484023
+      }
+    }
+  },
+  {
+    "condition": "persistent",
+    "wait_cap": 3,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.0540674534301853,
+        "ci_lower": -0.061651575092452914,
+        "ci_upper": -0.046403957737639154,
+        "std_diff": 0.02172571895547695
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.06105413868580933,
+        "ci_lower": -0.0698320612863191,
+        "ci_upper": -0.05219424291528471,
+        "std_diff": 0.02515849939477496
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.05406745343018533,
+        "ci_lower": 0.046403957737639154,
+        "ci_upper": 0.06165157509245294,
+        "std_diff": 0.02172571895547694
+      }
+    }
+  },
+  {
+    "condition": "persistent",
+    "wait_cap": 6,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.019992767273651825,
+        "ci_lower": -0.02775063409996899,
+        "ci_upper": -0.012527752439380984,
+        "std_diff": 0.021557073895551424
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.02120375536408479,
+        "ci_lower": -0.02942725655885871,
+        "ci_upper": -0.013295045316356238,
+        "std_diff": 0.02288133978981457
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.01999276727365183,
+        "ci_lower": 0.012527752439381031,
+        "ci_upper": 0.027750634099968998,
+        "std_diff": 0.021557073895551417
+      }
+    }
+  },
+  {
+    "condition": "persistent",
+    "wait_cap": 6,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.0931834465743132,
+        "ci_lower": -0.10733875457728849,
+        "ci_upper": -0.0794240337640484,
+        "std_diff": 0.03979540257267608
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.0987909576029969,
+        "ci_lower": -0.1141953853594865,
+        "ci_upper": -0.08392966951468936,
+        "std_diff": 0.04309580086412316
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.09318344657431325,
+        "ci_lower": 0.07942403376404839,
+        "ci_upper": 0.10733875457728856,
+        "std_diff": 0.03979540257267613
+      }
+    }
+  },
+  {
+    "condition": "persistent",
+    "wait_cap": 9,
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.012881435721629782,
+        "ci_lower": -0.022237603921013194,
+        "ci_upper": -0.003602089480403792,
+        "std_diff": 0.026660292744781662
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.013398222884276697,
+        "ci_lower": -0.023096114716842267,
+        "ci_upper": -0.0038298811256894097,
+        "std_diff": 0.027548123690541885
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.012881435721629773,
+        "ci_lower": 0.003602089480403795,
+        "ci_upper": 0.022237603921013205,
+        "std_diff": 0.026660292744781672
+      }
+    }
+  },
+  {
+    "condition": "persistent",
+    "wait_cap": 9,
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.10189883678617609,
+        "ci_lower": -0.11655722571898129,
+        "ci_upper": -0.08771723257597211,
+        "std_diff": 0.04091930914136128
+      },
+      "constrained_efficiency": {
+        "mean_diff": -0.1053240415579459,
+        "ci_lower": -0.12066216107484791,
+        "ci_upper": -0.09055601921221373,
+        "std_diff": 0.04281022139632118
+      },
+      "algorithm_loss": {
+        "mean_diff": 0.10189883678617609,
+        "ci_lower": 0.08771723257597211,
+        "ci_upper": 0.11655722571898128,
+        "std_diff": 0.040919309141361306
+      }
+    }
+  }
+]

@@ -1,0 +1,194 @@
+[
+  {
+    "rho": 0.25,
+    "comparison": "cap_effect",
+    "metrics": {
+      "M_uni": {
+        "mean_diff": 6.5962692878538896,
+        "ci_lower": 6.158928481020709,
+        "ci_upper": 7.048474845331544,
+        "std_diff": 1.264782624777113
+      },
+      "forced_gain": {
+        "mean_diff": -11.213490981284535,
+        "ci_lower": -11.593908967405865,
+        "ci_upper": -10.845691439865961,
+        "std_diff": 1.0514894039929763
+      },
+      "auction_gain": {
+        "mean_diff": 17.809760269138426,
+        "ci_lower": 17.168303834426677,
+        "ci_upper": 18.48238150900325,
+        "std_diff": 1.8441615744423907
+      },
+      "wins_change": {
+        "mean_diff": -0.8666666666666666,
+        "ci_lower": -1.24,
+        "ci_upper": -0.49999999999999994,
+        "std_diff": 1.0600368677171284
+      },
+      "forced_wins_change": {
+        "mean_diff": -22.419999999999998,
+        "ci_lower": -23.086666666666662,
+        "ci_upper": -21.77333333333333,
+        "std_diff": 1.834045838557759
+      },
+      "auction_wins_change": {
+        "mean_diff": 21.553333333333338,
+        "ci_lower": 20.84666666666667,
+        "ci_upper": 22.306666666666665,
+        "std_diff": 2.0407458631982864
+      },
+      "credit_spent_change": {
+        "mean_diff": 0.05390169615856659,
+        "ci_lower": -0.17105046632712295,
+        "ci_upper": 0.2810132121061308,
+        "std_diff": 0.6394611936916785
+      },
+      "forced_credit_spent_change": {
+        "mean_diff": -16.98167330962989,
+        "ci_lower": -17.489642520842487,
+        "ci_upper": -16.486137326603085,
+        "std_diff": 1.4006727303433693
+      },
+      "auction_credit_spent_change": {
+        "mean_diff": 17.03557500578846,
+        "ci_lower": 16.47939712593412,
+        "ci_upper": 17.600435416760472,
+        "std_diff": 1.5862550433746796
+      },
+      "deviating_balance_limited": {
+        "mean_diff": -0.027493333333333356,
+        "ci_lower": -0.02980000000000001,
+        "ci_upper": -0.02500666666666671,
+        "std_diff": 0.006771488571301327
+      },
+      "truthful_balance_limited": {
+        "mean_diff": -0.027486666666666666,
+        "ci_lower": -0.030639999999999994,
+        "ci_upper": -0.024433166666666662,
+        "std_diff": 0.00897747116429494
+      },
+      "deviating_mean_balance": {
+        "mean_diff": 0.03290008633528095,
+        "ci_lower": 0.030524666866119717,
+        "ci_upper": 0.03518712480972524,
+        "std_diff": 0.006624299728892802
+      },
+      "truthful_mean_balance": {
+        "mean_diff": 0.14975710065770675,
+        "ci_lower": 0.09527891703437033,
+        "ci_upper": 0.2116603380211017,
+        "std_diff": 0.16618648187201301
+      },
+      "deviating_value_per_win": {
+        "mean_diff": 0.006433617829974373,
+        "ci_lower": 0.00464131459953934,
+        "ci_upper": 0.0081059831107725,
+        "std_diff": 0.0048791176562170855
+      },
+      "truthful_value_per_win": {
+        "mean_diff": -0.029617353314733384,
+        "ci_lower": -0.031210612429278566,
+        "ci_upper": -0.02803844260414522,
+        "std_diff": 0.004423942407858025
+      }
+    }
+  },
+  {
+    "rho": 1.0,
+    "comparison": "cap_effect",
+    "metrics": {
+      "M_uni": {
+        "mean_diff": 16.624567468471053,
+        "ci_lower": 15.94796087606068,
+        "ci_upper": 17.287569065123687,
+        "std_diff": 1.888844626181534
+      },
+      "forced_gain": {
+        "mean_diff": -20.904171229875057,
+        "ci_lower": -21.412088078955584,
+        "ci_upper": -20.39810393430385,
+        "std_diff": 1.4737307666121902
+      },
+      "auction_gain": {
+        "mean_diff": 37.52873869834611,
+        "ci_lower": 36.74627966502273,
+        "ci_upper": 38.277036700121414,
+        "std_diff": 2.1906473385206717
+      },
+      "wins_change": {
+        "mean_diff": -1.720000000000001,
+        "ci_lower": -2.2200000000000006,
+        "ci_upper": -1.2066666666666683,
+        "std_diff": 1.4437499067024882
+      },
+      "forced_wins_change": {
+        "mean_diff": -41.86666666666667,
+        "ci_lower": -42.46,
+        "ci_upper": -41.239999999999995,
+        "std_diff": 1.7430321051375468
+      },
+      "auction_wins_change": {
+        "mean_diff": 40.146666666666654,
+        "ci_lower": 39.3,
+        "ci_upper": 40.97350000000001,
+        "std_diff": 2.3727960130487893
+      },
+      "credit_spent_change": {
+        "mean_diff": -12.974869633042896,
+        "ci_lower": -13.498336020333758,
+        "ci_upper": -12.447294918203708,
+        "std_diff": 1.500499660284107
+      },
+      "forced_credit_spent_change": {
+        "mean_diff": -38.409193257673934,
+        "ci_lower": -39.0010468084,
+        "ci_upper": -37.79537954531759,
+        "std_diff": 1.7377484452115444
+      },
+      "auction_credit_spent_change": {
+        "mean_diff": 25.434323624631045,
+        "ci_lower": 24.622658145138498,
+        "ci_upper": 26.2455725969716,
+        "std_diff": 2.2965571705844066
+      },
+      "deviating_balance_limited": {
+        "mean_diff": -0.03836,
+        "ci_lower": -0.04194666666666666,
+        "ci_upper": -0.03509983333333334,
+        "std_diff": 0.009793509462200298
+      },
+      "truthful_balance_limited": {
+        "mean_diff": -0.007413333333333335,
+        "ci_lower": -0.00888,
+        "ci_upper": -0.005960000000000002,
+        "std_diff": 0.004136943177102475
+      },
+      "deviating_mean_balance": {
+        "mean_diff": 0.10980130586648665,
+        "ci_lower": 0.0823926570091878,
+        "ci_upper": 0.13662857216073757,
+        "std_diff": 0.07596621444270177
+      },
+      "truthful_mean_balance": {
+        "mean_diff": 0.708901414600719,
+        "ci_lower": 0.6655937094906939,
+        "ci_upper": 0.7494850277833499,
+        "std_diff": 0.11915190773295149
+      },
+      "deviating_value_per_win": {
+        "mean_diff": -0.02336654110272814,
+        "ci_lower": -0.024838011609760433,
+        "ci_upper": -0.021883560294713392,
+        "std_diff": 0.004226298317489504
+      },
+      "truthful_value_per_win": {
+        "mean_diff": -0.16722311619522584,
+        "ci_lower": -0.17060200612945856,
+        "ci_upper": -0.16400109453339512,
+        "std_diff": 0.00948845055525277
+      }
+    }
+  }
+]

@@ -1,0 +1,69 @@
+{
+  "experiment": "e15",
+  "n_seeds": 30,
+  "seeds": [
+    757622112,
+    386682252,
+    1290662912,
+    2059789867,
+    864521517,
+    554138736,
+    1401771452,
+    766857090,
+    1397694947,
+    112824743,
+    1224308124,
+    320610205,
+    1518900451,
+    1400406480,
+    202313410,
+    496045617,
+    39072542,
+    221143392,
+    1113461820,
+    1618931310,
+    1658987805,
+    965327209,
+    2035413892,
+    526679758,
+    2144002459,
+    2107884453,
+    1437146493,
+    555195200,
+    239713887,
+    557696872
+  ],
+  "protocol_version": "course-extension-v1",
+  "seed_role": "heldout",
+  "seed_file": "seeds/extension_seeds.json",
+  "source_sha256": "6ea9815fd4dc6191c49eea84731a3e26cfe0c402e29cba5c71c930980cb89da9",
+  "n": 10,
+  "k": 2,
+  "T": 120,
+  "budgets": [
+    [
+      5,
+      20
+    ],
+    [
+      5,
+      80
+    ],
+    [
+      40,
+      20
+    ],
+    [
+      40,
+      80
+    ]
+  ],
+  "focal": 0,
+  "opponents": "truthful",
+  "future_values": "iid marginals",
+  "continuation_policy": "truthful after the first simulated round",
+  "exact_truth_candidate": true,
+  "truncate_at_episode_end": true,
+  "rank_histories": "updating plus matched frozen controls",
+  "n_bootstrap": 10000
+}

@@ -1,0 +1,252 @@
+[
+  {
+    "initial": "truthful",
+    "label": "Greedy",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.30532921952978,
+        "ci_lower": -0.3107311841141365,
+        "ci_upper": -0.29977733322159494,
+        "std_diff": 0.015399107739425776
+      },
+      "mean_utility": {
+        "mean_diff": -9.593771514528528,
+        "ci_lower": -9.760046961701219,
+        "ci_upper": -9.418995763487848,
+        "std_diff": 0.4797940190442518
+      },
+      "Q_max": {
+        "mean_diff": 8.466666666666667,
+        "ci_lower": 7.4,
+        "ci_upper": 9.7,
+        "std_diff": 3.2877340832705504
+      }
+    }
+  },
+  {
+    "initial": "truthful",
+    "label": "Score",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.027797205662601118,
+        "ci_lower": 0.025617679700668246,
+        "ci_upper": 0.030048823112756636,
+        "std_diff": 0.006150087063997478
+      },
+      "mean_utility": {
+        "mean_diff": 0.8738268181731936,
+        "ci_lower": 0.8043369511727929,
+        "ci_upper": 0.9450466651588267,
+        "std_diff": 0.19473219687233018
+      },
+      "Q_max": {
+        "mean_diff": 5.633333333333334,
+        "ci_lower": 4.966666666666667,
+        "ci_upper": 6.4,
+        "std_diff": 2.008316044185609
+      }
+    }
+  },
+  {
+    "initial": "truthful",
+    "label": "Vickrey",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.0517923901286295,
+        "ci_lower": 0.04885898304713067,
+        "ci_upper": 0.05461150030249232,
+        "std_diff": 0.007970302276006735
+      },
+      "mean_utility": {
+        "mean_diff": -21.416163231618146,
+        "ci_lower": -21.566039222267527,
+        "ci_upper": -21.267426564228032,
+        "std_diff": 0.42718544911873046
+      },
+      "Q_max": {
+        "mean_diff": 8.9,
+        "ci_lower": 7.833333333333333,
+        "ci_upper": 10.166666666666666,
+        "std_diff": 3.2307787040406772
+      }
+    }
+  },
+  {
+    "initial": "truthful",
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.006018216117004464,
+        "ci_lower": 0.0025910573871032808,
+        "ci_upper": 0.00930754697073342,
+        "std_diff": 0.009638070653835873
+      },
+      "mean_utility": {
+        "mean_diff": 0.18935888130982276,
+        "ci_lower": 0.08219620932711452,
+        "ci_upper": 0.29233383553673103,
+        "std_diff": 0.30126921518361155
+      },
+      "Q_max": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "initial": "truthful",
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.00037837195202832983,
+        "ci_lower": -0.003907169158368762,
+        "ci_upper": 0.0032128310544360336,
+        "std_diff": 0.010135038476375821
+      },
+      "mean_utility": {
+        "mean_diff": -0.012368419697671603,
+        "ci_lower": -0.12288327218251428,
+        "ci_upper": 0.10028875642349538,
+        "std_diff": 0.31832762155739613
+      },
+      "Q_max": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "initial": "cap_2",
+    "label": "Greedy",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.3093930316173552,
+        "ci_lower": -0.31461594398099313,
+        "ci_upper": -0.3040679715597778,
+        "std_diff": 0.014891738494667002
+      },
+      "mean_utility": {
+        "mean_diff": -9.721299405902593,
+        "ci_lower": -9.878763731748895,
+        "ci_upper": -9.556667097161805,
+        "std_diff": 0.45907958018102657
+      },
+      "Q_max": {
+        "mean_diff": 8.466666666666667,
+        "ci_lower": 7.4,
+        "ci_upper": 9.7,
+        "std_diff": 3.2877340832705504
+      }
+    }
+  },
+  {
+    "initial": "cap_2",
+    "label": "Score",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.023733393575025873,
+        "ci_lower": 0.02084555786552607,
+        "ci_upper": 0.026769227625731248,
+        "std_diff": 0.008449075323465068
+      },
+      "mean_utility": {
+        "mean_diff": 0.7462989267991282,
+        "ci_lower": 0.6549711494251883,
+        "ci_upper": 0.8420860363011837,
+        "std_diff": 0.2677169752549692
+      },
+      "Q_max": {
+        "mean_diff": 5.633333333333334,
+        "ci_lower": 4.966666666666667,
+        "ci_upper": 6.4,
+        "std_diff": 2.008316044185609
+      }
+    }
+  },
+  {
+    "initial": "cap_2",
+    "label": "Vickrey",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.04772857804105425,
+        "ci_lower": 0.04455132108633645,
+        "ci_upper": 0.050980498282315524,
+        "std_diff": 0.009169282115128118
+      },
+      "mean_utility": {
+        "mean_diff": -21.543691122992204,
+        "ci_lower": -21.717203330415124,
+        "ci_upper": -21.38193404172499,
+        "std_diff": 0.4780523724537294
+      },
+      "Q_max": {
+        "mean_diff": 8.9,
+        "ci_lower": 7.833333333333333,
+        "ci_upper": 10.166666666666666,
+        "std_diff": 3.2307787040406772
+      }
+    }
+  },
+  {
+    "initial": "cap_2",
+    "label": "Karma-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.015831116912102396,
+        "ci_lower": -0.0197404265566968,
+        "ci_upper": -0.011916369907934926,
+        "std_diff": 0.011152938689514438
+      },
+      "mean_utility": {
+        "mean_diff": -0.4965272471664476,
+        "ci_lower": -0.6185720948996213,
+        "ci_upper": -0.3739381315208177,
+        "std_diff": 0.3481782533831564
+      },
+      "Q_max": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "initial": "cap_2",
+    "label": "Rank-Cap",
+    "reference": "Score-Cap",
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.004442184039603573,
+        "ci_lower": -0.007929501016502702,
+        "ci_upper": -0.0008254561202056305,
+        "std_diff": 0.010190802052091311
+      },
+      "mean_utility": {
+        "mean_diff": -0.13989631107173692,
+        "ci_lower": -0.24952197020994257,
+        "ci_upper": -0.026383756877114035,
+        "std_diff": 0.3206443533512199
+      },
+      "Q_max": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  }
+]

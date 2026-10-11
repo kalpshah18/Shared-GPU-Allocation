@@ -1,0 +1,23 @@
+{
+  "checks_passed": true,
+  "studies": {
+    "e16": {
+      "cells": 2,
+      "seed_rows": 60
+    },
+    "e17": {
+      "cells": 4,
+      "seed_rows": 120
+    },
+    "e18": {
+      "cells": 24,
+      "seed_rows": 720
+    }
+  },
+  "saved_mean_checks": 350,
+  "paired_metric_checks": 67,
+  "example_credit_transition_checks": 8000,
+  "original_seed_outcome_reproduction_checks": 180,
+  "rank_replay_note": "Private truth updates only the focal reference; fixed report sequence; endogenous counts and waits.",
+  "seed_note": "E16/E17 reuse prior evaluation descriptively; E18 independently evaluates fixed training budgets."
+}
