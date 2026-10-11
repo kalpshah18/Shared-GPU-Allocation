@@ -770,6 +770,8 @@ def run_all_plots(results_dir: str = "results", figures_dir: str = "figures") ->
     if (d := _load(rd / "e11" / "summary.json")) is not None:
         e3c = rd / "e3c" / "summary.json"
         plot_e11(d, json.loads(e3c.read_text()) if e3c.exists() else None)
+    from analysis.course_plots import run_course_plots
+    run_course_plots(results_dir, figures_dir)
 
 
 if __name__ == "__main__":
