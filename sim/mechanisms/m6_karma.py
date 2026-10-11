@@ -55,7 +55,8 @@ class KarmaCapMechanism(Mechanism):
         n, k = cfg.n, cfg.k
         bids = np.minimum(reports, balance)
 
-        forced = forced_mask(wait, cfg.wait_limit, k, tiebreak)
+        forced = (forced_mask(wait, cfg.wait_limit, k, tiebreak) if cfg.enable_wait_cap
+                  else np.zeros(wait.shape, dtype=np.int64))
         n_forced = forced.sum(axis=-1)
         r = k - n_forced                                           # auction slots per scenario
         x = batch_top_k_mask(with_forced_priority(bids, forced), tiebreak, k)
@@ -88,9 +89,11 @@ class KarmaCapMechanism(Mechanism):
     # ── rollout interface ─────────────────────────────────────────────────────
     def rollout_init(self, history: History, B: int) -> dict:
         return {"bal": np.tile(self.balance[None, :], (B, 1)),
+                "cum": np.tile(history.cumulative[None, :], (B, 1)).astype(np.int64),
                 "wait": np.tile(history.consecutive_wait[None, :], (B, 1)).astype(np.int64)}
 
     def rollout_step(self, reports, state, tiebreak):
         x, state["bal"] = self._step(state["bal"], state["wait"], reports, tiebreak)
         state["wait"] = np.where(x == 1, 0, state["wait"] + 1)
+        state["cum"] = state["cum"] + x
         return x, np.zeros(reports.shape, dtype=np.float64)

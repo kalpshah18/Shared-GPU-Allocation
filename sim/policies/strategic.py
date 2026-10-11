@@ -34,13 +34,14 @@ Notes
 * Future rounds in a rollout are simulated from the i.i.d. marginals D_i,
   with all other users following `opponent_policy`; the focal user reports
   truthfully after the first simulated round (the standard rollout base
-  policy).  Candidates share common random numbers, so differences between
-  candidate reports are not Monte Carlo noise.
+  policy). Candidates share common random numbers to reduce Monte Carlo
+  variance in comparisons between candidate reports.
 """
 
 from __future__ import annotations
 
 from typing import Callable
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -97,19 +98,28 @@ def rollout_report(
     """
     Choose the focal user's report for the current round.
 
-    For every candidate report r in `grid` (scaled by v_max), simulate the
+    For every candidate report r in `grid` (scaled by v_max), plus exact truth, simulate the
     next H rounds `n_rollouts` times: the current round uses r and the focal
     user's known `true_value`; the other users' values are drawn from their
     marginals and reported through `opponent_policy`; later rounds use fresh
     values with a truthful focal user.  The candidate with the highest mean
     cumulative focal utility wins; ties go to the candidate closest to the
-    true value.
+    true value. H is truncated to the rounds remaining in the finite episode.
+    Stateful mechanism and opponent-policy histories advance in each scenario.
 
     `mechanism` must support the rollout interface (``rollout_init`` /
     ``rollout_step``): M3, M4, M5 via ``allocate_batch``; M6, M7 natively.
     """
     n = cfg.n
-    cand = np.asarray(grid, dtype=np.float64) * cfg.v_max
+    if H < 1 or n_rollouts < 1:
+        raise ValueError("H and n_rollouts must be positive.")
+    remaining = cfg.T - history.round
+    if remaining < 1:
+        raise ValueError("No allocation rounds remain.")
+    H = min(H, remaining)
+    cand = np.unique(np.append(np.asarray(grid, dtype=np.float64) * cfg.v_max, true_value))
+    if not np.all(np.isfinite(cand)) or np.any((cand < 0) | (cand > cfg.v_max)):
+        raise ValueError("Candidate reports must lie in [0, v_max].")
     G, R = len(cand), n_rollouts
 
     vals = sample_iid_values(rng, cfg, (H, R))              # (H, R, n)
@@ -119,9 +129,11 @@ def rollout_report(
     state = mechanism.rollout_init(history, G * R)
     util = np.zeros((G, R))
     for h in range(H):
-        opp = np.asarray(call_policy(opponent_policy, vals[h], history, cfg),
-                         dtype=np.float64)                                     # (R, n)
-        reports = np.broadcast_to(opp, (G, R, n)).copy()
+        simulated_history = SimpleNamespace(cumulative=state["cum"],
+                                            consecutive_wait=state["wait"], round=history.round + h)
+        values = np.broadcast_to(vals[h], (G, R, n)).reshape(G * R, n)
+        opp = np.asarray(call_policy(opponent_policy, values, simulated_history, cfg), dtype=np.float64)
+        reports = opp.reshape(G, R, n).copy()
         reports[:, :, focal] = cand[:, None] if h == 0 else vals[h, :, focal][None, :]
         x, p = mechanism.rollout_step(reports.reshape(G * R, n), state,
                                       np.broadcast_to(tiebreak[h], (G, R, n)).reshape(G * R, n))
@@ -148,9 +160,9 @@ def make_timed(c: float = 2.0, quantile: float | None = None) -> Callable:
     """
     def policy(true_value, history, cfg, users=None, **_):
         v = np.asarray(true_value, dtype=np.float64)
-        cum = history.cumulative if users is None else history.cumulative[np.asarray(users)]
-        threshold = (history.cumulative.mean() if quantile is None
-                     else np.quantile(history.cumulative, quantile))
+        cum = history.cumulative if users is None else history.cumulative[..., np.asarray(users)]
+        threshold = (history.cumulative.mean(axis=-1, keepdims=True) if quantile is None
+                     else np.quantile(history.cumulative, quantile, axis=-1, keepdims=True))
         return np.where(cum <= threshold, np.minimum(c * v, cfg.v_max), v)[()]
     policy.needs_users = True
     policy.__name__ = f"timed_cap_{c:g}" + ("" if quantile is None else f"_q{round(100 * quantile)}")

@@ -93,6 +93,8 @@ def save_outputs(results_dir, exp: str, summary: list, config: dict, seeds: list
                  paired: list | dict | None = None) -> None:
     """Persist summary.json, config.json and (optionally) paired.json."""
     base = Path(results_dir) / exp
+    if exp in ("e3b", "e3c", "e11"):
+        config = {**config, "attacker_version": "corrected-stateful-v2"}
     save_json(summary, base / "summary.json")
     save_json({"experiment": exp, "n_seeds": len(seeds), "seeds": seeds, **config},
               base / "config.json")

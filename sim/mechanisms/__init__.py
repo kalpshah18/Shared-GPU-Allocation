@@ -8,6 +8,7 @@ from sim.mechanisms.m4_score     import ScoreMechanism
 from sim.mechanisms.m5_vickrey   import VickreyMechanism
 from sim.mechanisms.m6_karma     import KarmaCapMechanism
 from sim.mechanisms.m7_rank      import RankCapMechanism
+from sim.mechanisms.score_cap    import ScoreCapMechanism
 
 __all__ = [
     "Mechanism",
@@ -18,6 +19,7 @@ __all__ = [
     "VickreyMechanism",
     "KarmaCapMechanism",
     "RankCapMechanism",
+    "ScoreCapMechanism",
     "MECHANISM_NAMES",
     "PROPOSED_MECHANISM_NAMES",
     "ALL_MECHANISM_NAMES",
@@ -36,7 +38,7 @@ MECHANISM_NAMES = [
 
 # The two mechanisms proposed in this project (extensions beyond the five baselines).
 PROPOSED_MECHANISM_NAMES = ["KarmaCapMechanism", "RankCapMechanism"]
-ALL_MECHANISM_NAMES = MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES
+ALL_MECHANISM_NAMES = MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES + ["ScoreCapMechanism"]
 
 MECHANISM_LABELS = {
     "RandomMechanism"    : "M1 Random",
@@ -46,6 +48,7 @@ MECHANISM_LABELS = {
     "VickreyMechanism"   : "M5 Vickrey",
     "KarmaCapMechanism"  : "M6 Karma-Cap",
     "RankCapMechanism"   : "M7 Rank-Cap",
+    "ScoreCapMechanism"  : "Score-Cap",
 }
 
 
@@ -73,4 +76,6 @@ def make_mechanism(name: str, cfg, pkg=None) -> Mechanism:
         return KarmaCapMechanism(cfg)
     if name == "RankCapMechanism":
         return RankCapMechanism(cfg)
+    if name == "ScoreCapMechanism":
+        return ScoreCapMechanism(cfg)
     raise ValueError(f"Unknown mechanism '{name}'. Known: {ALL_MECHANISM_NAMES}")

@@ -121,15 +121,15 @@ def test_rollout_under_vickrey_is_truthful_on_the_grid():
     assert _roll(VickreyMechanism(RCFG), 0.0) == 0.0
 
 
-def test_rollout_vickrey_picks_a_grid_neighbour_of_off_grid_values():
+def test_rollout_vickrey_can_report_exact_off_grid_truth():
     r = _roll(VickreyMechanism(RCFG), 0.55, n_rollouts=300)
-    assert r in (0.5, 0.6)
+    assert r == pytest.approx(0.55)
 
 
-def test_rollout_returns_grid_value_and_is_deterministic_given_rng():
+def test_rollout_returns_grid_or_truth_and_is_deterministic_given_rng():
     mech = ScoreMechanism(RCFG)
     a = _roll(mech, 0.42, seed=7)
-    assert a in ROLLOUT_GRID
+    assert a in (*ROLLOUT_GRID, 0.42)
     assert a == _roll(mech, 0.42, seed=7)
 
 

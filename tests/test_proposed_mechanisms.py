@@ -60,7 +60,7 @@ def test_invalid_proposed_parameters_rejected(kw):
 
 def test_factory_labels_and_names_include_proposed():
     assert PROPOSED_MECHANISM_NAMES == ["KarmaCapMechanism", "RankCapMechanism"]
-    assert ALL_MECHANISM_NAMES == MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES
+    assert ALL_MECHANISM_NAMES == MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES + ["ScoreCapMechanism"]
     assert set(MECHANISM_LABELS) == set(ALL_MECHANISM_NAMES)
     cfg = Config(n=8, k=2, T=3)
     pkg = SeedPackage.generate(1, cfg)
@@ -402,7 +402,7 @@ def test_rollout_init_is_a_copy_not_a_view():
 
 @pytest.mark.parametrize("cls", PROPOSED)
 def test_rollout_report_works_and_leaves_the_mechanism_untouched(cls):
-    cfg = Config(n=10, k=2, T=1)
+    cfg = Config(n=10, k=2, T=100)
     m = cls(cfg)
     h, rng = hist(10), np.random.default_rng(0)
     for t in range(25):                                       # build some state

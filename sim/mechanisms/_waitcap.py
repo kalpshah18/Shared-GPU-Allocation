@@ -5,8 +5,8 @@ The hard waiting guarantee shared by the proposed mechanisms (M6, M7).
 
 Rule: a user whose consecutive wait has reached the cap W is *forced* into the
 allocation, oldest first (ties broken at random).  At most k users are forced
-in one round; any surplus keeps waiting and is first in line next round, so the
-guarantee degrades gracefully instead of being violated silently.  This is the
+in one round; surplus eligible users keep waiting. Starting with zero waits,
+the certified bound is W+ceil(n/k)-1 (docs/THEORY.md proves this). This is the
 deficit-style override used by bounded-lag schedulers (Deficit Round Robin,
 stride scheduling, Gavel's priority), added on top of a value-aware rule.
 
@@ -18,7 +18,7 @@ from __future__ import annotations
 import numpy as np
 
 # Priority given to forced users so they sort ahead of every ordinary score.
-FORCED_PRIORITY = 1e18
+FORCED_PRIORITY = np.inf
 
 
 def forced_mask(wait: np.ndarray, cap: int, k: int, tiebreak: np.ndarray) -> np.ndarray:

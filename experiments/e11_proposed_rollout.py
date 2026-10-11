@@ -7,17 +7,19 @@ E3c showed that a rollout attacker with a 40-80-round horizon earns a
 significant gain against M4 Score even at lambda = 2, although every simple lie
 loses.  This is the test the proposed mechanisms were *not* tuned on: M6
 Karma-Cap and M7 Rank-Cap face the same attacker (n = 10, k = 2, T = 300, all
-other users truthful, 100 rollouts per candidate report, grid {0, 0.1, ..., 1})
+other users truthful, 100 rollouts per candidate report, grid {0, 0.1, ..., 1}
+plus exact truth)
 with horizons H in {5, 40, 80}, next to capped exaggeration c = 2 and c = 1.25.
 
 The Score reference at the same settings is E3c (``results/e3c``), which uses
 identical seeds, n, k, T and number of rollouts.
 
-How the attacker sees each mechanism: for M6 the rollout simulates the karma
-balances, waits and payments exactly; for M7 the users' report histories (their
-quantile functions) are frozen at the current round, so within a rollout the
-attacker cannot reshape its own quantile function (an approximation that favours
-M7; see the limitations in the README).
+How the attacker sees each mechanism: M6 evolves balances and waits; M7 now
+updates users' report histories inside each hypothetical future. Historical
+checkpoint results froze these histories. E15 evaluates the corrected attacker
+on fresh seeds. The historical approximation froze quantile functions at the
+current round, preventing the attacker from modelling changes to its own report
+history. E15 includes matched frozen controls to measure that effect.
 
 Outputs: results/e11/{summary,config}.json and results/e11/raw/*.json
 Usage:   python experiments/e11_proposed_rollout.py [--seeds N] [--results-dir DIR]

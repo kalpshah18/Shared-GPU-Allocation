@@ -90,7 +90,8 @@ class Mechanism(ABC):
 
     def rollout_init(self, history: History, B: int) -> dict:
         """Mutable simulation state for B rollouts, copied from the current state."""
-        return {"cum": np.tile(history.cumulative[None, :], (B, 1)).astype(np.int64)}
+        return {"cum": np.tile(history.cumulative[None, :], (B, 1)).astype(np.int64),
+                "wait": np.tile(history.consecutive_wait[None, :], (B, 1)).astype(np.int64)}
 
     def rollout_step(
         self,
@@ -101,6 +102,7 @@ class Mechanism(ABC):
         """Allocate one simulated round for every rollout, advancing `state`."""
         x, p = self.allocate_batch(reports, state["cum"], tiebreak)
         state["cum"] = state["cum"] + x
+        state["wait"] = np.where(x == 1, 0, state["wait"] + 1)
         return x, p
 
     @property

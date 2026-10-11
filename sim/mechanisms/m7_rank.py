@@ -11,9 +11,9 @@ the raw report the mechanism scores the user's *quantile*
 
 so q_i is approximately Uniform(0,1) for every truthful user, whatever their
 value distribution.  Consequences:
-  * any increasing distortion of the reports (e.g. multiplying by c) leaves the
-    quantiles unchanged, and clipping at v_max creates ties that *lower* the
-    quantile of the user's best values, so exaggeration cannot raise a score;
+  * a fixed strictly increasing distortion leaves quantiles unchanged. Clipping
+    creates ties that can raise some quantiles and lower others; it is not covered
+    by the invariance theorem (see docs/THEORY.md);
   * users with different value scales are treated alike, which equalises
     normalised benefit (J_B) but gives up welfare when users really differ.
 
@@ -64,15 +64,18 @@ class RankCapMechanism(Mechanism):
         q = np.array([self._quantile(self._past[i], float(reports[i])) for i in range(n)])
         tiebreak = np.random.default_rng(tie_seed).random(n)[None, :]
         scores = self._score(q, reports, history.cumulative)[None, :]
-        forced = forced_mask(history.consecutive_wait[None, :], self.cfg.wait_limit, k, tiebreak)
+        forced = (forced_mask(history.consecutive_wait[None, :], self.cfg.wait_limit, k, tiebreak)
+                  if self.cfg.enable_wait_cap else np.zeros((1, n), dtype=np.int64))
         x = batch_top_k_mask(with_forced_priority(scores, forced), tiebreak, k)
         for i in range(n):                              # the report becomes part of the user's past
             bisect.insort(self._past[i], float(reports[i]))
         return x[0], np.zeros(n, dtype=np.float64)
 
-    # ── rollout interface: quantile functions are frozen at the current state ─
+    # Base reports are sorted once. Hypothetical reports are tracked separately
+    # per scenario, so no candidate can contaminate another or the real mechanism.
     def rollout_init(self, history: History, B: int) -> dict:
         return {"past": [np.asarray(p, dtype=np.float64) for p in self._past],
+                "future": [],
                 "cum": np.tile(history.cumulative[None, :], (B, 1)).astype(np.int64),
                 "wait": np.tile(history.consecutive_wait[None, :], (B, 1)).astype(np.int64)}
 
@@ -82,10 +85,18 @@ class RankCapMechanism(Mechanism):
         for i, past in enumerate(state["past"]):
             lo = np.searchsorted(past, reports[:, i], side="left")
             hi = np.searchsorted(past, reports[:, i], side="right")
-            q[:, i] = (lo + 0.5 * (hi - lo) + 0.5) / (len(past) + 1)
+            count = lo + 0.5 * (hi - lo)
+            if state["future"]:
+                future = np.stack([r[:, i] for r in state["future"]], axis=1)
+                count = count + np.sum(future < reports[:, i, None], axis=1)
+                count = count + 0.5 * np.sum(future == reports[:, i, None], axis=1)
+            q[:, i] = (count + 0.5) / (len(past) + len(state["future"]) + 1)
         scores = self._score(q, reports, state["cum"])
-        forced = forced_mask(state["wait"], self.cfg.wait_limit, k, tiebreak)
+        forced = (forced_mask(state["wait"], self.cfg.wait_limit, k, tiebreak)
+                  if self.cfg.enable_wait_cap else np.zeros(reports.shape, dtype=np.int64))
         x = batch_top_k_mask(with_forced_priority(scores, forced), tiebreak, k)
         state["cum"] = state["cum"] + x
         state["wait"] = np.where(x == 1, 0, state["wait"] + 1)
+        if self.cfg.rank_rollout_update:
+            state["future"].append(reports.copy())
         return x, np.zeros(reports.shape, dtype=np.float64)

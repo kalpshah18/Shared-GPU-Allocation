@@ -36,10 +36,12 @@ class Config:
     c: float = 2.0        # capped-exaggeration multiplier (1.25, 1.5, or 2)
 
     # ── Proposed mechanisms (M6 Karma-Cap, M7 Rank-Cap) ───────────────────────
-    wait_cap: int | None = None   # hard waiting bound W (None -> Delta = 2*ceil(n/k))
+    wait_cap: int | None = None   # service override threshold W (None -> Delta = 2*ceil(n/k))
     karma_init: float = 2.0       # initial / mean karma balance per user (M6)
     karma_cap_mult: float = 3.0   # balance ceiling = karma_cap_mult * karma_init (M6)
     rank_blend: float = 0.0       # M7 score = (1-b)*rank + b*report, b in [0, 1]
+    enable_wait_cap: bool = True  # explicit ablation switch for Score-Cap / M6 / M7
+    rank_rollout_update: bool = True  # False reproduces the historical frozen-history attacker
 
     # ── Valuation process ────────────────────────────────────────────────────
     # "uniform"   → Uniform(0, v_max)        (base case)
@@ -64,7 +66,7 @@ class Config:
 
     # ── Derived (not set by user) ─────────────────────────────────────────────
     delta: int = field(init=False)
-    wait_limit: int = field(init=False)   # effective waiting cap W
+    wait_limit: int = field(init=False)   # effective override threshold W; bound is W+ceil(n/k)-1
 
     def __post_init__(self) -> None:
         if self.n < 2:
@@ -99,6 +101,9 @@ class Config:
             raise ValueError(f"karma_cap_mult={self.karma_cap_mult} must be >= 1.")
         if not (0.0 <= self.rank_blend <= 1.0):
             raise ValueError(f"rank_blend={self.rank_blend} must be in [0, 1].")
+        for name in ("enable_wait_cap", "rank_rollout_update"):
+            if not isinstance(getattr(self, name), bool):
+                raise ValueError(f"{name} must be a bool.")
         self.delta = self.delta_multiplier * math.ceil(self.n / self.k)
         self.wait_limit = self.delta if self.wait_cap is None else int(self.wait_cap)
 
