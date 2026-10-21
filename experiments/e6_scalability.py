@@ -1,128 +1,114 @@
 """
 experiments/e6_scalability.py
 ==============================
-E6 — Computational Scalability (Stretch Experiment) — Owner: Kalp Shah
+E6 — Computational scalability (stretch) — Owner: Kalp Shah
 
-Sweep population size n ∈ {10, 25, 50, 100, 250, 500} with fixed scarcity ratio
-k/n = 0.2 (k = round(0.2 * n)), T = 1000 rounds.
+Vary n in {10, 25, 50, 100, 250, 500} with k/n = 0.2 and T = 1000 (truthful
+reports) and report, for M1-M5:
 
-Measures:
-  - Wall-clock runtime per round (microseconds)
-  - Peak memory allocated during simulation (KiB)
-for mechanisms M1–M5.
+  * wall-clock time per simulated round (microseconds), measured around the
+    round loop only (valuation generation excluded), best of 3 after a warm-up;
+  * peak Python-heap memory (KiB) *measured* with ``tracemalloc`` over one
+    full simulation, including the pre-generated seed package and the
+    per-round allocation / payment records.  numpy buffers are tracked by
+    tracemalloc; interpreter and library overhead outside the heap is not.
 
-Output: results/e6/summary.json
+Timing and memory use separate passes because tracemalloc slows execution.
+The rollout attack is excluded (it solves a separate, costlier problem).
+Absolute numbers are machine-dependent.
+
+Outputs: results/e6/{summary,config}.json and results/e6/raw/*.json
+Usage:   python experiments/e6_scalability.py [--seeds N] [--results-dir DIR]
 """
 
 from __future__ import annotations
 
-import json
 import sys
 import time
 import tracemalloc
 from pathlib import Path
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import numpy as np
-
-sys.path.insert(0, ".")
-
+from analysis.bootstrap import summarise_seeds
+from experiments.common import build_parser, load_seeds, save_outputs, save_raw
 from sim.config import Config
 from sim.environment import SeedPackage
-from sim.mechanisms import (
-    RandomMechanism, RoundRobinMechanism,
-    GreedyMechanism, ScoreMechanism, VickreyMechanism,
-)
-from sim.runner import run_single
-from analysis.bootstrap import summarise_seeds
+from sim.mechanisms import MECHANISM_NAMES, make_mechanism
+from sim.runner import run_mixed
 
 N_VALUES = [10, 25, 50, 100, 250, 500]
-BASE_T = 1000
-MECH_NAMES = [
-    "RandomMechanism", "RoundRobinMechanism",
-    "GreedyMechanism", "ScoreMechanism", "VickreyMechanism",
-]
-SCALABILITY_METRIC_KEYS = ["time_per_round_us", "peak_memory_kib"]
+MEMORY_SEEDS = 3                      # memory is near-deterministic; few seeds suffice
+METRIC_KEYS = ["time_per_round_us", "peak_memory_kib"]
 
 
-def load_seeds(path: str = "seeds/master_seeds.json", max_seeds: int = 5) -> list[int]:
-    with open(path) as fh:
-        seeds = json.load(fh)["seeds"]
-    return seeds[:max_seeds]  # Use 5 seeds for computational benchmarks
+TIMING_REPEATS = 3
 
 
-def make_mech(mname: str, cfg: Config, pkg: SeedPackage):
-    if mname == "RandomMechanism":
-        return RandomMechanism(cfg)
-    if mname == "RoundRobinMechanism":
-        return RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0]))
-    if mname == "GreedyMechanism":
-        return GreedyMechanism(cfg)
-    if mname == "ScoreMechanism":
-        return ScoreMechanism(cfg)
-    if mname == "VickreyMechanism":
-        return VickreyMechanism(cfg)
-    raise ValueError(f"Unknown mechanism {mname}")
+def measure_time_us(mname: str, cfg: Config, seed: int) -> float:
+    """
+    Microseconds per round of the simulation loop for one seed: one warm-up
+    run, then the minimum over ``TIMING_REPEATS`` timed runs (the standard
+    way to suppress scheduler and frequency noise on a shared machine).
+    """
+    pkg = SeedPackage.generate(seed, cfg)
+    run_mixed(make_mechanism(mname, cfg, pkg), pkg, cfg, None)               # warm-up
+    best = float("inf")
+    for _ in range(TIMING_REPEATS):
+        mech = make_mechanism(mname, cfg, pkg)
+        t0 = time.perf_counter()
+        run_mixed(mech, pkg, cfg, None)
+        best = min(best, time.perf_counter() - t0)
+    return best / cfg.T * 1e6
 
 
-def run_e6(seeds: list[int]) -> list[dict]:
-    all_results = []
+def measure_peak_kib(mname: str, cfg: Config, seed: int) -> float:
+    """Peak traced heap (KiB) during seed-package generation plus one run."""
+    tracemalloc.start()
+    try:
+        tracemalloc.reset_peak()
+        pkg = SeedPackage.generate(seed, cfg)
+        mech = make_mechanism(mname, cfg, pkg)
+        history = run_mixed(mech, pkg, cfg, None)
+        _, peak = tracemalloc.get_traced_memory()
+        del history
+    finally:
+        tracemalloc.stop()
+    return peak / 1024.0
 
-    for n in N_VALUES:
-        k = max(1, round(n * 0.2))
-        cfg = Config(n=n, k=k, T=BASE_T, rho=0.0)
 
-        for mname in MECH_NAMES:
-            per_seed = []
-            for seed in seeds:
-                pkg = SeedPackage.generate(seed, cfg)
-                mech = make_mech(mname, cfg, pkg)
-
-                t0 = time.perf_counter()
-                history = run_single(mech, pkg, cfg, policy_fn=None)
-                elapsed_s = time.perf_counter() - t0
-
-                time_per_round_us = (elapsed_s / cfg.T) * 1e6
-                # Analytic size of the simulation state arrays (valuations, tie
-                # seeds, history vectors, per-round allocation + payment records).
-                # Computed from array sizes, not measured with a profiler, so it is
-                # identical across mechanisms by construction.
-                state_bytes = (
-                    pkg.valuations.nbytes
-                    + pkg.tie_seeds.nbytes
-                    + history.cumulative.nbytes
-                    + history.consecutive_wait.nbytes
-                    + (cfg.T * cfg.n * 16)  # allocations (int64) + payments (float64)
-                )
-                peak_memory_kib = state_bytes / 1024.0
-
-                per_seed.append({
-                    "time_per_round_us": time_per_round_us,
-                    "peak_memory_kib": peak_memory_kib,
-                    "seed": seed,
-                })
-
-            summary = summarise_seeds(per_seed, SCALABILITY_METRIC_KEYS)
-            summary["mechanism"] = mname
-            summary["n"] = n
-            summary["k"] = k
-            all_results.append(summary)
-            print(f"  E6 n={n:3d} {mname:<20s} "
-                  f"Time/round: {summary['time_per_round_us']['mean']:6.1f} µs | "
-                  f"State RAM: {summary['peak_memory_kib']['mean']:6.1f} KiB", flush=True)
-
-    return all_results
+def run_e6(seeds, results_dir=None, T=1000, n_bootstrap=10_000, verbose=True, n_values=None) -> list:
+    n_values = n_values or N_VALUES
+    summaries = []
+    for n in n_values:
+        cfg = Config(n=n, k=max(1, round(0.2 * n)), T=T, rho=0.0)
+        for mname in MECHANISM_NAMES:
+            rows = []
+            for j, seed in enumerate(seeds):
+                row = {"seed": seed, "time_per_round_us": measure_time_us(mname, cfg, seed)}
+                row["peak_memory_kib"] = (measure_peak_kib(mname, cfg, seed)
+                                          if j < MEMORY_SEEDS else float("nan"))
+                rows.append(row)
+            summary = summarise_seeds(rows, METRIC_KEYS, n_resamples=n_bootstrap)
+            summary.update({"mechanism": mname, "n": n, "k": cfg.k, "n_seeds": len(seeds)})
+            summaries.append(summary)
+            if results_dir:
+                save_raw(results_dir, "e6", f"{mname}_n_{n}", rows, cfg.to_dict())
+            if verbose:
+                mem = summary["peak_memory_kib"]["mean"]
+                print(f"  E6 n={n:<4d} {mname:<20s} "
+                      f"{summary['time_per_round_us']['mean']:7.1f} us/round | "
+                      f"peak heap {mem:9.1f} KiB", flush=True)
+    if results_dir:
+        save_outputs(results_dir, "e6", summaries,
+                     {"n_values": n_values, "k_over_n": 0.2, "T": T,
+                      "memory_seeds": MEMORY_SEEDS, "memory_tool": "tracemalloc"}, seeds)
+    return summaries
 
 
 if __name__ == "__main__":
-    seeds = load_seeds()
-    print(f"Running E6 benchmark with {len(seeds)} seeds across n ∈ {N_VALUES}")
-    results = run_e6(seeds)
-
-    out = Path("results/e6")
-    out.mkdir(parents=True, exist_ok=True)
-    with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2)
-    print("E6 complete. Summary saved to results/e6/summary.json")
+    args = build_parser(__doc__).parse_args()
+    seeds = load_seeds(n=args.seeds)
+    print(f"Running E6 benchmark with {len(seeds)} seeds across n = {N_VALUES}")
+    run_e6(seeds, args.results_dir, T=args.T or 1000, n_bootstrap=args.bootstrap)
+    print(f"E6 complete. Summary saved to {args.results_dir}/e6/summary.json")

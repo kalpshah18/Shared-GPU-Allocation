@@ -1,0 +1,242 @@
+[
+  {
+    "label": "Greedy",
+    "initial": "truthful",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      },
+      "mean_utility": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "label": "Greedy",
+    "initial": "cap_2",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      },
+      "mean_utility": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "label": "Score",
+    "initial": "truthful",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      },
+      "mean_utility": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "label": "Score",
+    "initial": "cap_2",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      },
+      "mean_utility": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "label": "Score-Cap",
+    "initial": "truthful",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.004048391089752527,
+        "ci_lower": 0.0018666427136914672,
+        "ci_upper": 0.006271882761641453,
+        "std_diff": 0.006161293505635368
+      },
+      "mean_utility": {
+        "mean_diff": 0.12692236569855833,
+        "ci_lower": 0.05792800481518991,
+        "ci_upper": 0.1977953973933228,
+        "std_diff": 0.19508184961219405
+      }
+    }
+  },
+  {
+    "label": "Score-Cap",
+    "initial": "cap_2",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.0024246619627431207,
+        "ci_lower": -0.004673261305278708,
+        "ci_upper": -0.0003241330875425493,
+        "std_diff": 0.006162353497625899
+      },
+      "mean_utility": {
+        "mean_diff": -0.07578388033685109,
+        "ci_lower": -0.14643404868691073,
+        "ci_upper": -0.009859425028025887,
+        "std_diff": 0.19383288873560933
+      }
+    }
+  },
+  {
+    "label": "Vickrey",
+    "initial": "truthful",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      },
+      "mean_utility": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "label": "Vickrey",
+    "initial": "cap_2",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      },
+      "mean_utility": {
+        "mean_diff": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std_diff": 0.0
+      }
+    }
+  },
+  {
+    "label": "Karma-Cap",
+    "initial": "truthful",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": -0.006298938942022151,
+        "ci_lower": -0.009318601361835892,
+        "ci_upper": -0.003270637848724189,
+        "std_diff": 0.00858908643526085
+      },
+      "mean_utility": {
+        "mean_diff": -0.19609606115040373,
+        "ci_lower": -0.2910540042728464,
+        "ci_upper": -0.10177022887972957,
+        "std_diff": 0.26861250969884365
+      }
+    }
+  },
+  {
+    "label": "Karma-Cap",
+    "initial": "cap_2",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": 0.00923009846801894,
+        "ci_lower": 0.005626287152075169,
+        "ci_upper": 0.01257427929766935,
+        "std_diff": 0.00970298443474196
+      },
+      "mean_utility": {
+        "mean_diff": 0.28931972221165514,
+        "ci_lower": 0.17701919442163588,
+        "ci_upper": 0.39331377839997517,
+        "std_diff": 0.3021364341773962
+      }
+    }
+  },
+  {
+    "label": "Rank-Cap",
+    "initial": "truthful",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": -2.2402630693466965e-05,
+        "ci_lower": -0.0020089245846224547,
+        "ci_upper": 0.0019026296694031931,
+        "std_diff": 0.0054985508800501895
+      },
+      "mean_utility": {
+        "mean_diff": -0.0012986638245061262,
+        "ci_lower": -0.06343591338512833,
+        "ci_upper": 0.05866997818400061,
+        "std_diff": 0.17165661400683213
+      }
+    }
+  },
+  {
+    "label": "Rank-Cap",
+    "initial": "cap_2",
+    "budget": 20,
+    "reference_budget": 4,
+    "metrics": {
+      "WR": {
+        "mean_diff": -2.2402630693466965e-05,
+        "ci_lower": -0.0020089245846224547,
+        "ci_upper": 0.0019026296694031931,
+        "std_diff": 0.0054985508800501895
+      },
+      "mean_utility": {
+        "mean_diff": -0.0012986638245061262,
+        "ci_lower": -0.06343591338512833,
+        "ci_upper": 0.05866997818400061,
+        "std_diff": 0.17165661400683213
+      }
+    }
+  }
+]

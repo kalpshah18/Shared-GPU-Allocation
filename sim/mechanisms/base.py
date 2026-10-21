@@ -59,6 +59,52 @@ class Mechanism(ABC):
             Payment vector; p_i = 0 whenever x_i = 0.
         """
 
+    def allocate_batch(
+        self,
+        reports: np.ndarray,
+        cumulative: np.ndarray,
+        tiebreak: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Vectorised ``allocate`` over B independent scenarios (used by the
+        rollout attack).  Only mechanisms whose decision depends on history
+        solely through the cumulative allocation counts can implement this.
+
+        Parameters
+        ----------
+        reports, cumulative, tiebreak : ndarray, shape (B, n)
+            Reports, cumulative allocations a_i(t) and the secondary
+            tie-breaking key for every scenario.
+
+        Returns
+        -------
+        (x, p) : both shape (B, n); x in {0,1} with k ones per row.
+        """
+        raise NotImplementedError(f"{self.name} has no batch allocation rule.")
+
+    # ── Rollout interface (used by the finite-horizon rollout attack) ─────────
+    # A rollout simulates B hypothetical futures of the *current* state.  The
+    # default implementation covers mechanisms whose decision depends on the
+    # past only through cumulative allocations (M3, M4, M5); stateful
+    # mechanisms override both methods.
+
+    def rollout_init(self, history: History, B: int) -> dict:
+        """Mutable simulation state for B rollouts, copied from the current state."""
+        return {"cum": np.tile(history.cumulative[None, :], (B, 1)).astype(np.int64),
+                "wait": np.tile(history.consecutive_wait[None, :], (B, 1)).astype(np.int64)}
+
+    def rollout_step(
+        self,
+        reports: np.ndarray,
+        state: dict,
+        tiebreak: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Allocate one simulated round for every rollout, advancing `state`."""
+        x, p = self.allocate_batch(reports, state["cum"], tiebreak)
+        state["cum"] = state["cum"] + x
+        state["wait"] = np.where(x == 1, 0, state["wait"] + 1)
+        return x, p
+
     @property
     def name(self) -> str:
         return self.__class__.__name__

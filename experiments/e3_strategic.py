@@ -1,118 +1,85 @@
 """
 experiments/e3_strategic.py
 ============================
-E3 — Strategic Population and Attack Type — Owner: Kalp Shah
+E3 — Strategic population and attack type — Owner: Kalp Shah
 
-Full factorial design over:
-  ρ ∈ {0, 0.1, 0.25, 0.5, 1}    (fraction of strategic users)
-  × 3 scalable policies (truthful, capped exaggeration c=2, maximum claim)
+Factorial design over rho in {0, 0.1, 0.25, 0.5, 1} and the three scalable
+policies (truthful, capped exaggeration c = 2, maximum claim) for all five
+mechanisms (M4 at lambda = 1).  Metrics: PoS, WR, J_A, J_B, SR_Delta,
+coalition gain (M_mean, M_max, frac_pos; undefined at rho = 0) and unilateral
+gain (M_uni, M_uni_max, frac_pos_uni; at rho = 0 each focal user is a lone
+deviator in an otherwise truthful population).
 
-For all five mechanisms, with M4 at the default history penalty λ = 1.0.
-(The diagnostic rollout attack in sim/policies/strategic.py is not run here.)
+The diagnostic rollout attack is run separately for M3-M5 in
+experiments/e3b_rollout.py (n = 10).
 
-Metrics: PoS, WR, J_A, SR_Δ,
-  coalition gain   M_mean / M_max / frac_pos  (strategic set deviates together
-                   vs. all truthful; undefined at ρ = 0),
-  unilateral gain  M_uni  (one focal user deviates vs. reports truthfully,
-                   all other strategic users unchanged; at ρ = 0 the focal
-                   user is a lone deviator in a truthful population).
-
-Output: results/e3/summary.json
+Outputs: results/e3/{summary,paired,config}.json and results/e3/raw/*.json
+Usage:   python experiments/e3_strategic.py [--seeds N] [--results-dir DIR]
 """
 
 from __future__ import annotations
 
-import json
 import sys
 from itertools import product
 from pathlib import Path
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import numpy as np
-
-sys.path.insert(0, ".")
-
-from sim.config import Config
-from sim.environment import SeedPackage, save_seed_result
-from sim.mechanisms import (
-    RandomMechanism, RoundRobinMechanism,
-    GreedyMechanism, ScoreMechanism, VickreyMechanism,
+from analysis.bootstrap import paired_differences
+from experiments.common import (
+    STRATEGIC_KEYS, build_parser, load_seeds, overrides_from_args, run_cell,
+    save_outputs, save_raw, strategic_row,
 )
-from sim.policies import capped_exaggeration, maximum_claim, truthful
-from sim.runner import run_paired, run_unilateral
-from sim import metrics as M
-from analysis.bootstrap import summarise_seeds
+from sim.config import Config
+from sim.mechanisms import MECHANISM_NAMES
+from sim.policies import make_capped, maximum_claim
 
 RHO_VALUES = [0.0, 0.1, 0.25, 0.5, 1.0]
-POLICIES = {
-    "truthful"  : lambda v, h, c: truthful(v, h, c),
-    "cap_2"     : lambda v, h, c: capped_exaggeration(v, h, c, c=2.0),
-    "max_claim" : lambda v, h, c: maximum_claim(v, h, c),
+POLICIES = {                 # name -> policy (None = truthful, handled exactly)
+    "truthful" : None,
+    "cap_2"    : make_capped(2.0),
+    "max_claim": maximum_claim,
 }
-METRIC_KEYS = ["WR", "J_A", "SR_delta", "M_mean", "M_max", "frac_pos", "M_uni", "PoS"]
+PAIRED_KEYS = ["WR", "J_A", "SR_delta"]
 
 
-def load_seeds(path="seeds/master_seeds.json"):
-    with open(path) as fh:
-        return json.load(fh)["seeds"]
+def run_e3(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=True, k=None) -> list:
+    k = k if k is not None else max(1, round(0.2 * n))
+    summaries, cells = [], {}
+    for mname, (pname, policy), rho in product(MECHANISM_NAMES, POLICIES.items(), RHO_VALUES):
+        cfg = Config(n=n, k=k, T=T, rho=rho)
+        rows, summary = run_cell(lambda pkg, m=mname, c=cfg, p=policy: strategic_row(m, c, pkg, p),
+                                 seeds, cfg, STRATEGIC_KEYS, n_bootstrap)
+        summary.update({"mechanism": mname, "policy": pname, "rho": rho, "n_seeds": len(seeds)})
+        summaries.append(summary)
+        cells[(mname, pname, rho)] = rows
+        if results_dir:
+            save_raw(results_dir, "e3", f"{mname}_{pname}_rho_{rho:g}", rows, cfg.to_dict())
+        if verbose:
+            mu = summary["M_uni"]["mean"]
+            print(f"  E3 {mname:<20s} rho={rho:<4g} {pname:<9s} WR={summary['WR']['mean']:.3f} "
+                  f"M_uni={mu:+.3f}", flush=True)
 
-
-def make_mech(mname: str, cfg: Config, pkg: SeedPackage):
-    return {
-        "RandomMechanism"    : RandomMechanism(cfg),
-        "RoundRobinMechanism": RoundRobinMechanism(cfg, init_seed=int(pkg.tie_seeds[0])),
-        "GreedyMechanism"    : GreedyMechanism(cfg),
-        "ScoreMechanism"     : ScoreMechanism(cfg),
-        "VickreyMechanism"   : VickreyMechanism(cfg),
-    }[mname]
-
-
-MECH_NAMES = list({
-    "RandomMechanism", "RoundRobinMechanism",
-    "GreedyMechanism", "ScoreMechanism", "VickreyMechanism",
-})
-
-
-def run_e3(seeds: list[int]) -> list[dict]:
-    results = []
-
-    for mname, (pname, pfn), rho in product(MECH_NAMES, POLICIES.items(), RHO_VALUES):
-        cfg = Config(n=50, k=10, T=1000, rho=rho)
-        per_seed = []
-
-        for seed in seeds:
-            pkg    = SeedPackage.generate(seed, cfg)
-            mech   = make_mech(mname, cfg, pkg)
-
-            h_truth, h_strat = run_paired(mech, pkg, cfg, pfn)
-
-            row = M.compute_all(h_strat, pkg.valuations, cfg)
-            mgain = M.manipulation_gain(h_strat, h_truth, pkg.valuations, pkg.strategic_set)
-            row.update(mgain)
-            h_dev, h_uni, f = run_unilateral(mech, pkg, cfg, pfn)
-            row["M_uni"] = M.unilateral_gain(h_dev, h_uni, pkg.valuations, f)
-            row["PoS"]  = M.price_of_strategy(h_truth, h_strat, pkg.valuations, cfg)
-            row["seed"] = seed
-            per_seed.append(row)
-
-        summary = summarise_seeds(per_seed, METRIC_KEYS)
-        summary.update({"mechanism": mname, "policy": pname, "rho": rho})
-        results.append(summary)
-        print(f"  E3 {mname} ρ={rho} {pname} "
-              f"WR={summary['WR']['mean']:.3f} M_uni={summary['M_uni']['mean']:.4f}", flush=True)
-
-    return results
+    # Paired (same omega) differences: strategic policy minus the truthful cell.
+    paired = []
+    for (mname, pname, rho), rows in cells.items():
+        if pname == "truthful":
+            continue
+        base = cells[(mname, "truthful", rho)]
+        d = paired_differences({"x": rows, "ref": base}, "ref", PAIRED_KEYS, n_resamples=n_bootstrap)["x"]
+        paired.append({"mechanism": mname, "policy": pname, "rho": rho,
+                       "reference": "truthful", "metrics": d})
+    if results_dir:
+        save_outputs(results_dir, "e3", summaries,
+                     {"n": n, "k": k, "T": T, "rho_values": RHO_VALUES,
+                      "policies": list(POLICIES), "lambda_": 1.0, "c": 2.0}, seeds, paired)
+    return summaries
 
 
 if __name__ == "__main__":
-    seeds = load_seeds()
-    print(f"Running E3 factorial: {len(MECH_NAMES)} mechs × {len(POLICIES)} policies × {len(RHO_VALUES)} ρ values")
-    results = run_e3(seeds)
-
-    out = Path("results/e3")
-    out.mkdir(parents=True, exist_ok=True)
-    with open(out / "summary.json", "w") as fh:
-        json.dump(results, fh, indent=2, allow_nan=False)
-    print("E3 complete. Summary saved to results/e3/summary.json")
+    args = build_parser(__doc__).parse_args()
+    seeds = load_seeds(n=args.seeds)
+    print(f"Running E3 factorial: {len(MECHANISM_NAMES)} mechanisms x {len(POLICIES)} policies "
+          f"x {len(RHO_VALUES)} rho values, {len(seeds)} seeds")
+    run_e3(seeds, args.results_dir, **overrides_from_args(args))
+    print(f"E3 complete. Summary saved to {args.results_dir}/e3/summary.json")

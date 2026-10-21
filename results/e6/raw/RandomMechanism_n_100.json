@@ -1,0 +1,175 @@
+{
+  "cell": "RandomMechanism_n_100",
+  "config": {
+    "n": 100,
+    "k": 20,
+    "T": 1000,
+    "v_max": 1.0,
+    "rho": 0.0,
+    "n_focal": 5,
+    "lambda_": 1.0,
+    "c": 2.0,
+    "valuation_dist": "uniform",
+    "alpha": 0.0,
+    "ar1_mode": "proposal",
+    "n_seeds": 30,
+    "n_bootstrap": 10000,
+    "delta_multiplier": 2,
+    "results_dir": "results",
+    "figures_dir": "figures",
+    "seeds_file": "seeds/master_seeds.json",
+    "delta": 10
+  },
+  "rows": [
+    {
+      "seed": 1867694403,
+      "time_per_round_us": 51.05339991860092,
+      "peak_memory_kib": 2596.2470703125
+    },
+    {
+      "seed": 181516585,
+      "time_per_round_us": 51.09960003755987,
+      "peak_memory_kib": 2596.2470703125
+    },
+    {
+      "seed": 176759817,
+      "time_per_round_us": 26.85280004516244,
+      "peak_memory_kib": 2596.2470703125
+    },
+    {
+      "seed": 969161034,
+      "time_per_round_us": 54.70540001988411,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 2111132541,
+      "time_per_round_us": 76.93620002828538,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 731143041,
+      "time_per_round_us": 73.18800000939518,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1537853632,
+      "time_per_round_us": 42.395299999043345,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1107828869,
+      "time_per_round_us": 44.61520002223551,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1843299529,
+      "time_per_round_us": 70.25409990455955,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 305030012,
+      "time_per_round_us": 80.95650002360344,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 803566779,
+      "time_per_round_us": 82.95060007367283,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1966061021,
+      "time_per_round_us": 40.50530004315078,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 580385435,
+      "time_per_round_us": 54.07910002395511,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1191985677,
+      "time_per_round_us": 106.71210009604692,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1979879667,
+      "time_per_round_us": 80.53999999538064,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1313852837,
+      "time_per_round_us": 55.11879990808666,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1376510864,
+      "time_per_round_us": 56.313700042665005,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 2077124754,
+      "time_per_round_us": 81.53399999719113,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 349357642,
+      "time_per_round_us": 87.02810003887862,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1072094445,
+      "time_per_round_us": 78.82950000930578,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 403724232,
+      "time_per_round_us": 41.70719999819994,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 537701754,
+      "time_per_round_us": 23.990900022909045,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1579212729,
+      "time_per_round_us": 22.230899892747402,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1715531334,
+      "time_per_round_us": 25.312499958090484,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1921905285,
+      "time_per_round_us": 28.927700011990964,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 613825205,
+      "time_per_round_us": 33.21479994338006,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1849331768,
+      "time_per_round_us": 79.60980001371354,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1768370664,
+      "time_per_round_us": 57.82660003751516,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 1459208994,
+      "time_per_round_us": 34.39450007863343,
+      "peak_memory_kib": null
+    },
+    {
+      "seed": 893607661,
+      "time_per_round_us": 55.95439998432994,
+      "peak_memory_kib": null
+    }
+  ]
+}

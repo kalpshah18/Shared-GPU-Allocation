@@ -18,7 +18,7 @@ import numpy as np
 from sim.config import Config
 from sim.environment import History
 from sim.mechanisms.base import Mechanism
-from sim.mechanisms._utils import seeded_top_k
+from sim.mechanisms._utils import batch_top_k_mask, seeded_top_k
 
 
 class GreedyMechanism(Mechanism):
@@ -37,3 +37,7 @@ class GreedyMechanism(Mechanism):
 
         p = np.zeros(self.cfg.n, dtype=np.float64)
         return x, p
+
+    def allocate_batch(self, reports, cumulative, tiebreak):
+        x = batch_top_k_mask(reports, tiebreak, self.cfg.k)
+        return x, np.zeros(reports.shape, dtype=np.float64)

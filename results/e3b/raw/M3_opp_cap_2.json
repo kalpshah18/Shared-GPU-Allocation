@@ -1,0 +1,265 @@
+{
+  "cell": "M3_opp_cap_2",
+  "config": {
+    "n": 10,
+    "k": 2,
+    "T": 500,
+    "v_max": 1.0,
+    "rho": 0.0,
+    "n_focal": 5,
+    "lambda_": 1.0,
+    "c": 2.0,
+    "valuation_dist": "uniform",
+    "alpha": 0.0,
+    "ar1_mode": "proposal",
+    "n_seeds": 30,
+    "n_bootstrap": 10000,
+    "delta_multiplier": 2,
+    "results_dir": "results",
+    "figures_dir": "figures",
+    "seeds_file": "seeds/master_seeds.json",
+    "delta": 10
+  },
+  "rows": [
+    {
+      "M_rollout": 114.31315220205957,
+      "M_cap2": 91.0977705677084,
+      "mean_inflation": 0.4816565971906995,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1867694403
+    },
+    {
+      "M_rollout": 96.37466477893261,
+      "M_cap2": 74.10415832229687,
+      "mean_inflation": 0.5145594606534938,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 181516585
+    },
+    {
+      "M_rollout": 94.43641731077062,
+      "M_cap2": 70.59575458400793,
+      "mean_inflation": 0.5042368228301554,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 176759817
+    },
+    {
+      "M_rollout": 98.84189087114521,
+      "M_cap2": 71.01722638213715,
+      "mean_inflation": 0.5028546320554161,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 969161034
+    },
+    {
+      "M_rollout": 109.13752982700933,
+      "M_cap2": 79.03266741749543,
+      "mean_inflation": 0.5037536327768197,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 2111132541
+    },
+    {
+      "M_rollout": 108.04501842950003,
+      "M_cap2": 85.7268663706425,
+      "mean_inflation": 0.47142982410730916,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 731143041
+    },
+    {
+      "M_rollout": 101.32837616348786,
+      "M_cap2": 79.86761681503705,
+      "mean_inflation": 0.4889268513486229,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1537853632
+    },
+    {
+      "M_rollout": 102.17564634988936,
+      "M_cap2": 78.94072145842574,
+      "mean_inflation": 0.4665353692131456,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1107828869
+    },
+    {
+      "M_rollout": 92.73949780216245,
+      "M_cap2": 66.26049830058847,
+      "mean_inflation": 0.4857314971552599,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1843299529
+    },
+    {
+      "M_rollout": 84.02398372532355,
+      "M_cap2": 57.0176253155216,
+      "mean_inflation": 0.5077726410036015,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 305030012
+    },
+    {
+      "M_rollout": 96.45032798481037,
+      "M_cap2": 71.3078676269092,
+      "mean_inflation": 0.511631163016406,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 803566779
+    },
+    {
+      "M_rollout": 90.94730282014135,
+      "M_cap2": 66.58730749786797,
+      "mean_inflation": 0.5045235540538563,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1966061021
+    },
+    {
+      "M_rollout": 96.40334199430629,
+      "M_cap2": 71.36249688872536,
+      "mean_inflation": 0.4799875174859935,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 580385435
+    },
+    {
+      "M_rollout": 102.01738671600003,
+      "M_cap2": 80.46993864106918,
+      "mean_inflation": 0.4777411299092052,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1191985677
+    },
+    {
+      "M_rollout": 98.31903701979863,
+      "M_cap2": 74.73550941394261,
+      "mean_inflation": 0.5035594637106993,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1979879667
+    },
+    {
+      "M_rollout": 94.06315221299494,
+      "M_cap2": 68.19261791274953,
+      "mean_inflation": 0.4931142350233719,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1313852837
+    },
+    {
+      "M_rollout": 100.92452189384377,
+      "M_cap2": 74.1921446160166,
+      "mean_inflation": 0.49970446768716625,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1376510864
+    },
+    {
+      "M_rollout": 97.94558615172154,
+      "M_cap2": 72.47092845768019,
+      "mean_inflation": 0.5037089611467083,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 2077124754
+    },
+    {
+      "M_rollout": 85.09978333855665,
+      "M_cap2": 62.39416902502474,
+      "mean_inflation": 0.5058483109821588,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 349357642
+    },
+    {
+      "M_rollout": 89.29640489453746,
+      "M_cap2": 62.79726155679453,
+      "mean_inflation": 0.5145394751417631,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1072094445
+    },
+    {
+      "M_rollout": 101.49943170436585,
+      "M_cap2": 77.01010489351634,
+      "mean_inflation": 0.5135473829428934,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 403724232
+    },
+    {
+      "M_rollout": 86.22082810401099,
+      "M_cap2": 62.28670074602246,
+      "mean_inflation": 0.5315937587912765,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 537701754
+    },
+    {
+      "M_rollout": 104.1448573626198,
+      "M_cap2": 77.73974269618506,
+      "mean_inflation": 0.4877654474750708,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1579212729
+    },
+    {
+      "M_rollout": 92.82237666583183,
+      "M_cap2": 68.59363625975794,
+      "mean_inflation": 0.5080877224597422,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1715531334
+    },
+    {
+      "M_rollout": 103.99498756397116,
+      "M_cap2": 79.98232668933136,
+      "mean_inflation": 0.5098535534263146,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1921905285
+    },
+    {
+      "M_rollout": 110.92483261860447,
+      "M_cap2": 85.12791146059293,
+      "mean_inflation": 0.4944614152646977,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 613825205
+    },
+    {
+      "M_rollout": 94.51704406425424,
+      "M_cap2": 68.26544938458044,
+      "mean_inflation": 0.5091833841554747,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1849331768
+    },
+    {
+      "M_rollout": 98.59835104244254,
+      "M_cap2": 71.31644033288433,
+      "mean_inflation": 0.5221410774150145,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1768370664
+    },
+    {
+      "M_rollout": 107.11932760388564,
+      "M_cap2": 83.05661298734928,
+      "mean_inflation": 0.48486148651086863,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 1459208994
+    },
+    {
+      "M_rollout": 86.19335777666679,
+      "M_cap2": 60.81941438070724,
+      "mean_inflation": 0.5055060544148768,
+      "frac_inflated": 1.0,
+      "frac_max_report": 1.0,
+      "seed": 893607661
+    }
+  ]
+}

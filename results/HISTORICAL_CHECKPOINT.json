@@ -1,0 +1,7 @@
+{
+  "checkpoint": "1f54943",
+  "historical_experiments": ["e3b", "e3c", "e11"],
+  "attacker": "grid-only candidates; rollout may extend beyond episode; Rank-Cap histories frozen",
+  "replacement_study": "e15",
+  "reason": "Preserve earlier evidence without presenting it as output of the corrected attacker."
+}

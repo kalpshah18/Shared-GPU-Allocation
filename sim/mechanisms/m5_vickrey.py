@@ -28,7 +28,7 @@ import numpy as np
 from sim.config import Config
 from sim.environment import History
 from sim.mechanisms.base import Mechanism
-from sim.mechanisms._utils import seeded_top_k
+from sim.mechanisms._utils import batch_top_k_mask, seeded_top_k
 
 
 class VickreyMechanism(Mechanism):
@@ -57,3 +57,11 @@ class VickreyMechanism(Mechanism):
         p[winners] = threshold  # all winners pay the same threshold price
 
         return x, p
+
+    def allocate_batch(self, reports, cumulative, tiebreak):
+        k, n = self.cfg.k, self.cfg.n
+        x = batch_top_k_mask(reports, tiebreak, k)
+        # (k+1)-st highest bid = element n-k-1 of the ascending order
+        threshold = np.partition(reports, n - k - 1, axis=-1)[..., n - k - 1]
+        p = x * threshold[..., None]
+        return x, p.astype(np.float64)

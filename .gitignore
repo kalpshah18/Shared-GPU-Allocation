@@ -43,6 +43,11 @@ desktop.ini
 results/**/seed_*.json
 results/*/*.json
 !results/**/summary.json
+!results/e1[2-5]/config.json
+!results/e1[2-5]/paired.json
+!results/e1[6-8]/config.json
+!results/e1[6-8]/paired.json
+!results/e1[6-8]/example.json
 !seeds/master_seeds.json
 !config/base.yaml
 

@@ -1,0 +1,71 @@
+{
+  "experiment": "e18",
+  "n_seeds": 30,
+  "seeds": [
+    1200269611,
+    413978808,
+    156870783,
+    813286636,
+    287632129,
+    1178623082,
+    1548003497,
+    973601006,
+    1191064876,
+    548350861,
+    466548805,
+    970532290,
+    1306332762,
+    1893346540,
+    1411123607,
+    927403680,
+    1788699093,
+    1292004882,
+    90681700,
+    1038794020,
+    1648634617,
+    2051612815,
+    372606682,
+    685264788,
+    920433065,
+    2058947826,
+    1578069550,
+    529721306,
+    1093506521,
+    420561832
+  ],
+  "protocol_version": "failure-followup-v1",
+  "seed_role": "heldout",
+  "seed_file": "seeds/followup_seeds.json",
+  "source_sha256": "0f7a1a0f64b4d01a042ad327b8c658f2eb22ad7b55e9d5810ee4c85d9b0a7452",
+  "n": 6,
+  "k": 2,
+  "T": 120,
+  "n_bootstrap": 10000,
+  "training_seeds": [
+    201,
+    202,
+    203,
+    204,
+    205
+  ],
+  "budgets": [
+    4,
+    20
+  ],
+  "stop_on_recurrence": false,
+  "update_order_seed": 329,
+  "policies": [
+    "truthful",
+    "cap_1.25",
+    "cap_1.5",
+    "cap_2",
+    "max_claim",
+    "timed_cap_1.25",
+    "timed_cap_2",
+    "high_only"
+  ],
+  "initial_policies": [
+    "truthful",
+    "cap_2"
+  ]
+}

@@ -23,11 +23,15 @@ import numpy as np
 from sim.config import Config
 from sim.environment import History
 from sim.mechanisms.base import Mechanism
-from sim.mechanisms._utils import seeded_top_k
+from sim.mechanisms._utils import batch_top_k_mask, seeded_top_k
 
 
 class ScoreMechanism(Mechanism):
     """M4: history-penalised score allocation, no payments."""
+
+    def scores(self, reports: np.ndarray, cumulative: np.ndarray) -> np.ndarray:
+        """s = v̂ / (1 + a)^λ; the denominator is >= 1, so no division by zero."""
+        return reports / (1.0 + cumulative.astype(np.float64)) ** self.cfg.lambda_
 
     def allocate(
         self,
@@ -35,11 +39,7 @@ class ScoreMechanism(Mechanism):
         history: History,
         tie_seed: int,
     ) -> tuple[np.ndarray, np.ndarray]:
-        lam = self.cfg.lambda_
-        # denominator: (1 + a_i(t))^λ — safe against division by zero since
-        # denominator ≥ 1 for all λ ≥ 0.
-        denominator = (1.0 + history.cumulative.astype(np.float64)) ** lam
-        scores = reports / denominator
+        scores = self.scores(reports, history.cumulative)
 
         winners = seeded_top_k(scores, self.cfg.k, tie_seed)
 
@@ -48,3 +48,7 @@ class ScoreMechanism(Mechanism):
 
         p = np.zeros(self.cfg.n, dtype=np.float64)
         return x, p
+
+    def allocate_batch(self, reports, cumulative, tiebreak):
+        x = batch_top_k_mask(self.scores(reports, cumulative), tiebreak, self.cfg.k)
+        return x, np.zeros(reports.shape, dtype=np.float64)

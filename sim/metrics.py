@@ -6,161 +6,133 @@ All evaluation metrics — Owner: Raj Modi
 Metrics are computed from the raw simulation output stored in a History object
 and the true valuation tensor.
 
-Notation (from proposal §2)
-----------------------------
-n         : number of users
-k         : GPUs per round
-T         : number of rounds
-A_i       : cumulative allocations of user i over T rounds (= history.cumulative after run)
-v[i, t]   : true valuation of user i in round t
-x[i, t]   : allocation of user i in round t (0 or 1)
-p[i, t]   : payment of user i in round t
-W*        : optimal (oracle) welfare — sum of top-k true values each round
-Δ         : starvation threshold = 2 * ceil(n / k)
-
-All metric functions accept History and the valuation tensor v (n×T ndarray)
-and return a scalar or small dict.
+Notation (proposal section 2)
+-----------------------------
+n, k, T   : users, GPUs per round, rounds
+A_i       : cumulative allocations of user i over T rounds
+v[i, t]   : true valuation;  x[i, t] : allocation;  p[i, t] : payment
+W*        : oracle welfare, the sum of the top-k true values each round
+q_i(t)    : consecutive rounds with no service immediately BEFORE round t
+            (q_i(0) = 0), as in the proposal
+Delta     : starvation threshold = 2 * ceil(n / k)
 """
 
 from __future__ import annotations
 
-import math
-
 import numpy as np
 
 from sim.config import Config
-from sim.environment import History
+from sim.environment import History, expected_values
 
 
-# ── Helper: build allocation/payment matrices from history ────────────────────
+# ── Helpers: matrices built from a history ────────────────────────────────────
 
 def _matrices(history: History) -> tuple[np.ndarray, np.ndarray]:
-    """Return allocation (n×T) and payment (n×T) matrices."""
-    X = np.stack(history.allocations, axis=1)  # shape (n, T)
+    """Allocation (n x T) and payment (n x T) matrices."""
+    X = np.stack(history.allocations, axis=1)
     P = np.stack(history.payments,    axis=1)
     return X, P
 
 
+def wait_matrix(X: np.ndarray) -> np.ndarray:
+    """
+    Pre-round waiting times q_i(t) for an allocation matrix X of shape (n, T):
+    the number of consecutive rounds immediately before round t in which user
+    i was not served (so q_i(0) = 0, and q_i(t) = 0 if i was served in round
+    t-1).  Vectorised; shape (n, T).
+    """
+    n, T = X.shape
+    idx = np.arange(T)
+    served_at = np.where(X == 1, idx[None, :], -1)
+    last_served = np.maximum.accumulate(served_at, axis=1)      # last service <= t
+    last_before = np.concatenate(                                # last service <= t-1
+        [np.full((n, 1), -1, dtype=last_served.dtype), last_served[:, :-1]], axis=1
+    )
+    # rounds since the last service before t; with no service yet (last = -1)
+    # this equals t, the number of rounds played so far.
+    return (idx[None, :] - 1 - last_before).astype(np.int64)
+
+
+def utilities(history: History, valuations: np.ndarray) -> np.ndarray:
+    """Per-user quasi-linear utility U_i = sum_t (v x - p), shape (n,)."""
+    X, P = _matrices(history)
+    return np.sum(valuations * X - P, axis=1)
+
+
+def gross_benefits(history: History, valuations: np.ndarray) -> np.ndarray:
+    """Per-user gross benefit G_i = sum_t v x (payments excluded), shape (n,)."""
+    X, _ = _matrices(history)
+    return np.sum(valuations * X, axis=1)
+
+
 # ── Welfare ───────────────────────────────────────────────────────────────────
 
-def welfare_ratio(history: History, valuations: np.ndarray, cfg: Config) -> float:
-    """
-    WR = W / W*
-
-    W  = Σ_{i,t} v_{i,t} · x_{i,t}       (achieved gross welfare)
-    W* = Σ_t  Σ_{i ∈ S*_t} v_{i,t}        (oracle: top-k true values each round)
-    """
-    X, _ = _matrices(history)
-    W = float(np.sum(valuations * X))
-
-    # Oracle: for each round, sum the k largest true values
-    W_star = float(np.sum(np.sort(valuations, axis=0)[-cfg.k:, :]))
-
-    if W_star == 0.0:
-        return 1.0  # degenerate case: all values are 0
-    return W / W_star
-
-
 def oracle_welfare(valuations: np.ndarray, cfg: Config) -> float:
-    """W* — used by PoF."""
+    """W* = sum_t (sum of the k largest true values in round t)."""
     return float(np.sum(np.sort(valuations, axis=0)[-cfg.k:, :]))
 
 
-def nash_social_welfare(history: History, valuations: np.ndarray, eps: float = 1e-8) -> float:
-    """
-    NSW = Σ_i log(G_i + ε),  ε = 1e-8
+def welfare_ratio(history: History, valuations: np.ndarray, cfg: Config) -> float:
+    """WR = W / W*; payments are transfers, so W uses gross benefits."""
+    W      = float(np.sum(gross_benefits(history, valuations)))
+    W_star = oracle_welfare(valuations, cfg)
+    if W_star == 0.0:
+        return 1.0                     # degenerate: every value is 0
+    return W / W_star
 
-    G_i = Σ_t v_{i,t} · x_{i,t}  (gross benefit for user i)
-    """
-    X, _ = _matrices(history)
-    G = np.sum(valuations * X, axis=1)  # shape (n,)
-    return float(np.sum(np.log(G + eps)))
+
+def nash_social_welfare(history: History, valuations: np.ndarray, eps: float = 1e-8) -> float:
+    """NSW = sum_i log(G_i + eps)."""
+    return float(np.sum(np.log(gross_benefits(history, valuations) + eps)))
 
 
 # ── Fairness ──────────────────────────────────────────────────────────────────
 
-def jain_allocation(history: History) -> float:
-    """
-    J_A = (Σ_i A_i)² / (n · Σ_i A_i²)
-
-    where A_i = cumulative allocations of user i over T rounds.
-    J_A ∈ (0, 1], equals 1 iff all A_i are equal.
-    """
-    A = history.cumulative.astype(np.float64)
-    if np.all(A == 0):
-        return 1.0  # no allocations made; vacuously fair
-    return float(np.sum(A) ** 2 / (len(A) * np.sum(A ** 2)))
-
-
-def jain_benefit(
-    history: History,
-    valuations: np.ndarray,
-    mu: np.ndarray,
-) -> float:
-    """
-    J_B = (Σ_i B_i)² / (n · Σ_i B_i²)
-
-    B_i = G_i / (T · μ_i)  where μ_i = E[v_{i,·}] (per-user expected value)
-
-    Used when user distributions differ (experiment E4).
-    mu : ndarray, shape (n,) — per-user expected values, pre-computed from D_i.
-    """
-    X, _ = _matrices(history)
-    T = history.round
-    G = np.sum(valuations * X, axis=1)
-    # Avoid division by zero for users with μ_i = 0
-    denom = T * mu
-    B = np.where(denom > 0, G / denom, 0.0)
-    if np.all(B == 0):
+def _jain(a: np.ndarray) -> float:
+    """Jain's index (sum a)^2 / (n sum a^2); 1.0 for the all-zero vector."""
+    a = np.asarray(a, dtype=np.float64)
+    ss = float(np.sum(a ** 2))
+    if ss == 0.0:
         return 1.0
-    return float(np.sum(B) ** 2 / (len(B) * np.sum(B ** 2)))
+    return float(np.sum(a) ** 2 / (len(a) * ss))
+
+
+def jain_allocation(history: History) -> float:
+    """J_A over the cumulative allocation counts A_i."""
+    return _jain(history.cumulative)
+
+
+def jain_benefit(history: History, valuations: np.ndarray, mu: np.ndarray) -> float:
+    """
+    J_B over the normalised gross benefits B_i = G_i / (T mu_i).
+    `mu` holds the per-user expected values E_{D_i}[v].
+    """
+    T = history.round
+    G = gross_benefits(history, valuations)
+    denom = T * np.asarray(mu, dtype=np.float64)
+    B = np.where(denom > 0, G / np.where(denom > 0, denom, 1.0), 0.0)
+    return _jain(B)
 
 
 # ── Waiting & starvation ──────────────────────────────────────────────────────
 
-def max_wait(history: History, valuations: np.ndarray) -> int:
-    """
-    Q_max = max_{i, t} q_i(t)
-
-    Reconstructed from the allocation matrix (post-run).
-    """
+def max_wait(history: History, valuations: np.ndarray | None = None) -> int:
+    """Q_max = max_{i,t} q_i(t).  (`valuations` is accepted for backward compatibility.)"""
     X, _ = _matrices(history)
-    n, T = X.shape
-    q_max = 0
-    current_wait = np.zeros(n, dtype=np.int64)
-    for t in range(T):
-        current_wait = np.where(X[:, t] == 1, 0, current_wait + 1)
-        q_max = max(q_max, int(current_wait.max()))
-    return q_max
+    return int(wait_matrix(X).max())
 
 
 def starvation_rate(history: History, cfg: Config) -> float:
-    """
-    SR_Δ = (1 / nT) Σ_{i,t} 1{q_i(t) > Δ}
-
-    Δ = 2 · ⌈n/k⌉  (twice the round-robin service cycle).
-    """
+    """SR_Delta = (1 / nT) sum_{i,t} 1{q_i(t) > Delta}."""
     X, _ = _matrices(history)
-    n, T = X.shape
-    delta = cfg.delta
-    count = 0
-    current_wait = np.zeros(n, dtype=np.int64)
-    for t in range(T):
-        current_wait = np.where(X[:, t] == 1, 0, current_wait + 1)
-        count += int(np.sum(current_wait > delta))
-    return count / (n * T)
+    Q = wait_matrix(X)
+    return float(np.mean(Q > cfg.delta))
 
 
 def percentile_wait(history: History, pct: float = 95.0) -> float:
-    """Return the `pct`-th percentile of all per-user per-round waiting times."""
+    """`pct`-th percentile of all per-user, per-round waiting times q_i(t)."""
     X, _ = _matrices(history)
-    n, T = X.shape
-    waits = []
-    current_wait = np.zeros(n, dtype=np.int64)
-    for t in range(T):
-        current_wait = np.where(X[:, t] == 1, 0, current_wait + 1)
-        waits.extend(current_wait.tolist())
-    return float(np.percentile(waits, pct))
+    return float(np.percentile(wait_matrix(X), pct))
 
 
 # ── Strategic manipulation ────────────────────────────────────────────────────
@@ -172,35 +144,24 @@ def manipulation_gain(
     strategic_set: np.ndarray,
 ) -> dict:
     """
-    Coalition manipulation gain for each strategic user i:
+    Coalition manipulation gain for every strategic user i:
 
-        M_i^coal(ω) = U_i(σ_S, truthful_{-S}; ω) − U_i(truthful; ω)
-
-    where U_i = Σ_t (v_{i,t} · x_{i,t} − p_{i,t}) and S is the strategic set.
+        M_i^coal = U_i(sigma_S, truthful_{-S}) - U_i(truthful)
 
     `history_strategic` is the mixed run (all of S deviate together) and
-    `history_truthful` is the all-truthful run, both on the same ω.  This is a
-    *group* deviation: strategic users compete with each other, so a negative
-    value does NOT imply that an individual user is better off truthful.  Use
-    `unilateral_gain` for the individual incentive M_i(σ_i, σ_{-i}; ω).
+    `history_truthful` the all-truthful run, both on the same omega.  Strategic
+    users compete with each other, so this is a *group* deviation: a negative
+    value does NOT mean an individual is better off truthful (use
+    ``unilateral_gain`` for that).
 
-    Returns
-    -------
-    dict with keys:
-        M_mean   : mean manipulation gain over strategic users
-        M_max    : maximum manipulation gain over strategic users
-        frac_pos : fraction of strategic users with M_i > 0
+    Returns M_mean, M_max and frac_pos (fraction with M_i > 0) over S; all NaN
+    when S is empty (rho = 0).
     """
-    Xs, Ps = _matrices(history_strategic)
-    Xt, Pt = _matrices(history_truthful)
-
-    U_strat   = np.sum(valuations * Xs - Ps, axis=1)
-    U_truth   = np.sum(valuations * Xt - Pt, axis=1)
-    gains     = (U_strat - U_truth)[strategic_set]
-
+    gains = (utilities(history_strategic, valuations)
+             - utilities(history_truthful, valuations))[strategic_set]
     if len(gains) == 0:
-        # No strategic users (ρ = 0): the coalition gain is undefined.
-        return {"M_mean": float("nan"), "M_max": float("nan"), "frac_pos": float("nan")}
+        nan = float("nan")
+        return {"M_mean": nan, "M_max": nan, "frac_pos": nan}
     return {
         "M_mean"  : float(np.mean(gains)),
         "M_max"   : float(np.max(gains)),
@@ -215,57 +176,53 @@ def unilateral_gain(
     focal: int,
 ) -> float:
     """
-    M_f(σ_f; ω) = U_f(σ_f, σ_{-f}; ω) − U_f(truthful, σ_{-f}; ω)
+    M_f = U_f(sigma_f, sigma_{-f}) - U_f(truthful, sigma_{-f}).
 
-    Histories come from `sim.runner.run_unilateral`: identical ω and opponent
-    behaviour; only the focal user's report policy differs.
+    The two histories share omega and every other user's behaviour; only the
+    focal user's report policy differs (see ``sim.runner.unilateral_gains``).
     """
-    Xd, Pd = _matrices(history_deviate)
-    Xt, Pt = _matrices(history_truthful_focal)
-    U_d = float(np.sum(valuations[focal] * Xd[focal] - Pd[focal]))
-    U_t = float(np.sum(valuations[focal] * Xt[focal] - Pt[focal]))
-    return U_d - U_t
+    U_d = utilities(history_deviate,        valuations)[focal]
+    U_t = utilities(history_truthful_focal, valuations)[focal]
+    return float(U_d - U_t)
+
+
+def unilateral_summary(gains) -> dict:
+    """
+    Summarise per-focal-user unilateral gains: mean (M_uni), max (M_uni_max) and
+    the fraction of focal users with a strictly positive gain (frac_pos_uni).
+    """
+    g = np.asarray(gains, dtype=np.float64)
+    return {
+        "M_uni"       : float(np.mean(g)),
+        "M_uni_max"   : float(np.max(g)),
+        "frac_pos_uni": float(np.mean(g > 0)),
+    }
 
 
 def price_of_strategy(
     history_truthful: History,
     history_strategic: History,
     valuations: np.ndarray,
-    cfg: Config,
+    cfg: Config | None = None,
 ) -> float:
-    """
-    PoS = (W_truthful − W_strategic) / W_truthful
-
-    Both histories share the same ω.
-    """
-    Xt, _ = _matrices(history_truthful)
-    Xs, _ = _matrices(history_strategic)
-    W_t = float(np.sum(valuations * Xt))
-    W_s = float(np.sum(valuations * Xs))
+    """PoS = (W_truthful - W_strategic) / W_truthful on a shared omega."""
+    W_t = float(np.sum(gross_benefits(history_truthful,  valuations)))
+    W_s = float(np.sum(gross_benefits(history_strategic, valuations)))
     if W_t == 0.0:
         return 0.0
     return (W_t - W_s) / W_t
 
 
-def price_of_fairness(
-    history: History,
-    valuations: np.ndarray,
-    cfg: Config,
-) -> float:
-    """
-    PoF(F) = (W* − W_F) / W*
-
-    Welfare loss of mechanism F under truthful reports relative to oracle.
-    """
+def price_of_fairness(history: History, valuations: np.ndarray, cfg: Config) -> float:
+    """PoF(F) = (W* - W_F) / W*: welfare loss vs. the truthful oracle."""
     W_star = oracle_welfare(valuations, cfg)
-    X, _ = _matrices(history)
-    W_F = float(np.sum(valuations * X))
     if W_star == 0.0:
         return 0.0
+    W_F = float(np.sum(gross_benefits(history, valuations)))
     return (W_star - W_F) / W_star
 
 
-# ── Convenience: compute all scalable metrics in one call ─────────────────────
+# ── Convenience: every metric computable from one run ─────────────────────────
 
 def compute_all(
     history: History,
@@ -274,20 +231,20 @@ def compute_all(
     mu: np.ndarray | None = None,
 ) -> dict:
     """
-    Return a dict of all metrics computable from a single simulation run
-    (no paired comparison needed).
-
-    `mu` is required for J_B; if None, J_B is omitted.
+    All single-run metrics.  `mu` (per-user expected values) defaults to the
+    configured distribution's means, so J_B is always reported.
     """
-    result = {
-        "WR"     : welfare_ratio(history, valuations, cfg),
-        "J_A"    : jain_allocation(history),
-        "NSW"    : nash_social_welfare(history, valuations),
-        "Q_max"  : max_wait(history, valuations),
-        "SR_delta": starvation_rate(history, cfg),
-        "pct95_wait": percentile_wait(history, 95.0),
-        "PoF"    : price_of_fairness(history, valuations, cfg),
+    if mu is None:
+        mu = expected_values(cfg)
+    X, _ = _matrices(history)
+    Q = wait_matrix(X)
+    return {
+        "WR"        : welfare_ratio(history, valuations, cfg),
+        "J_A"       : jain_allocation(history),
+        "J_B"       : jain_benefit(history, valuations, mu),
+        "NSW"       : nash_social_welfare(history, valuations),
+        "Q_max"     : int(Q.max()),
+        "SR_delta"  : float(np.mean(Q > cfg.delta)),
+        "pct95_wait": float(np.percentile(Q, 95.0)),
+        "PoF"       : price_of_fairness(history, valuations, cfg),
     }
-    if mu is not None:
-        result["J_B"] = jain_benefit(history, valuations, mu)
-    return result
