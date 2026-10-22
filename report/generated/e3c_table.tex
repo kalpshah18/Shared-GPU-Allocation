@@ -1,0 +1,22 @@
+\begin{table}[!htb]
+\caption{E3c (historical checkpoint): gain of one rollout attacker against M4 with truthful opponents ($n=10$, $T=300$) as the planning horizon grows. The last two rows give the capped-exaggeration gains on the same workloads.}
+\label{tab:e3c}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lrrrr}
+\toprule
+Horizon $H$ & $\lambda=1$ gain [95\% CI] & Share at $v_{\max}$ & $\lambda=2$ gain [95\% CI] & Share at $v_{\max}$ \\
+\midrule
+5 & $-$9.61 [$-$10.30, $-$8.90] & 0.93 & $-$12.47 [$-$13.15, $-$11.81] & 0.88 \\
+10 & $-$7.04 [$-$7.69, $-$6.38] & 0.85 & $-$8.58 [$-$9.24, $-$7.94] & 0.74 \\
+20 & $-$2.93 [$-$3.56, $-$2.31] & 0.72 & $-$2.68 [$-$3.24, $-$2.12] & 0.53 \\
+40 & +2.97 [2.41, 3.55] & 0.52 & +3.19 [2.77, 3.62] & 0.29 \\
+80 & +7.20 [6.76, 7.63] & 0.31 & +3.24 [2.77, 3.68] & 0.19 \\
+\midrule
+capped $c=2$ & +0.91 &  & $-$3.48 &  \\
+capped $c=1.25$ & +3.88 &  & +1.29 &  \\
+\bottomrule
+\end{tabular}}
+\end{table}

@@ -1,0 +1,18 @@
+\begin{table}[!htb]
+\caption{E3b (historical checkpoint): proposal-style rollout attack with $H=5$ ($n=10$, $T=500$). Entries are the mean gain of the focal user.}
+\label{tab:e3b}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lrrrrr}
+\toprule
+Mechanism & Rollout (truthful opp.) & Cap 2 & Rollout (cap-2 opp.) & Cap 2 & Share at $v_{\max}$ \\
+\midrule
+M3 Greedy & +164.8 & +123.8 & +98.0 & +73.1 & 1.00 \\
+M4 Score ($\lambda=1$) & $-$18.3 & +0.9 & $-$22.2 & $-$1.8 & 0.95 \\
+M4 Score ($\lambda=2$) & $-$23.3 & $-$6.2 & $-$24.2 & $-$6.8 & 0.92 \\
+M5 Vickrey & $-$0.2 & $-$41.6 & 0.0 & $-$24.0 & 0.06 \\
+\bottomrule
+\end{tabular}}
+\end{table}

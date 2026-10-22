@@ -1,0 +1,33 @@
+\begin{table}[!htb]
+\caption{E9: truthful reports on the locked seeds. M6 and M7 use the wait cap $W=10$ (the default $W=\Delta$).}
+\label{tab:e9}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{llrrrr}
+\toprule
+Condition & Mechanism & WR & $J_B$ & $Q_{\max}$ & $\mathrm{SR}_\Delta$ \\
+\midrule
+base & M3 Greedy & 1.000 & 0.996 & 41.7 & 0.084 \\
+ & M4 Score ($\lambda=1$) & 0.996 & 0.999 & 37.7 & 0.075 \\
+ & M6 Karma-Cap & 0.942 & 1.000 & 10.0 & 0.000 \\
+ & M7 Rank-Cap & 0.945 & 0.999 & 10.0 & 0.000 \\
+\midrule
+scarce ($k/n=0.1$) & M3 Greedy & 1.000 & 0.991 & 81.7 & 0.108 \\
+ & M4 Score ($\lambda=1$) & 0.992 & 0.999 & 67.1 & 0.077 \\
+ & M6 Karma-Cap & 0.933 & 0.999 & 20.4 & 0.000 \\
+ & M7 Rank-Cap & 0.930 & 0.999 & 20.0 & 0.000 \\
+\midrule
+mixed groups & M3 Greedy & 1.000 & 0.517 & 974.6 & 0.480 \\
+ & M4 Score ($\lambda=1$) & 0.897 & 0.995 & 49.8 & 0.098 \\
+ & M6 Karma-Cap & 0.722 & 0.940 & 11.9 & 0.000 \\
+ & M7 Rank-Cap & 0.804 & 0.971 & 10.0 & 0.000 \\
+\midrule
+persistent (copula, $\alpha=0.9$) & M3 Greedy & 1.000 & 0.954 & 210.4 & 0.498 \\
+ & M4 Score ($\lambda=1$) & 0.969 & 0.994 & 165.7 & 0.445 \\
+ & M6 Karma-Cap & 0.752 & 0.998 & 11.1 & 0.000 \\
+ & M7 Rank-Cap & 0.813 & 0.995 & 10.0 & 0.000 \\
+\bottomrule
+\end{tabular}}
+\end{table}

@@ -1,0 +1,19 @@
+\begin{table}[!htb]
+\caption{E1 at $k/n=0.2$ ($n=50$, $k=10$, truthful reports, 30 seeds). WR is the welfare ratio, NSW the Nash social welfare, $Q_{\max}$ the mean maximum consecutive wait.}
+\label{tab:e1}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Mechanism & WR [95\% CI] & $J_A$ & NSW & $Q_{\max}$ & p95 wait & $\mathrm{SR}_\Delta$ \\
+\midrule
+M1 Random & 0.561 [0.559, 0.562] & 0.9962 & 230.1 & 42.7 & 13.0 & 0.0845 \\
+M2 Round-Robin & 0.560 [0.559, 0.561] & 1.0000 & 230.2 & 4.0 & 4.0 & 0.0000 \\
+M3 Greedy & 1.000 [1.000, 1.000] & 0.9960 & 259.1 & 41.7 & 12.9 & 0.0844 \\
+M4 Score & 0.996 [0.996, 0.996] & 0.9996 & 259.0 & 37.7 & 12.1 & 0.0747 \\
+M5 Vickrey & 1.000 [1.000, 1.000] & 0.9960 & 259.1 & 41.7 & 12.9 & 0.0844 \\
+\bottomrule
+\end{tabular}}
+\end{table}

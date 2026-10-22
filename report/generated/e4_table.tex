@@ -1,0 +1,19 @@
+\begin{table}[!htb]
+\caption{E4: heterogeneous population (half $\mathrm{Beta}(2,5)$, half $\mathrm{Beta}(5,2)$), truthful reports.}
+\label{tab:e4}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lrrrrr}
+\toprule
+Mechanism & WR & $J_A$ & $J_B$ & $\mathrm{SR}_\Delta$ & NSW \\
+\midrule
+M1 Random & 0.581 & 0.996 & 0.995 & 0.085 & 225.1 \\
+M2 Round-Robin & 0.581 & 1.000 & 0.999 & 0.000 & 225.2 \\
+M3 Greedy & 1.000 & 0.507 & 0.517 & 0.480 & 142.1 \\
+M4 Score ($\lambda=1$) & 0.897 & 0.925 & 0.995 & 0.098 & 245.4 \\
+M5 Vickrey & 1.000 & 0.507 & 0.517 & 0.480 & 142.1 \\
+\bottomrule
+\end{tabular}}
+\end{table}

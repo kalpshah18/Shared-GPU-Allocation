@@ -151,6 +151,19 @@ results/  figures/           Generated outputs  (results/RESULTS.md = every tabl
 run_all.py / run_all.sh      One command: validate → run everything → regenerate every figure
 ```
 
+## Project report (LaTeX)
+
+`report/main.tex` is the full project report in the PRIME AI style (`report/PRIMEarxiv.sty`). Its tables and
+figures are generated from the saved results, so no number is typed by hand:
+
+```bash
+python report/make_tables.py     # report/generated/*.tex
+python report/make_figures.py    # report/media/*.pdf
+cd report && latexmk -pdf main.tex
+```
+
+`report/CITATIONS.md` records how each reference was verified.
+
 ## Setup
 
 The project is developed and tested in a dedicated virtual environment (Python 3.13; 3.10+ works).

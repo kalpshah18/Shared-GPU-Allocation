@@ -1,0 +1,21 @@
+\begin{table}[!htb]
+\caption{E5 at $\alpha=0.9$, truthful reports. The proposal recursion shrinks the value spread; the copula control preserves the marginal distribution.}
+\label{tab:e5}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & \multicolumn{4}{c}{Proposal recursion} & \multicolumn{4}{c}{Copula control} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+Mechanism & WR & $J_A$ & $Q_{\max}$ & $\mathrm{SR}_\Delta$ & WR & $J_A$ & $Q_{\max}$ & $\mathrm{SR}_\Delta$ \\
+\midrule
+M1 Random & 0.846 & 0.996 & 42.7 & 0.085 & 0.561 & 0.996 & 42.7 & 0.085 \\
+M2 Round-Robin & 0.846 & 1.000 & 4.0 & 0.000 & 0.561 & 1.000 & 4.0 & 0.000 \\
+M3 Greedy & 1.000 & 0.957 & 204.7 & 0.492 & 1.000 & 0.957 & 210.4 & 0.498 \\
+M4 Score ($\lambda=1$) & 0.971 & 0.998 & 130.3 & 0.377 & 0.969 & 0.995 & 165.7 & 0.445 \\
+M5 Vickrey & 1.000 & 0.957 & 204.7 & 0.492 & 1.000 & 0.957 & 210.4 & 0.498 \\
+\bottomrule
+\end{tabular}}
+\end{table}

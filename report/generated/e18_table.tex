@@ -1,0 +1,28 @@
+\begin{table}[!htb]
+\caption{E18: four versus twenty training sweeps, evaluated on 30 independent seeds. Greedy, Score and Vickrey reach a fixed point within four sweeps in every start and are omitted.}
+\label{tab:e18}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lllllrl}
+\toprule
+Rule & Start & Budget & Status & Sweeps used & Training regret & Independent regret [band] \\
+\midrule
+Score-Cap & truthful & 4 & sweep limit & 4 & 1.163 & 0.21 [0.00, 1.11] \\
+ &  & 20 & sweep limit & 20 & 0.682 & 0.66 [0.00, 1.60] \\
+ & cap 2 & 4 & sweep limit & 4 & 0.694 & 0.63 [0.00, 1.61] \\
+ &  & 20 & sweep limit & 20 & 0.682 & 0.66 [0.00, 1.60] \\
+\midrule
+Karma-Cap & truthful & 4 & sweep limit & 4 & 0.457 & 0.59 [0.00, 1.50] \\
+ &  & 20 & converged & 18 & 0.000 & 0.07 [0.00, 1.03] \\
+ & cap 2 & 4 & sweep limit & 4 & 0.477 & 1.54 [0.59, 2.50] \\
+ &  & 20 & converged & 18 & 0.000 & 0.07 [0.00, 1.03] \\
+\midrule
+Rank-Cap & truthful & 4 & sweep limit & 4 & 0.620 & 0.58 [0.00, 1.47] \\
+ &  & 20 & sweep limit & 20 & 0.235 & 0.27 [0.00, 1.27] \\
+ & cap 2 & 4 & sweep limit & 4 & 0.620 & 0.58 [0.00, 1.47] \\
+ &  & 20 & sweep limit & 20 & 0.235 & 0.27 [0.00, 1.27] \\
+\bottomrule
+\end{tabular}}
+\end{table}

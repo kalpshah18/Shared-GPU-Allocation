@@ -1,0 +1,23 @@
+\begin{table}[!htb]
+\caption{E15 at the largest budget ($H=40$, 80 Monte Carlo futures per candidate; $n=10$, $k=2$, $T=120$): gain of the planning attacker.}
+\label{tab:e15}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{llrr}
+\toprule
+Rule & History model & Focal gain [95\% CI] & Truthful share \\
+\midrule
+Greedy & exact & +39.64 [38.78, 40.53] & 0.02 \\
+Score & exact & +3.47 [3.07, 3.88] & 0.38 \\
+Score ($\lambda=2$) & exact & +2.24 [1.95, 2.52] & 0.45 \\
+Score-Cap & exact & +2.60 [2.29, 2.94] & 0.36 \\
+Vickrey & exact & 0.00 [0.00, 0.00] & 1.00 \\
+Karma-Cap & exact & $-$0.32 [$-$0.80, 0.16] & 0.41 \\
+\midrule
+Rank-Cap & updating & +2.58 [2.19, 2.98] & 0.36 \\
+Rank-Cap & frozen & $-$0.92 [$-$1.80, $-$0.09] & 0.31 \\
+\bottomrule
+\end{tabular}}
+\end{table}

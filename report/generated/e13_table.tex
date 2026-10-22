@@ -1,0 +1,27 @@
+\begin{table}[!htb]
+\caption{E13: adaptive finite-policy populations ($n=6$, $k=2$, $T=120$). Regret is the largest seed-averaged gain from any single policy switch, with a simultaneous bootstrap band.}
+\label{tab:e13}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lllcrrrr}
+\toprule
+Start & Rule & Training & Sweeps & WR & Mean utility & Regret [band] & Truthful \\
+\midrule
+truthful & Greedy & converged & 2 & 0.643 & 20.20 & 0.00 [0.00, 1.55] & 0.00 \\
+ & Score & converged & 4 & 0.976 & 30.67 & 0.17 [0.00, 1.12] & 0.00 \\
+ & Score-Cap & sweep limit & 4 & 0.948 & 29.80 & 0.40 [0.00, 1.29] & 0.00 \\
+ & Vickrey & converged & 1 & 1.000 & 8.38 & 0.00 [0.00, 1.36] & 1.00 \\
+ & Karma-Cap & sweep limit & 4 & 0.954 & 29.99 & 0.58 [0.00, 1.50] & 0.00 \\
+ & Rank-Cap & sweep limit & 4 & 0.948 & 29.78 & 0.63 [0.00, 1.49] & 0.33 \\
+\midrule
+cap 2 & Greedy & converged & 2 & 0.643 & 20.20 & 0.00 [0.00, 1.55] & 0.00 \\
+ & Score & converged & 4 & 0.976 & 30.67 & 0.17 [0.00, 1.12] & 0.00 \\
+ & Score-Cap & sweep limit & 4 & 0.952 & 29.92 & 0.62 [0.00, 1.51] & 0.00 \\
+ & Vickrey & converged & 2 & 1.000 & 8.38 & 0.00 [0.00, 1.36] & 1.00 \\
+ & Karma-Cap & sweep limit & 4 & 0.936 & 29.43 & 0.80 [0.00, 1.83] & 0.00 \\
+ & Rank-Cap & sweep limit & 4 & 0.948 & 29.78 & 0.63 [0.00, 1.49] & 0.33 \\
+\bottomrule
+\end{tabular}}
+\end{table}
