@@ -74,11 +74,11 @@ def section_e2(rows) -> str:
                 else f"M4 λ={r['lambda_']:g}")
         body.append([name + (" ★" if r.get("pareto") else ""), _f(r, "WR"), _f(r, "J_A", 4),
                      _f(r, "SR_delta", 3), _f(r, "M_mean", 1, signed=True),
-                     _f(r, "M_uni", 1, ci=True, signed=True), _f(r, "frac_pos_uni", 2), _f(r, "PoS", 3)])
+                     _f(r, "M_uni", 1, ci=True, signed=True), _f(r, "frac_pos_uni", 2), _f(r, "SWL", 3)])
     return ("## E2 — Fairness / manipulation frontier (ρ=0.25, capped exaggeration c=2)\n\n"
             "★ = Pareto non-dominated on (WR↑, J_A↑, SR_Δ↓, M_uni↓).\n\n"
             + _table(["Setting", "WR", "J_A", "SR_Δ", "Coalition M", "Unilateral M_uni [95% CI]",
-                      "frac M_i>0", "PoS"], body))
+                      "frac M_i>0", "SWL"], body))
 
 
 def section_e3(rows) -> str:
@@ -90,10 +90,10 @@ def section_e3(rows) -> str:
             for rho in sorted({r["rho"] for r in rows}):
                 r = _pick(rows, mechanism=m, policy=pol, rho=rho)
                 if r:
-                    body.append([pol, f"{rho:g}", _f(r, "WR"), _f(r, "J_A", 3), _f(r, "PoS"),
+                    body.append([pol, f"{rho:g}", _f(r, "WR"), _f(r, "J_A", 3), _f(r, "SWL"),
                                  _f(r, "M_mean", 1, signed=True), _f(r, "M_uni", 2, ci=True, signed=True),
                                  _f(r, "M_uni_max", 1, signed=True), _f(r, "frac_pos_uni", 2)])
-        out.append(_table(["Policy", "ρ", "WR", "J_A", "PoS", "Coalition M", "M_uni [95% CI]",
+        out.append(_table(["Policy", "ρ", "WR", "J_A", "SWL", "Coalition M", "M_uni [95% CI]",
                            "max M_i", "frac M_i>0"], body))
     return "\n".join(out)
 
@@ -150,10 +150,10 @@ def section_e6(rows) -> str:
 
 
 def section_e7(rows) -> str:
-    body = [[r["label"], f"{r['c']:g}", _f(r, "WR"), _f(r, "PoS"), _f(r, "M_uni", 2, ci=True, signed=True),
+    body = [[r["label"], f"{r['c']:g}", _f(r, "WR"), _f(r, "SWL"), _f(r, "M_uni", 2, ci=True, signed=True),
              _f(r, "frac_pos_uni", 2)] for r in rows]
     return ("## E7 — Sensitivity to the exaggeration factor c (ρ=0.25)\n\n"
-            + _table(["Mechanism", "c", "WR", "PoS", "M_uni [95% CI]", "frac M_i>0"], body))
+            + _table(["Mechanism", "c", "WR", "SWL", "M_uni [95% CI]", "frac M_i>0"], body))
 
 
 def section_e3c(rows) -> str:
@@ -177,8 +177,8 @@ def section_e8(rows) -> str:
                 if r and base:
                     prem = "—" if v == "always" else f"{r['M_uni']['mean'] - base['M_uni']['mean']:+.2f}"
                     body.append([lab, v, _f(r, "M_uni", 2, ci=True, signed=True), prem,
-                                 _f(r, "frac_pos_uni", 2), _f(r, "PoS", 3)])
-        out.append(_table(["Mechanism", "Policy", "M_uni [95% CI]", "Premium", "frac M_i>0", "PoS"], body))
+                                 _f(r, "frac_pos_uni", 2), _f(r, "SWL", 3)])
+        out.append(_table(["Mechanism", "Policy", "M_uni [95% CI]", "Premium", "frac M_i>0", "SWL"], body))
     return "\n".join(out)
 
 
@@ -204,9 +204,9 @@ def section_e10(rows) -> str:
     for rho in sorted({r["rho"] for r in rows}):
         out.append(f"\n**ρ = {rho:g}**\n")
         body = [[r["label"], r["policy"], _f(r, "M_uni", 2, ci=True, signed=True), _f(r, "M_uni_max", 1, signed=True),
-                 _f(r, "frac_pos_uni", 2), _f(r, "WR"), _f(r, "PoS")]
+                 _f(r, "frac_pos_uni", 2), _f(r, "WR"), _f(r, "SWL")]
                 for r in rows if r["rho"] == rho]
-        out.append(_table(["Mechanism", "Lie", "M_uni [95% CI]", "max M_i", "frac M_i>0", "WR", "PoS"], body))
+        out.append(_table(["Mechanism", "Lie", "M_uni [95% CI]", "max M_i", "frac M_i>0", "WR", "SWL"], body))
     return "\n".join(out)
 
 
@@ -219,8 +219,50 @@ def section_e11(rows) -> str:
                       "frac rounds at v_max", "mean (report - v)"], body))
 
 
+def section_e19(rows) -> str:
+    out = ["## E19 — Value-threshold timing attack (ρ=0.25)\n\n"
+           "sandbag_τ reports 0 below τ·v_max and v_max above; boost_τ is truthful below and v_max above. "
+           "Sandbag premium = M_uni(sandbag_τ) − M_uni(boost_τ) on the same seeds: the value of deliberately "
+           "losing low-value rounds.\n"]
+    labels = list(dict.fromkeys(r["label"] for r in rows))
+    taus = sorted({r["tau"] for r in rows if r.get("tau") is not None})
+    body = []
+    for lab in labels:
+        mx = _pick(rows, label=lab, variant="max_claim")
+        for tau in taus:
+            sb, bo = _pick(rows, label=lab, variant=f"sandbag_{tau:g}"), _pick(rows, label=lab, variant=f"boost_{tau:g}")
+            if not (sb and bo):
+                continue
+            body.append([lab, f"{tau:g}", _f(sb, "M_uni", 2, ci=True, signed=True), _f(bo, "M_uni", 2, signed=True),
+                         f"{sb['M_uni']['mean'] - bo['M_uni']['mean']:+.2f}",
+                         _f(mx, "M_uni", 2, signed=True) if mx else "n/a", _f(sb, "frac_pos_uni", 2), _f(sb, "SWL", 3)])
+    out.append(_table(["Mechanism", "τ", "M_uni sandbag [95% CI]", "M_uni boost", "Sandbag premium",
+                       "M_uni max_claim", "frac M_i>0 (sandbag)", "SWL (sandbag)"], body))
+    return "\n".join(out)
+
+
+def section_e20(rows) -> str:
+    out = ["## E20 — Vickrey paid in credits instead of money (ρ=0.25)\n"]
+    labels = list(dict.fromkeys(r["label"] for r in rows))
+    tr = [[lab, _f(r, "WR"), _f(r, "J_A", 4), _f(r, "Q_max", 1), _f(r, "pct95_wait", 1), _f(r, "SR_delta", 4)]
+          for lab in labels if (r := _pick(rows, label=lab, policy="truthful"))]
+    out.append("\n**Truthful reports**\n")
+    out.append(_table(["Mechanism", "WR", "J_A", "Q_max", "p95 wait", "SR_Δ"], tr))
+    out.append("\n**Unilateral gain M_uni [95% CI] (fraction of focal users who gain)**\n")
+    pols = [p for p in dict.fromkeys(r["policy"] for r in rows) if p != "truthful"]
+    body = []
+    for lab in labels:
+        cells = []
+        for pol in pols:
+            r = _pick(rows, label=lab, policy=pol)
+            cells.append(f"{_f(r, 'M_uni', 2, ci=True, signed=True)} ({_f(r, 'frac_pos_uni', 2)})" if r else "n/a")
+        body.append([lab] + cells)
+    out.append(_table(["Mechanism"] + pols, body))
+    return "\n".join(out)
+
+
 SECTIONS = [("e1", section_e1), ("e2", section_e2), ("e3", section_e3), ("e3b", section_e3b), ("e3c", section_e3c),
-            ("e4", section_e4), ("e5", section_e5), ("e6", section_e6), ("e7", section_e7), ("e8", section_e8), ("e9", section_e9), ("e10", section_e10), ("e11", section_e11)]
+            ("e4", section_e4), ("e5", section_e5), ("e6", section_e6), ("e7", section_e7), ("e8", section_e8), ("e19", section_e19), ("e20", section_e20), ("e9", section_e9), ("e10", section_e10), ("e11", section_e11)]
 
 
 def build_report(results_dir: str = "results") -> str:

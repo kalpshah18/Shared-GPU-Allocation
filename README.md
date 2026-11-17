@@ -5,9 +5,48 @@
 
 > A simulation study comparing repeated GPU-allocation mechanisms on allocative efficiency (welfare ratio WR),
 > long-run fairness (Jain indices J_A, J_B; waiting and starvation), and resistance to bounded strategic
-> misreporting (paired manipulation gain M, price of strategy). The full design is in
+> misreporting (paired manipulation gain M, strategic welfare loss SWL). The full design is in
 > [`FAI_Project_Proposal.pdf`](FAI_Project_Proposal.pdf); every item it asks for is implemented, tested and
 > traceable in the [coverage table](#proposal-coverage) below.
+
+---
+
+## Main focus: the history-penalised Score rule (M4)
+
+Two baseline outcomes follow directly from theory: **Greedy (M3) can be gamed by over-reporting**, and **Vickrey (M5) is
+truthful in each round** (hypothesis H4 expects both). The study confirms them, but uses M3 and M5 as *controls*.
+The open question is **M4, the score `v̂ / (1+a_i)^λ`**: winning a round today lowers your score tomorrow, so it is not
+obvious which lies pay, how much penalty λ deters them, or whether *timing* reports pays. Most of the analysis is
+therefore on M4:
+
+| Question about M4 | Experiment | Answer (n=50, k=10, T=1000, ρ=0.25, 30 seeds) |
+|---|---|---|
+| What does the penalty cost when everyone is truthful? | E1, E4, E5 | <1% welfare (WR 0.996); J_B 0.52→0.995 under heterogeneous values; does **not** bound waiting |
+| How much λ deters a fixed lie? | E2, E7 | depends on the lie: λ=2 stops c=2, λ∈(2,5] stops c=1.5, even λ=5 leaves c=1.25 at +1.1 |
+| Does timing by *own history* pay? (H2) | E8 | no: always inflating earns more wherever inflation pays |
+| Does timing by *current value* pay? (H2) | **E19 (new)** | **yes**: "claim v_max when v ≥ 0.75, report 0 otherwise" gains at every λ tested (+20.7 at λ=1, +10.8 at λ=2, **+4.6 at λ=5**, 99% of users gain), beating every capped lie at λ=5. The part of that rule that *deliberately loses* low-value rounds is worth −0.4, +0.1, +0.6, +1.5 at λ=0.5, 1, 2, 5: it grows with λ as H2 predicts, but it is small |
+| Does a far-sighted planner beat it? | E3c | yes, +3 to +7 at λ=1–2 with a 40–80-round horizon |
+
+So **a larger history penalty mostly shrinks the gain from claiming high values, while making the "protect your score"
+part of the strategy more valuable**. That part stays small (≤1.5 utility over 1000 rounds), but a simple value-threshold rule is
+the most profitable fixed strategy tested against M4 at λ=5.
+
+The proposed mechanisms M6/M7 (E9–E18) are an **extension** built on these M4 findings; they are documented after the
+core results.
+
+### Response to reviewer feedback
+
+| Feedback | What changed |
+|---|---|
+| 1. Focus the analysis on M4 | This section plus the M4 question table; M3/M5 treated as theory controls; new M4 experiment E19 |
+| 2. Add a simple timing policy to the core experiments | `make_value_threshold` (`sim/policies/strategic.py`): `sandbag_τ` reports 0 below τ·v_max and v_max above; `boost_τ` is truthful below. Run in **E19** at n=50 on M4 λ∈{0.5,1,2,5} with M3, M5, M5c controls; the paired difference isolates the value of losing rounds on purpose |
+| 3. "PoS" means price of stability | Renamed to **SWL (strategic welfare loss)** in the code (`strategic_welfare_loss`; old name kept as an alias), saved results, tables and figures |
+| 4. Credit-based version instead of money | New mechanism **M5c Credit-Vickrey** (`sim/mechanisms/m5c_credit_vickrey.py`): Vickrey prices paid from a renewable per-user credit quota with no utility value; evaluated in **E20** |
+
+```bash
+python experiments/e19_value_threshold.py    # ~10 min
+python experiments/e20_credit_budget.py      # ~5 min
+```
 
 ---
 
@@ -125,10 +164,11 @@ sim/                         Pure-Python simulator
   config.py                  Validated Config dataclass (+ YAML loading)
   environment.py             Seeded valuations (i.i.d. / Beta / two AR(1) variants), History, strict-JSON store
   runner.py                  Round loop: mixed populations, paired runs, unilateral gains, rollout runner
-  metrics.py                 WR, J_A, J_B, NSW, Q_max, p95 wait, SR_Δ, PoF, PoS, coalition & unilateral M
+  metrics.py                 WR, J_A, J_B, NSW, Q_max, p95 wait, SR_Δ, PoF, SWL, coalition & unilateral M
   mechanisms/                M1 Random · M2 Round-Robin · M3 Greedy · M4 Score · M5 Vickrey (+ factory)
+                             M5c Credit-Vickrey (Vickrey paid from a credit quota)
                              M6 Karma-Cap · M7 Rank-Cap (proposed) · shared wait cap (_waitcap.py)
-  policies/strategic.py      Truthful · capped exaggeration · maximum claim · rollout attack (batched)
+  policies/strategic.py      Truthful · capped exaggeration · maximum claim · timed · value-threshold · rollout attack
 experiments/
   e0_validation.py           Exhaustive checks on small discrete instances (67k instances)
   e1_scarcity.py             k/n sweep                       e5_persistence.py   AR(1) persistence (+ sensitivity)
@@ -136,6 +176,7 @@ experiments/
   e3_strategic.py            ρ × policy factorial            e7_sensitivity.py   λ × exaggeration-factor grid
   e3b_rollout.py             rollout attack (H=5)            e4_heterogeneous.py equal service vs equal benefit
   e3c_rollout_horizon.py     rollout attack vs horizon       e8_timing.py        timing attack (hypothesis H2)
+  e19_value_threshold.py     value-threshold timing (H2)     e20_credit_budget.py  Vickrey with credits (M5c)
   e9_proposed_truthful.py    M6/M7 truthful + wait frontier  e10_proposed_strategic.py  M6/M7 vs every lie
   e11_proposed_rollout.py    M6/M7 vs far-sighted attacker   proposed.py         specs + development seeds
   common.py                  Seeds, CLI, raw/summary persistence, strategic-cell measurement
@@ -143,7 +184,7 @@ analysis/
   bootstrap.py               95% bootstrap CIs (10,000 resamples) and paired-difference CIs
   pareto.py                  Multi-objective dominance filter
   plots.py                   All figures (PDF + PNG)             report.py   results/RESULTS.md tables
-tests/                       501 tests (see "Tests")
+tests/                       514 tests (see "Tests")
 docs/                        Fixed extension protocol, proofs, generated course report
 config/base.yaml             Base configuration (n=50, k=10, T=1000, ρ=0.25, …)
 seeds/                       generate_seeds.py + the 30 locked master seeds
@@ -164,7 +205,7 @@ pip install -r requirements.txt   # exact versions used for the reported results
 ## Quick start
 
 ```bash
-python -m pytest                  # 501 tests; add -m "not slow" to skip the end-to-end pipeline test
+python -m pytest                  # 514 tests; add -m "not slow" to skip the end-to-end pipeline test
 python experiments/e0_validation.py
 python run_all.py                 # everything, from the locked seeds → results/ and figures/  (tens of minutes)
 python run_all.py --quick         # 2-seed smoke run on tiny instances, for development only
@@ -175,15 +216,16 @@ Every experiment script accepts `--seeds N`, `--results-dir DIR`, `--n`, `--T`, 
 
 ## Tests
 
-`python -m pytest` runs 501 tests (`-m "not slow"` skips the one end-to-end pipeline test). They are organised by component:
+`python -m pytest` runs 514 tests (`-m "not slow"` skips the one end-to-end pipeline test). They are organised by component:
 
 | File | What it pins down |
 |---|---|
 | `test_config.py` | validation of every field, derived Δ, YAML loading, `base.yaml == defaults` |
 | `test_environment.py` | determinism, paired randomness, nested strategic sets, bounds, marginal means, AR(1) autocorrelation / variance (both variants), History bookkeeping, strict JSON |
 | `test_mechanisms.py` | capacity/payment invariants for every mechanism and size, report-invariance, uniform tie-breaking, scale-free ties (regression for the jitter bug), M2 wait bound, M3 oracle, M4 formula and monotonicity, M5 payments and **exhaustive DSIC**, negative controls, batch ≡ single allocation, determinism |
-| `test_metrics.py`, `test_metrics_extra.py` | hand-computed 2-user cases, pre-round waiting semantics, Jain-index properties, J_B, NSW, payments excluded from welfare, coalition / unilateral / PoS / PoF |
-| `test_policies.py` | elementwise bounded policies, timed policy (thresholds, per-user history, never above always-inflating), registry, rollout attack (inflates under Greedy, exactly truthful under Vickrey, deterministic, side-effect free, scales with `v_max`) |
+| `test_metrics.py`, `test_metrics_extra.py` | hand-computed 2-user cases, pre-round waiting semantics, Jain-index properties, J_B, NSW, payments excluded from welfare, coalition / unilateral / SWL / PoF |
+| `test_policies.py` | elementwise bounded policies, timed policy (thresholds, per-user history, never above always-inflating), value-threshold sandbag/boost rules, registry, rollout attack (inflates under Greedy, exactly truthful under Vickrey, deterministic, side-effect free, scales with `v_max`) |
+| `test_credit_vickrey.py` | M5c hand-computed round, budget never negative, unlimited budget ≡ Greedy, rollout ≡ real allocation, SWL alias |
 | `test_runner.py` | mixed / paired / unilateral runners vs manual counterfactuals, stateful-mechanism reset, report validation, rollout runner |
 | `test_proposed_mechanisms.py` | the shared wait cap, hand-computed Karma-Cap rounds (price, dividend, forced payment), karma conservation / ceiling / bid-cap, Rank-Cap quantiles, **invariance to increasing distortions**, `β=1 ≡ Score`, the hard waiting bound under adversarial reports, rollout interface ≡ real allocation, rollout attacker side-effect freedom |
 | `test_proposed_experiments.py` | E9–E11 schema / determinism / qualitative design goals; development seeds disjoint from the locked seeds |
@@ -207,6 +249,7 @@ seed every mechanism and every counterfactual run reads the same valuation tenso
 | M3 | Greedy: top-`k` reports | yes | no | no | first-best under truthful reports only |
 | M4 | Score `s = v̂ / (1+a_i)^λ`, top-`k` (default λ = 1) | yes | yes | no | `λ = 0 ≡ M3`; empirically stress-tested |
 | M5 | `k`-unit Vickrey, winners pay the `(k+1)`-st bid | yes | no | yes | per-round DSIC (VCG) |
+| M5c | **Credit-Vickrey**: M5 with bids capped by, and prices paid from, a renewable credit quota | yes | yes (balance) | no (credits) | `credit_rate → ∞` ≡ M3; truthfulness empirical |
 | **M6** | **Karma-Cap** (proposed): karma auction + hard wait cap, below | yes | yes | no (internal karma) | `Q_max ≤ W + ⌈n/k⌉ − 1`; truthfulness empirical |
 | **M7** | **Rank-Cap** (proposed): rank-normalised score + wait cap, below | yes | yes | no | `Q_max ≤ W + ⌈n/k⌉ − 1`; invariant to fixed strictly increasing distortions in pure-rank mode; truthfulness empirical |
 
@@ -224,7 +267,7 @@ seed every mechanism and every counterfactual run reads the same valuation tenso
 | SR_Δ | `mean 1{q_i(t) > Δ}`, `Δ = 2⌈n/k⌉` |
 | Coalition gain | `M̄, M_max, frac_pos` over the strategic set: `U_i(S deviates) − U_i(all truthful)`. Strategic users crowd each other out, so a negative value does **not** mean an individual is better off truthful |
 | **Unilateral gain** `M_i` | `U_i(σ_i, σ_{−i}; ω) − U_i(truthful, σ_{−i}; ω)` for `n_focal = 5` strategic users per seed (members of `S` drop out of the deviating set; at ρ=0 each focal user is a lone deviator). Reported as `M_uni` (mean), `M_uni_max`, `frac_pos_uni`. This is the proposal's individual incentive |
-| PoS | `(W_truthful − W_strategic) / W_truthful` |
+| SWL | strategic welfare loss `(W_truthful − W_strategic) / W_truthful` (called PoS in earlier versions; renamed because PoS usually means price of stability) |
 
 Every number is a mean over the 30 master seeds with a 95% percentile-bootstrap CI (10,000 resamples); differences
 between cells that share seeds use the **paired** bootstrap (`results/*/paired.json`).
@@ -247,6 +290,8 @@ between cells that share seeds use the **paired** bootstrap (`results/*/paired.j
 | E10 | Proposed mechanisms, strategic | M6, M7 vs M3, M4, M5 on every lie of E2/E3/E7/E8 at ρ=0.25 and the ρ=1 stress test; karma-supply sensitivity |
 | E11 | Proposed mechanisms vs far-sighted attacker | rollout attack, `H ∈ {5,40,80}`, n=10, T=300, against M6 and M7 (Score reference: E3c) |
 | E8 | Timing attack (H2) | M4 `λ ∈ {0.5,1,2,5}`, `c ∈ {1.25,2}`; inflate only when own history is favourable (`a_i ≤` mean / 25th / 75th percentile) vs always; paired premium |
+| E19 | Value-threshold timing (H2) | M4 `λ ∈ {0.5,1,2,5}` + M3, M5, M5c; `τ ∈ {0.5,0.75,0.9}`; sandbag (0 below τ, v_max above) vs boost (truth below) vs max claim; paired sandbag premium |
+| E20 | Vickrey with credits | M5c `credit_rate ∈ {0.25,0.5,1,2}` vs M5 (money) and M3; truthful, cap_1.25, cap_2, max_claim, sandbag_0.75 |
 
 Outputs per experiment `eX`: `summary.json` (means + CIs, one row per cell), `paired.json`, `config.json`
 (configuration + master seeds), and `raw/<cell>.json` (every per-seed row).
@@ -288,10 +333,10 @@ All results: n=50, k=10, T=1000, 30 master seeds, M4 at λ=1 unless stated (E3b:
   among settings with J_A>0.99).
 
 ### E3 — population × attack
-- **Round-Robin and Random are unaffected** by every attack (all gains and PoS exactly 0).
+- **Round-Robin and Random are unaffected** by every attack (all gains and SWL exactly 0).
 - **Greedy: inflating always pays individually** (`M_uni` +99 … +418, 100% of focal users gain), even when everyone
   already inflates (+149 cap_2, +99 max_claim at ρ=1). Max-claim at ρ≥0.25 drops WR to the random level (0.561;
-  PoS 0.44) and J_A to 0.24.
+  SWL 0.44) and J_A to 0.24.
 - **Vickrey: inflating never pays** (`M_uni` from −50 to −416; 0% gain) — consistent with per-round DSIC. Its welfare
   collapse under max-claim therefore requires users to act against their own interest: a stress test, not an equilibrium.
 - **Score (λ=1):** max-claim is unprofitable at every ρ (−47 … −54). Capped exaggeration pays a little when few
@@ -392,6 +437,56 @@ Timing never beats indiscriminate inflation where inflation is profitable (premi
 because always-inflating has become expensive and timing means *lying less*. **H2 in its simple form is not
 supported**: the value of this kind of timing does not rise with λ. The far-sighted rollout attack (E3c) shows the
 vulnerability is real but needs planning, not a fixed rule.
+
+### E19 — value-threshold timing (H2; ρ=0.25)
+
+`sandbag_τ` reports 0 when `v < τ·v_max` and v_max otherwise; `boost_τ` is truthful below τ. Both claim the same rounds,
+so **sandbag premium = M_uni(sandbag) − M_uni(boost)** (paired, same seeds) is the value of *deliberately losing*
+low-value rounds to keep one's score high.
+
+| | sandbag_0.75 M_uni [95% CI] | boost_0.75 | sandbag premium [95% CI] | max claim |
+|---|---|---|---|---|
+| M3 Greedy | +51.5 [50.3, 52.7] | +57.8 | −6.29 [−6.63, −5.97] | +417.6 |
+| M4 λ=0.5 | +35.3 [34.7, 35.9] | +35.7 | −0.38 [−0.54, −0.22] | −29.9 |
+| M4 λ=1 | +20.7 [20.3, 21.1] | +20.7 | +0.07 [−0.07, +0.20] | −53.6 |
+| M4 λ=2 | +10.8 [10.4, 11.1] | +10.1 | **+0.62 [+0.48, +0.74]** | −65.4 |
+| M4 λ=5 | **+4.6 [4.3, 4.8]** | +3.1 | **+1.49 [+1.34, +1.63]** | −71.0 |
+| M5 Vickrey | −4.5 | −4.2 | −0.34 [−0.37, −0.32] | −416.1 |
+| M5c Credit-Vickrey (rate 0.5) | +15.1 [14.5, 15.6] | −0.2 | **+15.23 [+14.59, +15.82]** | −50.2 |
+
+- **The value-threshold rule is the most profitable fixed strategy tested against M4 at high λ.** At λ=5 it gains +4.6 (99% of
+  focal users gain), above c=1.25 exaggeration (+1.1, E7) and far above always-max (−71). A history penalty is
+  much weaker against "claim the maximum only when your value is high" than against indiscriminate inflation.
+- **Losing low-value rounds on purpose becomes more valuable as λ grows** (−0.4 → +0.1 → +0.6 → +1.5), as H2
+  predicts. It is negative under Greedy and Vickrey, where skipping a round can only cost value. The effect is
+  small: most of the gain comes from claiming v_max on high values, not from skipping rounds.
+- τ matters: at τ=0.5 a value below 0.5 almost never wins anyway (premium ≈ 0); at τ=0.9 sandbagging gives up
+  winnable rounds (≈ −100 everywhere). Under the credit budget (M5c), skipping rounds also saves credits, so the premium
+  is 10× larger (+15.2).
+
+### E20 — Vickrey paid in credits instead of money (M5c; ρ=0.25)
+
+Each user receives `credit_rate·(k/n)·v_max` credits per round (capped at 20 rounds of income), bids `min(report, balance)`,
+and pays the Vickrey price in credits. Credits have no utility value.
+
+| | truthful WR | J_A | Q_max | cap_1.25 | cap_2 | max claim | sandbag_0.75 |
+|---|---|---|---|---|---|---|---|
+| M5c rate 0.25 | 0.703 | 1.000 | 10.9 | −5.2 | −13.0 | −25.5 | **+40.4** |
+| M5c rate 0.5 | 0.844 | 1.000 | 18.2 | −10.0 | −24.6 | −50.2 | **+15.1** |
+| M5c rate 1 | 0.998 | 0.997 | 41.5 | **+38.6** | **+9.9** | −43.0 | **+29.2** |
+| M5c rate 2 | 1.000 | 0.996 | 41.7 | +126.7 | +218.9 | +117.7 | +51.5 |
+| M5 (money) | 1.000 | 0.996 | 41.7 | −14.0 | −101.8 | −416.1 | −4.5 |
+
+(Columns 5–8: unilateral gain M_uni; all CIs in `results/RESULTS.md`.)
+
+- **Replacing money by credits loses M5's incentive property.** When the budget binds (rate ≤ 0.5) inflation no
+  longer pays, but **saving credits for high-value rounds does** (+15 to +40). When the budget is loose (rate ≥ 1),
+  inflation pays as well. At rate 2 the budget binds only for max-claim bidders: the truthful, cap_1.25 and
+  sandbag cells match Greedy exactly.
+- A tight budget acts as a fairness device: J_A≈1 and the longest wait drops from 41.7 to 10.9 rounds at rate 0.25,
+  at a large welfare cost (WR 0.70).
+- No credit rate tested deters every tested deviation, so credits alone do not give a non-monetary Vickrey. This motivates the
+  wait-capped karma design of M6 (which redistributes payments instead of destroying them).
 
 ## Proposed mechanisms: M6 Karma-Cap and M7 Rank-Cap
 
@@ -499,14 +594,17 @@ none of these capped rules establishes dynamic strategyproofness.
   (SR_Δ 27%→6.9% at λ=0→1) or heterogeneous (J_B 0.52→0.995). **H1 supported for fairness, weak for starvation.**
 - **Q2 (does the penalty change the value of manipulating?).** Yes — it removes most of it (+306→+3.5 at λ=1 against c=2),
   but how much penalty is needed depends on the lie (E7: λ=2 for c=2, more for milder lies) and on the attacker: a
-  far-sighted rollout attacker still gains at λ=2 (E3c), while simple timing does not (E8). **H2 (timing becomes more
-  valuable with λ) is not supported for the fixed timing rules tested**; it is not refuted for planning attackers.
+  far-sighted rollout attacker still gains at λ=2 (E3c). History-based timing does not pay (E8). Value-based timing
+  does (E19): claiming v_max only for high values is profitable at every λ, and the part of it that skips low-value
+  rounds grows with λ (+1.5 at λ=5). **H2 is supported in direction for value-threshold timing but the effect is
+  small; it is not supported for history-threshold timing.**
 - **Q3 (do equal-count conclusions survive heterogeneity / persistence?).** No for the value-aware rules (E4, E5).
   **H3 is only partly supported:** Round-Robin scores best on J_A and, perhaps surprisingly, *also* on J_B (0.999):
   value-blind rules equalise expected normalised benefit as well, so J_A and J_B diverge only for rules that read values (Greedy/Vickrey/Score).
 - **H4.** M5 has a negative unilateral gain in every tested setting (supported); M3 is vulnerable (supported); M4 is
-  vulnerable at λ=1, to mild lies at λ≥2, and to a far-sighted attacker even at λ=2 (supported, more strongly than the
-  proposal expected).
+  vulnerable at λ=1, to mild lies and to value-threshold timing at λ≥2, and to a far-sighted attacker even at λ=2 (supported, more strongly than the
+  proposal expected). M5's property depends on money: paid in credits (M5c, E20) it rewards strategic reporting at
+  every budget tested.
 
 ### Conclusions
 1. The extremes each fail on one axis: Round-Robin kills starvation and manipulation but loses 44% of welfare at k/n=0.2;
@@ -515,7 +613,8 @@ none of these capped rules establishes dynamic strategyproofness.
 3. Strategy-resistance needs a stronger penalty than fairness does, and the required strength depends on the attack:
    λ≈2 against c=2, more against milder lies, and no fixed λ tested here stops a far-sighted attacker.
 4. A cumulative-allocation penalty does not bound waiting. Round-Robin and the oldest-first cap supply explicit guarantees.
-5. Vickrey has non-positive gain for the tested deviations, but needs real transfers. Score with λ≈2
+5. Vickrey has non-positive gain for the tested deviations, but needs real transfers; replaced by a credit quota it no
+   longer deters lying (E20). Score with λ≈2
    deters c=2 exaggeration while retaining ≈96% welfare; milder lies and planning still pay in the tested settings.
    These are empirical results for bounded policies and a heuristic search, **not** truthfulness guarantees
    (simulation cannot establish dynamic strategyproofness).
@@ -531,13 +630,13 @@ none of these capped rules establishes dynamic strategyproofness.
 | Model: unit demand, `k<n`, quasi-linear utility, bounded reports, seeded ties | `sim/config.py`, `sim/environment.py`, `sim/mechanisms/_utils.py` | `test_config`, `test_environment`, `test_mechanisms` |
 | M1–M5 incl. payments `p=x·v̂_{(k+1)}` | `sim/mechanisms/` | E0 (exhaustive), `test_mechanisms` |
 | Policies: truthful, capped (c∈{1.25,1.5,2}), max claim, **rollout (n=10, H=5, 100 MC, grid)** | `sim/policies/strategic.py`, `sim/runner.py::run_rollout`, `experiments/e3b_rollout.py` | `test_policies`, `test_runner`, `test_experiments` |
-| WR, J_A, J_B, NSW, Q_max, p95 wait, SR_Δ, PoF, PoS | `sim/metrics.py` | hand-computed cases (`test_metrics*`), vectorised-vs-naive check (E0) |
+| WR, J_A, J_B, NSW, Q_max, p95 wait, SR_Δ, PoF, SWL | `sim/metrics.py` | hand-computed cases (`test_metrics*`), vectorised-vs-naive check (E0) |
 | Paired manipulation gain `M̄, M_max, frac_pos` (coalition **and** unilateral per-user `M_i`) | `sim/metrics.py`, `sim/runner.py::unilateral_gains` | `test_runner`, `test_metrics_extra` |
 | Paired counterfactual design on one ω | `SeedPackage`, `run_paired` | `test_environment`, `test_runner` |
 | Pareto-dominance over (WR, J_A, SR_Δ, M) | `analysis/pareto.py`, E2 `pareto` flag | `test_analysis` |
 | 30 locked seeds, paired 95% bootstrap CIs (10,000 resamples), raw per-seed results, config files, seed list | `seeds/`, `analysis/bootstrap.py`, `experiments/common.py` | `test_analysis`, `test_experiments` |
 | E0 exhaustive validation | `experiments/e0_validation.py` | `test_experiments` (incl. fault-injection tests) |
-| E1–E4 (required), E5, E6 (stretch), rollout (stretch) | `experiments/` (+ E3c horizon study, E7 λ×c grid, E8 timing) | `test_experiments`, `test_plots_and_pipeline` |
+| E1–E4 (required), E5, E6 (stretch), rollout (stretch) | `experiments/` (+ E3c horizon study, E7 λ×c grid, E8 and E19 timing, E20 credit budget) | `test_experiments`, `test_plots_and_pipeline` |
 | One command regenerates every main figure | `run_all.py`, `run_all.sh` | `test_run_all_quick_pipeline_end_to_end` |
 | *Extension beyond the proposal:* two new mechanisms and their evaluation | `sim/mechanisms/m6_karma.py`, `m7_rank.py`, E9–E11 | `test_proposed_mechanisms`, `test_proposed_experiments` |
 | Hypotheses H1–H4 evaluated, including contradicted ones | "Research questions and hypotheses" above | — |
@@ -596,8 +695,9 @@ all three for unit-demand GPU allocation, but the search was not exhaustive and 
 The model omits job duration, multi-GPU jobs, placement and preemption; findings concern repeated unit-demand
 allocation, not a production cluster. Synthetic values and utility-equivalent payments limit external validity.
 Jain's index is one notion of equality, so waiting and normalised-benefit metrics are reported alongside it. The attack
-policies include fixed rules, a finite-horizon search heuristic, and an independently trained finite-policy game; replacing M5's payments by
-reusable credits would need a dynamic budget model and would void its DSIC guarantee. In the rollout attack the focal
+policies include fixed rules, a finite-horizon search heuristic, and an independently trained finite-policy game. The credit-budget
+Vickrey (M5c) uses one simple quota design (fixed income, expiring balances, credits destroyed when paid); other
+budget models (transferable or redistributed credits, priced reserve) are not explored. In the rollout attack the focal
 user reports truthfully after the first simulated round and futures are drawn i.i.d., even in the AR(1) setting.
 E6 timings depend on the machine.
 For M6/M7: the hyperparameters were chosen on development seeds against the same *families* of lies that E10 then

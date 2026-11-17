@@ -43,6 +43,10 @@ class Config:
     enable_wait_cap: bool = True  # explicit ablation switch for Score-Cap / M6 / M7
     rank_rollout_update: bool = True  # False reproduces the historical frozen-history attacker
 
+    # ── M5c Credit-Vickrey (Vickrey paid from a renewable credit quota) ──────
+    credit_rate: float = 0.5      # income per round = credit_rate * (k/n) * v_max
+    credit_horizon: float = 20.0  # balance ceiling (and start) = credit_horizon * income
+
     # ── Valuation process ────────────────────────────────────────────────────
     # "uniform"   → Uniform(0, v_max)        (base case)
     # "beta_low"  → Beta(2, 5)               (low-value group, E4)
@@ -99,6 +103,10 @@ class Config:
             raise ValueError(f"karma_init={self.karma_init} must be positive.")
         if self.karma_cap_mult < 1:
             raise ValueError(f"karma_cap_mult={self.karma_cap_mult} must be >= 1.")
+        if not self.credit_rate > 0:
+            raise ValueError(f"credit_rate={self.credit_rate} must be positive.")
+        if self.credit_horizon < 1:
+            raise ValueError(f"credit_horizon={self.credit_horizon} must be >= 1.")
         if not (0.0 <= self.rank_blend <= 1.0):
             raise ValueError(f"rank_blend={self.rank_blend} must be in [0, 1].")
         for name in ("enable_wait_cap", "rank_rollout_update"):

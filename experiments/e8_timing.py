@@ -51,7 +51,7 @@ VARIANTS = {                       # name -> factory(c)
 SETTINGS = ([("GreedyMechanism", None, "M3")]
             + [("ScoreMechanism", lam, f"M4 lambda={lam:g}") for lam in LAMBDAS]
             + [("VickreyMechanism", None, "M5")])
-PAIRED_KEYS = ["M_uni", "frac_pos_uni", "WR", "PoS", "J_A"]
+PAIRED_KEYS = ["M_uni", "frac_pos_uni", "WR", "SWL", "J_A"]
 
 
 def run_e8(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=True, k=None) -> list:
@@ -75,7 +75,7 @@ def run_e8(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=Tr
                              rows, cfg.to_dict())
                 if verbose:
                     print(f"  E8 {label:<12s} c={c:<4g} {vname:<9s} "
-                          f"M_uni={summary['M_uni']['mean']:+8.2f} PoS={summary['PoS']['mean']:.3f}",
+                          f"M_uni={summary['M_uni']['mean']:+8.2f} SWL={summary['SWL']['mean']:.3f}",
                           flush=True)
             diffs = paired_differences(per_variant, "always", PAIRED_KEYS, n_resamples=n_bootstrap)
             paired += [{"label": label, "mechanism": mname, "lambda_": lam, "c": c, "variant": v,

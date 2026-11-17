@@ -64,7 +64,7 @@ def test_strategic_row_truthful_policy_is_exact_zero_gain():
     cfg = Config(n=20, k=4, T=60, rho=0.25)
     row = strategic_row("GreedyMechanism", cfg, SeedPackage.generate(1, cfg), None)
     assert set(row) == set(STRATEGIC_KEYS)
-    for key in ("M_mean", "M_max", "frac_pos", "M_uni", "M_uni_max", "frac_pos_uni", "PoS"):
+    for key in ("M_mean", "M_max", "frac_pos", "M_uni", "M_uni_max", "frac_pos_uni", "SWL"):
         assert row[key] == 0.0
 
 
@@ -244,14 +244,14 @@ def test_e3_report_invariant_mechanisms_are_unaffected(e3):
     rows, _ = e3
     for m in ("RandomMechanism", "RoundRobinMechanism"):
         for r in (r for r in rows if r["mechanism"] == m):
-            assert mean(r, "M_uni") == 0.0 and mean(r, "PoS") == 0.0
+            assert mean(r, "M_uni") == 0.0 and mean(r, "SWL") == 0.0
             assert mean(r, "M_uni_max") == 0.0 and mean(r, "frac_pos_uni") == 0.0
 
 
 def test_e3_truthful_policy_has_no_gain_or_welfare_loss(e3):
     rows, _ = e3
     for r in (r for r in rows if r["policy"] == "truthful"):
-        assert mean(r, "M_uni") == 0.0 and mean(r, "PoS") == 0.0
+        assert mean(r, "M_uni") == 0.0 and mean(r, "SWL") == 0.0
 
 
 def test_e3_greedy_rewards_and_vickrey_punishes_inflation(e3):
@@ -273,7 +273,7 @@ def test_e3_rho_zero_conventions(e3):
 def test_e3_max_claim_collapses_greedy_welfare(e3):
     rows, _ = e3
     full = by(rows, mechanism="GreedyMechanism", policy="max_claim", rho=1.0)
-    assert mean(full, "WR") < 0.8 and mean(full, "PoS") > 0.2
+    assert mean(full, "WR") < 0.8 and mean(full, "SWL") > 0.2
     assert mean(by(rows, mechanism="GreedyMechanism", policy="truthful", rho=1.0), "WR") == pytest.approx(1.0)
 
 
@@ -407,10 +407,10 @@ def test_e7_lambda_by_c_grid(tmp_path):
     assert_strict_json(tmp_path / "e7" / "summary.json")
     labels = ["M3", "M4 lambda=0.5", "M4 lambda=1", "M4 lambda=2", "M4 lambda=5", "M5"]
     assert [s[2] for s in e7_sensitivity.SETTINGS] == labels
-    # more aggressive exaggeration costs welfare (PoS grows with c) under every mechanism
+    # more aggressive exaggeration costs welfare (SWL grows with c) under every mechanism
     for lab in labels:
-        pos = [mean(by(rows, label=lab, c=c), "PoS") for c in (1.25, 1.5, 2.0)]
-        assert pos == sorted(pos)
+        swl = [mean(by(rows, label=lab, c=c), "SWL") for c in (1.25, 1.5, 2.0)]
+        assert swl == sorted(swl)
     # the individual gain falls monotonically with the penalty lambda, for every c
     for c in (1.25, 1.5, 2.0):
         gain = [mean(by(rows, label=f"M4 lambda={l}", c=c), "M_uni") for l in (0.5, 1, 2, 5)]

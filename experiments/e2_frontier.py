@@ -7,7 +7,7 @@ Sweep lambda in {0, 0.05, 0.1, 0.25, 0.5, 1, 2, 5} for M4 and add M1, M2, M3,
 M5 as reference points.  Every setting runs with rho = 0.25 users using capped
 exaggeration (c = 2) and reports WR, J_A, J_B, SR_Delta, the coalition gain
 (M_mean, M_max, frac_pos), the unilateral gains (M_uni, M_uni_max,
-frac_pos_uni) and PoS.  All non-dominated settings on (WR max, J_A max,
+frac_pos_uni) and SWL.  All non-dominated settings on (WR max, J_A max,
 SR_Delta min, M_uni min) are flagged in the summary (``pareto``).
 
 Outputs: results/e2/{summary,paired,config}.json and results/e2/raw/*.json
@@ -32,7 +32,7 @@ from sim.policies import make_capped
 
 LAMBDA_VALUES = [0.0, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
 STATIC_MECHS = ["RandomMechanism", "RoundRobinMechanism", "GreedyMechanism", "VickreyMechanism"]
-PAIRED_KEYS = ["WR", "J_A", "SR_delta", "M_mean", "M_uni", "PoS"]
+PAIRED_KEYS = ["WR", "J_A", "SR_delta", "M_mean", "M_uni", "SWL"]
 
 
 def _cell_name(mname, lam):
