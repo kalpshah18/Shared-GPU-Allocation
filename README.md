@@ -11,6 +11,39 @@
 
 ---
 
+## Final submission: report and result screenshots
+
+Repository link for submission: [Shared-GPU-Allocation](https://github.com/kalpshah18/Shared-GPU-Allocation).
+
+- [Final report: eight body pages plus references](output/pdf/Shared_GPU_Allocation_Final_Report.pdf)
+- [Portable LaTeX source archive](output/latex/Shared_GPU_Allocation_Final_Report_Source.zip)
+- [Editable report source](Project/FAI_Project_Final_Report.tex) and [build instructions](Project/FINAL_REPORT_README.md)
+- [Evidence file: raw sources, hashes, seed roles and checked statistics](Project/final_assets/evidence.json)
+
+The final report completes the supplied review proposal. It includes the mechanism algorithms, controlled timing
+design, credit budget, results and discussion, and the contribution assignments confirmed by the group.
+All reported data cells are checked against saved seed-level outputs. The main rollout figure uses corrected E15
+results; the older E3b/E3c/E11 checkpoints are not presented as corrected-code outputs.
+
+```bash
+python analysis/build_final_report.py      # audit saved results and regenerate paper assets
+python analysis/compile_final_report.py    # PDFLaTeX + BibTeX; check eight body pages and build the source ZIP
+```
+
+These commands build the report from the saved results. To rerun the simulations, use the experiment commands
+documented below. The evidence file records the audit/render runtime; this is separate from the dependency lock
+recommended for full simulation reproduction.
+
+The following screenshots are generated result plots, using the same data as the paper:
+
+![M4 controlled timing results, including the negative high-threshold result](Project/final_assets/m4_timing.png)
+
+![Credit-budget welfare, fairness and strategic gains](Project/final_assets/credit_budget.png)
+
+![Corrected planning attack on history-dependent mechanisms](Project/final_assets/planning_attack.png)
+
+---
+
 ## Main focus: the history-penalised Score rule (M4)
 
 Two baseline outcomes follow directly from theory: **Greedy (M3) can be gamed by over-reporting**, and **Vickrey (M5) is

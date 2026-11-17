@@ -1,0 +1,181 @@
+{
+  "passed": true,
+  "scope": "first saved seed in each listed cell; not a full-grid rerun",
+  "cells_replayed": 11,
+  "checks": [
+    {
+      "raw_source": "results/e1/raw/ScoreMechanism_kn_0.2.json",
+      "seed": 1867694403,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF"
+      ]
+    },
+    {
+      "raw_source": "results/e4/raw/ScoreMechanism_mixed.json",
+      "seed": 1867694403,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF"
+      ]
+    },
+    {
+      "raw_source": "results/e4/raw/GreedyMechanism_mixed.json",
+      "seed": 1867694403,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF"
+      ]
+    },
+    {
+      "raw_source": "results/e7/raw/M4_lambda=5_c_1.25.json",
+      "seed": 1867694403,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF",
+        "M_mean",
+        "M_max",
+        "frac_pos",
+        "M_uni",
+        "M_uni_max",
+        "frac_pos_uni",
+        "SWL"
+      ]
+    },
+    {
+      "raw_source": "results/e12/raw/base_cap_1.25_rho0.25_Score_W10.json",
+      "seed": 757622112,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF",
+        "M_mean",
+        "M_max",
+        "frac_pos",
+        "M_uni",
+        "M_uni_max",
+        "frac_pos_uni",
+        "SWL"
+      ]
+    },
+    {
+      "raw_source": "results/e12/raw/base_cap_1.25_rho0.25_Karma_W10.json",
+      "seed": 757622112,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF",
+        "M_mean",
+        "M_max",
+        "frac_pos",
+        "M_uni",
+        "M_uni_max",
+        "frac_pos_uni",
+        "SWL"
+      ]
+    },
+    {
+      "raw_source": "results/e12/raw/base_cap_1.25_rho0.25_Rank_W10.json",
+      "seed": 757622112,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF",
+        "M_mean",
+        "M_max",
+        "frac_pos",
+        "M_uni",
+        "M_uni_max",
+        "frac_pos_uni",
+        "SWL"
+      ]
+    },
+    {
+      "raw_source": "results/e20/raw/M5c_rate=0.5_sandbag_0.75.json",
+      "seed": 1867694403,
+      "verified_metrics": [
+        "WR",
+        "J_A",
+        "J_B",
+        "NSW",
+        "Q_max",
+        "SR_delta",
+        "pct95_wait",
+        "PoF",
+        "M_mean",
+        "M_max",
+        "frac_pos",
+        "M_uni",
+        "M_uni_max",
+        "frac_pos_uni",
+        "SWL"
+      ]
+    },
+    {
+      "raw_source": "results/e19/raw/controlled_M4_lambda=5_tau0.75.json",
+      "seed": 1867694403,
+      "verified_metrics": [
+        "sandbag_gain",
+        "boost_gain",
+        "timing_premium",
+        "focal_results"
+      ]
+    },
+    {
+      "raw_source": "results/e14/raw/mixed_Score-Cap_W6.json",
+      "seed": 757622112,
+      "verified_metrics": [
+        "online_welfare",
+        "oracle_welfare",
+        "oracle_upper_bound",
+        "constrained_efficiency"
+      ]
+    },
+    {
+      "raw_source": "results/e15/raw/Score lambda=2_exact_H40_R80.json",
+      "seed": 757622112,
+      "verified_metrics": [
+        "M_rollout"
+      ]
+    }
+  ]
+}
