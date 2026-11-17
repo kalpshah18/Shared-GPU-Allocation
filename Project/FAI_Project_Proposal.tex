@@ -1,0 +1,498 @@
+\documentclass{article}
+
+\usepackage{PRIMEarxiv}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+
+\graphicspath{{media/}}
+\hypersetup{hidelinks}
+\urlstyle{same}
+
+\pagestyle{fancy}
+\thispagestyle{empty}
+\rhead{\textit{}}
+\fancyhead[LO]{Fairness, efficiency, and strategic behaviour in shared GPU allocation}
+
+\title{Fairness, efficiency, and strategic behaviour\\in shared GPU allocation}
+
+\author{
+  Aayush Kuloor \quad Harsh Dhru \quad Raj Modi \quad Kalp Shah \\
+  Indian Institute of Technology Gandhinagar \\
+  \texttt{\{aayush.kuloor, harsh.dhru, raj.modi, kalp.shah\}@iitgn.ac.in}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Shared GPU clusters have to divide scarce compute among users whose job values
+are private and whose reports may be strategic. We study this problem in a
+repeated, unit-demand allocation model. The evaluation measures allocative
+efficiency, long-run fairness, and resistance to manipulation. A common
+simulator compares five mechanisms: random allocation, round-robin, greedy
+allocation by reported value, a history-penalised scoring rule, and a $k$-unit
+Vickrey auction. Reports are bounded. Payment and non-payment mechanisms use
+separate models, and all comparisons use paired valuation traces. The
+experiments vary scarcity, the fairness penalty, the fraction and strategy of
+misreporting users, valuation heterogeneity, temporal persistence, and
+population size. We will estimate the resulting frontier over welfare,
+fairness, and manipulation gain. The output will be a reproducible stress test
+of simple allocation rules, with evidence about when a modest fairness
+correction helps, fails, or introduces new strategic incentives.
+\end{abstract}
+
+\keywords{GPU allocation \and fair resource allocation \and mechanism design
+  \and strategic behaviour \and multi-agent systems}
+
+% ============================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================
+
+Modern machine-learning workloads compete for expensive shared accelerators.
+The scheduling rule affects cluster efficiency and the time each user waits.
+Existing systems handle priorities, heterogeneous accelerators, placement, and
+long-running jobs \cite{gu2019tiresias,narayanan2020heterogeneity}. Fair access
+still matters. Repeatedly serving the jobs with the largest apparent benefit
+can starve other users. A rigid equal-time rule can also waste compute when job
+values differ substantially.
+
+Private information creates another difficulty. If allocation depends on a
+self-reported priority, a user may inflate the report to receive service. The
+scheduler sees the claim, not the user's true value. A rule that is efficient
+with truthful reports can therefore perform poorly when users act
+strategically. The analysis draws on online resource allocation, fair division,
+and mechanism design
+\cite{nisan2007algorithmic,ghodsi2011dominant,bertsimas2011price}.
+
+Several GPU schedulers provide useful points of comparison. Tiresias uses
+attained service to reduce job completion time. Gavel extends scheduling
+policies to heterogeneous accelerators. Themis combines finish-time fairness
+with a round-by-round partial-allocation auction designed to encourage truthful
+bids. Shockwave uses market-based planning for jobs that adapt over time
+\cite{gu2019tiresias,narayanan2020heterogeneity,mahajan2020themis,
+zheng2023shockwave}. This project studies a narrower question. It uses a
+stylised unit-demand model to separate the effects of scarcity, allocation
+history, and bounded misreporting while holding information and random inputs
+constant. It does not claim a new production scheduler or a general
+impossibility theorem.
+
+\paragraph{Research question.}
+\begin{quote}
+\emph{How do simple repeated GPU-allocation mechanisms trade off true social
+welfare, long-run fairness, and empirical resistance to bounded strategic
+reporting as scarcity, user heterogeneity, and temporal demand patterns vary?}
+\end{quote}
+
+The experiments address three subsidiary questions:
+\begin{enumerate}
+  \item Does a moderate history penalty reduce starvation without a large loss
+        of true welfare?
+  \item Does increasing the fairness penalty change the benefit available from
+        strategically timing or inflating reports?
+  \item Do conclusions based on equal allocation counts survive when users
+        have unequal value distributions or persistent demand?
+\end{enumerate}
+
+\paragraph{Research contribution.}
+The project places allocation and payments in one formal model. It measures
+manipulation gain with paired counterfactual simulations and evaluates welfare,
+fairness, and manipulation together. Validation tests, confidence intervals,
+saved seeds, and common workloads make the experiments reproducible. The study
+is an analysis of mechanisms under controlled workloads, not a systems
+implementation.
+
+% ============================================================
+\section{Preliminaries}
+\label{sec:prelim}
+% ============================================================
+
+\paragraph{Agents, resources, and time.}
+Let $[n]=\{1,\ldots,n\}$ denote the unit-demand users. In each of $T$
+discrete rounds, they compete for $k<n$ identical GPUs. A user can receive at
+most one GPU in a round. Since all values are non-negative, the base model
+allocates all $k$ GPUs. A seeded random generator breaks ties uniformly.
+
+\paragraph{Valuations and reports.}
+User $i$ draws a private value $v_{i,t}\in[0,v_{\max}]$ from distribution
+$\mathcal D_i$ for receiving one GPU in round $t$. The user's report is
+$\hat v_{i,t}\in[0,v_{\max}]$. The common bound on values and reports rules
+out the degenerate case in which an arbitrarily large bid controls the
+allocation. Unless stated otherwise, $v_{\max}=1$.
+
+\paragraph{Allocations, payments, and histories.}
+An allocation $\mathbf x_t\in\{0,1\}^n$ satisfies
+$\sum_i x_{i,t}=k$. Its payment vector
+$\mathbf p_t\in\mathbb R_{\ge 0}^n$ has $p_{i,t}=0$ whenever
+$x_{i,t}=0$. For non-monetary mechanisms, $\mathbf p_t=\mathbf0$. The public
+history before round $t$ is
+$h_t=(\mathbf x_1,\ldots,\mathbf x_{t-1})$, and
+\[
+  a_i(t)=\sum_{\tau=1}^{t-1}x_{i,\tau}
+\]
+is user $i$'s cumulative allocation. Let $q_i(t)$ be the number of
+consecutive rounds since user $i$ last received a GPU.
+
+\paragraph{Utility and welfare.}
+Under quasi-linear utility, user $i$ receives
+\[
+  u_{i,t}=v_{i,t}x_{i,t}-p_{i,t},
+  \qquad U_i=\sum_{t=1}^T u_{i,t}.
+\]
+The gross allocation benefit is $G_i=\sum_t v_{i,t}x_{i,t}$. Payments count as
+transfers when calculating social welfare:
+\[
+  W=\sum_{i=1}^nG_i
+   =\sum_{t=1}^T\sum_{i=1}^n v_{i,t}x_{i,t}.
+\]
+In round $t$, let $S_t^*$ contain the $k$ users with the highest true values.
+The truthful allocation oracle obtains
+\[
+  W^*=\sum_{t=1}^T\sum_{i\in S_t^*}v_{i,t},
+  \qquad \mathrm{WR}=W/W^*.
+\]
+
+\paragraph{Allocation and benefit fairness.}
+Let $A_i=a_i(T+1)$. Jain's allocation-fairness index is
+\cite{jain1984quantitative}
+\[
+  J_A=\frac{(\sum_i A_i)^2}{n\sum_i A_i^2}.
+\]
+When the distributions $\mathcal D_i$ differ, equal access need not yield
+equal benefit. We also report Jain's index $J_B$ on normalised gross benefits:
+\[
+  B_i=\frac{G_i}{T\mu_i},\qquad
+  \mu_i=\mathbb E_{v\sim\mathcal D_i}[v],\qquad
+  J_B=\frac{(\sum_iB_i)^2}{n\sum_iB_i^2}.
+\]
+Nash gross welfare is
+$\mathrm{NSW}=\sum_i\log(G_i+\varepsilon)$ with
+$\varepsilon=10^{-8}$.
+
+\paragraph{Waiting and starvation.}
+The maximum wait is $Q_{\max}=\max_{i,t}q_i(t)$. For
+$\Delta=2\lceil n/k\rceil$, twice the service cycle of round-robin, the
+starvation rate is
+\[
+  \mathrm{SR}_{\Delta}
+  =\frac{1}{nT}\sum_{i=1}^n\sum_{t=1}^T
+    \mathbb I\{q_i(t)>\Delta\}.
+\]
+We report the $95$th percentile of all waiting times with this threshold-based
+measure.
+
+\paragraph{Paired strategic effects.}
+Let $\omega$ contain a fixed valuation trace, tie-breaking seed, and set of
+strategic users. To evaluate manipulation gain, we change only the focal user's
+strategy and hold $\omega$ and every other policy fixed:
+\[
+  M_i(\sigma_i;\omega)
+  =U_i(\sigma_i,\sigma_{-i};\omega)
+   -U_i(\text{truthful},\sigma_{-i};\omega).
+\]
+The reported statistics are the mean $\overline M$, the maximum $M_{\max}$,
+and the fraction of strategic users with $M_i>0$. For a strategic profile, the
+welfare loss is
+\[
+  \mathrm{PoS}
+  =\frac{W_{\mathrm{truthful}}-W_{\mathrm{strategic}}}
+         {W_{\mathrm{truthful}}},
+\]
+Both simulations use the same $\omega$. For a fair mechanism $F$, the
+normalised welfare loss with truthful reports is
+\[
+  \mathrm{PoF}(F)=\frac{W^*-W_F}{W^*}.
+\]
+
+\paragraph{Incentive terminology.}
+A one-round direct mechanism is dominant-strategy incentive compatible (DSIC)
+when truthful reporting weakly maximises each user's utility for every profile
+of other reports \cite{nisan2007algorithmic}. Reports cannot affect a
+report-invariant rule, which makes such a rule weakly strategyproof. For
+history-dependent non-payment rules, the experiments measure vulnerability to
+specified attacks. Simulation cannot establish dynamic strategyproofness.
+
+% ============================================================
+\section{Problem formulation}
+\label{sec:formulation}
+% ============================================================
+
+Let $\rho\in[0,1]$, and let
+$\mathcal S\subseteq[n]$, $|\mathcal S|=\lfloor\rho n\rfloor$, be the
+strategic set. A reporting policy may condition on the current value and
+public history:
+\[
+  \sigma_i:[0,v_{\max}]\times\mathcal H_t
+  \longrightarrow[0,v_{\max}],
+  \qquad
+  \hat v_{i,t}=\sigma_i(v_{i,t},h_t).
+\]
+A repeated mechanism is a sequence of mappings
+\[
+  \mathcal M_t:
+  [0,v_{\max}]^n\times\mathcal H_t
+  \longrightarrow
+  \mathcal X_k\times\mathbb R_{\ge0}^n,
+  \qquad
+  \mathcal X_k=
+  \left\{\mathbf x\in\{0,1\}^n:\sum_i x_i=k\right\},
+\]
+which returns an allocation $\mathbf x_t$ and a payment vector $\mathbf p_t$.
+The same model therefore covers the non-payment rules and the auction.
+
+For each workload condition, we estimate the achievable set
+\[
+  \mathcal F=
+  \left\{
+  (\mathrm{WR},J_A,J_B,\mathrm{SR}_{\Delta},\overline M):
+  \mathcal M\in\mathfrak M
+  \right\},
+\]
+where $\mathfrak M$ contains the five candidate mechanisms and the parameter
+settings described below. One setting Pareto dominates another when it has no
+lower welfare or fairness, no higher starvation or manipulation gain, and a
+strict improvement on at least one measure. Keeping the measures separate
+avoids an arbitrary scalar weighting of these normative objectives.
+
+The base environment is a repeated allocation model, not a production
+scheduler. It assumes identical GPUs, one-round service, at most one GPU per
+user, and additive values. It omits job arrivals, gang scheduling, placement,
+preemption, and multi-GPU speedup. These restrictions allow controlled causal
+comparisons between mechanisms. A separate experiment introduces temporal
+persistence to test whether the conclusions depend on independent values.
+
+% ============================================================
+\section{Proposed solutions}
+\label{sec:solutions}
+% ============================================================
+
+\subsection{Allocation mechanisms}
+
+\begin{table}[ht]
+\caption{Properties evaluated or guaranteed by construction.}
+\label{tab:mechanisms}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+Mechanism & Reports & History & Payments & Formal property \\
+\midrule
+M1 Random      & No  & No  & No  & Report-invariant \\
+M2 Round-robin & No  & Yes & No  & Report-invariant \\
+M3 Greedy      & Yes & No  & No  & Truthful welfare oracle only \\
+M4 Score       & Yes & Yes & No  & Empirically stress-tested \\
+M5 Vickrey     & Yes & No  & Yes & Per-round DSIC \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{M1 Random.}
+M1 chooses $k$ users uniformly without replacement. It ignores reports and
+history. It is report-invariant and equalises expected allocation counts.
+
+\paragraph{M2 Round-robin.}
+M2 starts from a seeded queue and serves the next $k$ users in each round. It
+is report-invariant and bounds waiting time, but ignores current job value.
+
+\paragraph{M3 Greedy reported value.}
+Allocate to the $k$ largest reports:
+\[
+  \mathbf x_t\in
+  \operatorname*{arg\,max}_{\mathbf x\in\mathcal X_k}
+  \sum_{i=1}^n\hat v_{i,t}x_i.
+\]
+When reports equal values, M3 attains the truthful welfare oracle. Increasing a
+report can only improve the user's one-round allocation probability.
+
+\paragraph{M4 History-penalised score.}
+For $\lambda\ge0$, define
+\[
+  s_{i,t}=\frac{\hat v_{i,t}}{(1+a_i(t))^{\lambda}}
+\]
+and allocate to the $k$ largest scores. M4 equals M3 at $\lambda=0$. As
+$\lambda$ grows, cumulative service has more influence relative to reported
+value. The rule approaches least-served-first, with reports used to break ties,
+but never becomes literal round-robin. Sweeping $\lambda$ measures the fairness
+benefit and strategic cost of the correction.
+
+\paragraph{M5 $k$-unit Vickrey auction.}
+Allocate to the $k$ highest bids and charge each winner the
+$(k+1)$st-highest bid:
+\[
+  p_{i,t}=x_{i,t}\hat v_{(k+1),t}.
+\]
+With unit demand, quasi-linear utility, and no intertemporal budget, this is the
+VCG outcome for $k$ identical units and is DSIC in each round
+\cite{vickrey1961counterspeculation,nisan2007algorithmic}. The model treats
+payments as utility-equivalent transfers. They are not reusable virtual
+credits. Real transfers are required for this truthfulness benchmark, which we
+use only as a mechanism-design baseline and do not propose as a deployment
+policy.
+
+\subsection{Strategic policies}
+
+Each strategic user follows one of four bounded policies:
+\begin{enumerate}
+  \item \textbf{Truthful:}
+        $\hat v_{i,t}=v_{i,t}$.
+  \item \textbf{Capped exaggeration:}
+        $\hat v_{i,t}=\min\{c v_{i,t},v_{\max}\}$ for
+        $c\in\{1.25,1.5,2\}$.
+  \item \textbf{Maximum claim:}
+        $\hat v_{i,t}=v_{\max}$, a worst-case priority-inflation baseline.
+  \item \textbf{Finite-horizon rollout attack:}
+        for a diagnostic setting with $n=10$, evaluate reports on
+        $\mathcal G=\{0,0.1,\ldots,1\}$ using $100$ Monte Carlo rollouts over
+        the next $H=5$ rounds, and select the report with highest estimated
+        cumulative utility under fixed opponent policies.
+\end{enumerate}
+The rollout policy approximates a unilateral attack. It is neither an
+equilibrium computation nor a proof of manipulability. We report it separately
+because a finite search heuristic is not a true best response.
+
+\subsection{Experimental protocol}
+
+Unless a factor is being varied, the base configuration is
+\[
+  n=50,\quad k=10,\quad T=1000,\quad
+  \mathcal D_i=\mathrm{Uniform}(0,1),\quad \rho=0.25.
+\]
+Each condition uses $30$ independent master seeds. For a given seed, every
+mechanism receives the same valuation tensor, strategic-user set, and
+pre-generated tie-breaking randomness. Reported results will include seed
+means and paired $95\%$ bootstrap confidence intervals based on $10{,}000$
+resamples. We will save raw per-seed results, configuration files, and the
+master seed list. Experiment E3 uses a factorial design; all other experiments
+change one factor at a time.
+
+\paragraph{E0 validation and sanity checks.}
+Small discrete instances allow exhaustive checks of capacity and payment
+invariants, report-invariance of M1--M2, equivalence of M3 and M4 at
+$\lambda=0$, the round-robin wait bound, welfare-oracle calculations, and
+one-round truthfulness of M5 for every report in a finite grid. These checks
+identify implementation errors before the main experiments run.
+
+\paragraph{E1 resource scarcity.}
+Vary $k/n\in\{0.1,0.2,0.4,0.6,0.8\}$ and compare WR, $J_A$,
+$Q_{\max}$, the $95$th-percentile wait, and $\mathrm{SR}_{\Delta}$ under
+truthful reports.
+
+\paragraph{E2 fairness and strategic-vulnerability frontier.}
+Sweep
+$\lambda\in\{0,0.05,0.1,0.25,0.5,1,2,5\}$. Plot WR against $J_A$ and
+colour each point by $\overline M$ under capped exaggeration. Report all
+non-dominated settings. No single metric will determine the selected value of
+$\lambda$.
+
+\paragraph{E3 strategic population and attack type.}
+Use a factorial design over
+$\rho\in\{0,0.1,0.25,0.5,1\}$ and the three scalable policies (truthful,
+capped exaggeration with $c=2$, and maximum claim). Measure PoS,
+$\overline M$, $M_{\max}$, the fraction benefiting from manipulation, WR,
+  and fairness. Apply the rollout attack to selected settings for M3--M5 where
+  it is most likely to separate their behaviour.
+
+\paragraph{E4 heterogeneous users.}
+Compare the homogeneous base case with an equal-sized two-group population:
+$\mathcal D_L=\mathrm{Beta}(2,5)$ and
+  $\mathcal D_H=\mathrm{Beta}(5,2)$. Both remain in $[0,1]$ but have different
+  means. Report $J_A$ and $J_B$ together to identify cases in which equal
+  service and equal normalised benefit diverge.
+
+\paragraph{E5 temporally persistent demand.}
+Replace i.i.d. values with
+\[
+  v_{i,t}=\alpha v_{i,t-1}+(1-\alpha)\epsilon_{i,t},
+  \qquad \epsilon_{i,t}\sim\mathrm{Uniform}(0,1),
+\]
+for $\alpha\in\{0,0.5,0.9\}$. The experiment checks whether the conclusions
+hold when high-value demand persists across rounds, a feature absent from the
+i.i.d. model.
+
+\paragraph{E6 scalability.}
+Vary $n\in\{10,25,50,100,250,500\}$ with $k/n=0.2$ and $T=1000$.
+Report wall-clock time per simulated round and peak memory. This experiment
+excludes the rollout attack, which solves a separate and more expensive
+diagnostic problem.
+
+\subsection{Testable hypotheses}
+
+\begin{enumerate}
+  \item Moderate $\lambda$ will reduce tail waiting and starvation before it
+        causes a comparable loss in WR.
+  \item Increasing $\lambda$ will improve allocation equality but may increase
+        the value of strategically timing reports because current service
+        changes future scores.
+  \item Round-robin will score well on $J_A$ but worse on WR and, under
+        heterogeneous values, need not dominate on $J_B$.
+  \item M5 will have negligible positive manipulation gain in the one-round
+        validation and repeated independent setting, whereas M3 and M4 will
+        remain vulnerable to bounded over-reporting.
+\end{enumerate}
+The project can succeed even if the evidence rejects these hypotheses.
+
+\subsection{Anticipated limitations}
+
+The model omits job duration, multi-GPU jobs, placement, and preemption. Its
+findings apply to repeated unit-demand allocation, not to a production cluster.
+Synthetic values and utility-equivalent payments cannot establish external
+validity. Jain's index captures one notion of equality, so the analysis also
+reports waiting and normalised-benefit metrics. Fixed attack policies do not
+characterise a multi-agent equilibrium, and the rollout attack is a
+finite-horizon unilateral search. The Vickrey result also depends on real
+quasi-linear transfers. Replacing payments with reusable credits would require
+a separate dynamic budget model and would remove the stated DSIC guarantee.
+
+\subsection{Success criteria and reproducibility}
+
+The project is \emph{complete} when M1--M5 pass E0, E1--E4 run for every
+prespecified seed, paired intervals and raw results are produced, and one
+command can regenerate every main figure. E5--E6 and the rollout attack are
+stretch deliverables. The evidence must answer the research questions
+reliably, even when it contradicts the hypotheses.
+
+% ============================================================
+\section{Contribution}
+\label{sec:contributions}
+% ============================================================
+
+All members will review the formal model, experimental design, results, and
+final report. Each member has a primary area of responsibility.
+
+\paragraph{Aayush Kuloor: simulator and reproducibility.}
+Aayush will implement the valuation processes, histories, paired random
+streams, configuration loading, result storage, and end-to-end experiment
+runner. He will maintain the master seeds and reproducibility instructions.
+
+\paragraph{Harsh Dhru: mechanisms and formal validation.}
+Harsh will implement M1--M5, the allocation and payment interfaces, seeded
+tie-breaking, and the exhaustive E0 tests for mechanism invariants and the
+Vickrey benchmark.
+
+\paragraph{Raj Modi: strategic policies and metrics.}
+Raj will implement the bounded attacks and rollout diagnostic. He will also
+implement WR, $J_A$, $J_B$, waiting, starvation, PoF, PoS, and paired
+manipulation metrics, then validate them on hand-computed examples.
+
+\paragraph{Kalp Shah: experiments and statistical analysis.}
+Kalp will implement the parameter sweeps, paired bootstrap intervals,
+Pareto-dominance analysis, figures, and result tables. He will document
+failures, sensitivity checks, and positive findings.
+
+Each owner will provide unit tests and a short methods description for their
+component. Another member will review that component's code.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

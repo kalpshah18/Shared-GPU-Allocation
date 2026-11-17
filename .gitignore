@@ -39,6 +39,7 @@ Thumbs.db
 desktop.ini
 
 # Project Specific: Simulation raw outputs
+/tmp/
 # Ignore per-seed raw outputs while allowing summary files and directories
 results/**/seed_*.json
 results/*/*.json
