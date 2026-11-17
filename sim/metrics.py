@@ -199,18 +199,26 @@ def unilateral_summary(gains) -> dict:
     }
 
 
-def price_of_strategy(
+def strategic_welfare_loss(
     history_truthful: History,
     history_strategic: History,
     valuations: np.ndarray,
     cfg: Config | None = None,
 ) -> float:
-    """PoS = (W_truthful - W_strategic) / W_truthful on a shared omega."""
+    """
+    Strategic welfare loss SWL = (W_truthful - W_strategic) / W_truthful on a
+    shared omega.  (Called "PoS" in earlier versions; renamed because PoS
+    conventionally means the *price of stability* in game theory.)
+    """
     W_t = float(np.sum(gross_benefits(history_truthful,  valuations)))
     W_s = float(np.sum(gross_benefits(history_strategic, valuations)))
     if W_t == 0.0:
         return 0.0
     return (W_t - W_s) / W_t
+
+
+# Backward-compatible alias for the pre-rename name.
+price_of_strategy = strategic_welfare_loss
 
 
 def price_of_fairness(history: History, valuations: np.ndarray, cfg: Config) -> float:

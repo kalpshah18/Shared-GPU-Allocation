@@ -39,7 +39,7 @@ SEEDS_FILE = ROOT / "seeds" / "master_seeds.json"
 
 # Metrics reported for every strategic cell (E2, E3, E7).
 STRATEGIC_KEYS = [
-    "WR", "J_A", "J_B", "NSW", "SR_delta", "pct95_wait", "Q_max", "PoF", "PoS",
+    "WR", "J_A", "J_B", "NSW", "SR_delta", "pct95_wait", "Q_max", "PoF", "SWL",
     "M_mean", "M_max", "frac_pos", "M_uni", "M_uni_max", "frac_pos_uni",
 ]
 # Metrics reported for every truthful cell (E1, E4, E5).
@@ -115,10 +115,10 @@ def strategic_row(mname: str, cfg: Config, pkg: SeedPackage, policy) -> dict:
     """
     One seed of a strategic cell: the strategic run's metrics, the coalition
     gain (M_mean, M_max, frac_pos), the unilateral gains of ``cfg.n_focal``
-    focal users (M_uni, M_uni_max, frac_pos_uni) and PoS.
+    focal users (M_uni, M_uni_max, frac_pos_uni) and SWL.
 
     ``policy=None`` is the truthful policy: the strategic run equals the
-    truthful run, all manipulation gains are exactly 0 and PoS = 0.
+    truthful run, all manipulation gains are exactly 0 and SWL = 0.
     """
     mech = make_mechanism(mname, cfg, pkg)
     if policy is None:
@@ -128,7 +128,7 @@ def strategic_row(mname: str, cfg: Config, pkg: SeedPackage, policy) -> dict:
         row.update({"M_mean": 0.0 if n_s else float("nan"),
                     "M_max": 0.0 if n_s else float("nan"),
                     "frac_pos": 0.0 if n_s else float("nan"),
-                    "M_uni": 0.0, "M_uni_max": 0.0, "frac_pos_uni": 0.0, "PoS": 0.0})
+                    "M_uni": 0.0, "M_uni_max": 0.0, "frac_pos_uni": 0.0, "SWL": 0.0})
         return row
 
     h_truth, h_strat = run_paired(mech, pkg, cfg, policy)
@@ -136,7 +136,7 @@ def strategic_row(mname: str, cfg: Config, pkg: SeedPackage, policy) -> dict:
     row.update(M.manipulation_gain(h_strat, h_truth, pkg.valuations, pkg.strategic_set))
     _, gains = unilateral_gains(mech, pkg, cfg, policy, h_strat)
     row.update(M.unilateral_summary(gains))
-    row["PoS"] = M.price_of_strategy(h_truth, h_strat, pkg.valuations, cfg)
+    row["SWL"] = M.strategic_welfare_loss(h_truth, h_strat, pkg.valuations, cfg)
     return row
 
 

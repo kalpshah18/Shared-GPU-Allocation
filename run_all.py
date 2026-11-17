@@ -39,6 +39,8 @@ STEPS = [
     ("E6  — Scalability benchmark (stretch)",        "experiments/e6_scalability.py",   ["--T", "50"]),
     ("E7  — λ × c sensitivity grid",                 "experiments/e7_sensitivity.py",   ["--n", "20", "--T", "80"]),
     ("E8  — Timing attack (hypothesis H2)",          "experiments/e8_timing.py",        ["--n", "20", "--T", "80"]),
+    ("E19 — Value-threshold timing attack (H2)",     "experiments/e19_value_threshold.py", ["--n", "20", "--T", "80"]),
+    ("E20 — Vickrey with a credit budget",          "experiments/e20_credit_budget.py",   ["--n", "20", "--T", "80"]),
     ("E9  — Proposed mechanisms, truthful",          "experiments/e9_proposed_truthful.py",   ["--n", "20", "--T", "80"]),
     ("E10 — Proposed mechanisms, strategic",         "experiments/e10_proposed_strategic.py", ["--n", "20", "--T", "80"]),
     ("E11 — Proposed mechanisms vs rollout attacker", "experiments/e11_proposed_rollout.py",  ["--n", "10", "--T", "25"]),
@@ -99,6 +101,8 @@ def main() -> None:
              EXTENSION_STEPS if args.extensions_only else STEPS + EXTENSION_STEPS + FOLLOWUP_STEPS)
     for label, script, quick_args in steps:
         run_step(label, [script] + common + (quick_args if args.quick else []))
+    if not args.extensions_only and not args.followups_only:
+        run_step("Feedback data audit", ["analysis/verify_feedback.py", "--results-dir", args.results_dir])
     if not args.extensions_only:
         run_step("Follow-up data audit", ["analysis/verify_followups.py", "--results-dir", args.results_dir])
 

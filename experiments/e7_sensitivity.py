@@ -56,7 +56,7 @@ def run_e7(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=Tr
                 save_raw(results_dir, "e7", f"{label.replace(' ', '_')}_c_{c:g}", rows, cfg.to_dict())
             if verbose:
                 print(f"  E7 {label:<12s} c={c:<4g} WR={summary['WR']['mean']:.3f} "
-                      f"M_uni={summary['M_uni']['mean']:+.2f} PoS={summary['PoS']['mean']:.3f}", flush=True)
+                      f"M_uni={summary['M_uni']['mean']:+.2f} SWL={summary['SWL']['mean']:.3f}", flush=True)
     if results_dir:
         save_outputs(results_dir, "e7", summaries,
                      {"n": n, "k": k, "T": T, "rho": 0.25, "c_values": C_VALUES,

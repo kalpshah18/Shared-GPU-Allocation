@@ -213,11 +213,11 @@ E3_TITLES = {
     "M_uni"       : "Unilateral manipulation gain, mean over focal users",
     "M_uni_max"   : "Unilateral manipulation gain, maximum over focal users",
     "frac_pos_uni": "Fraction of focal users who gain from deviating",
-    "PoS"         : "Price of Strategy (welfare loss vs. all truthful)",
+    "SWL"         : "Strategic welfare loss SWL (vs. all truthful)",
     "WR"          : "Welfare ratio under the strategic profile",
     "J_A"         : "Jain allocation fairness under the strategic profile",
 }
-E3_SEQUENTIAL = {"PoS", "WR", "J_A", "frac_pos_uni"}
+E3_SEQUENTIAL = {"SWL", "WR", "J_A", "frac_pos_uni"}
 
 
 def _e3_grid(results, mech, metric, rhos, policies):
@@ -493,8 +493,8 @@ E8_STYLES = {"always": ("#333333", "-", "o"), "timed": ("#b8322f", "-", "s"),
 def plot_e8(results: list, save: bool = True) -> None:
     """
     Top row: unilateral gain of M4 vs lambda for always-inflating and three timed
-    variants.  Bottom row: the timing premium (timed minus always, same omega).
-    One column per exaggeration factor c; a positive premium means timing helps.
+    variants. Bottom row: descriptive profile gain differences (timed minus
+    always, same omega). Opponent policies also differ; this does not isolate timing.
     """
     cs = sorted({r["c"] for r in results})
     fig, axes = plt.subplots(2, len(cs), figsize=(6.5 * len(cs), 9), sharex=True, tight_layout=True,
@@ -524,20 +524,124 @@ def plot_e8(results: list, save: bool = True) -> None:
         top.set_title(f"c = {c:g}", fontweight="bold")
         top.set_ylabel("Unilateral gain $M_{uni}$")
         top.legend(fontsize=9)
-        bottom.set_ylabel("Timing premium  M(timed) - M(always)")
+        bottom.set_ylabel("Profile difference  M(timed) - M(always)")
         bottom.set_xlabel("History penalty λ")
         bottom.legend(fontsize=9)
-    fig.suptitle("E8 — Does timing reports pay? (M4, ρ=0.25).  Premium > 0 would support H2",
+    fig.suptitle("E8 — History-triggered reporting (M4, ρ=0.25). Opponent policies differ between cells",
                  fontsize=13, fontweight="bold")
     if save:
         _save(fig, "e8_timing")
     plt.close(fig)
 
 
+# ── E19: value-threshold timing; E20: credit budget ───────────────────────────
+
+def plot_e19(results: list, save: bool = True, controlled: list | None = None) -> None:
+    """
+    Left: unilateral gain of the sandbag and boost rules vs lambda (M4), one
+    colour per threshold tau (population-profile comparisons).
+    Centre/right: controlled focal utility differences with fixed opponents;
+    tau=.9 has a separate scale so its large losses do not hide small effects.
+    """
+    taus = sorted({r["tau"] for r in results if r.get("tau") is not None})
+    palette = dict(zip(taus, ["#2ca02c", "#ff7f0e", "#b8322f", "#1c5cab"]))
+    m4 = [r for r in results if r["mechanism"] == "ScoreMechanism"]
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(17, 5.5), tight_layout=True)
+    lams = sorted({r["lambda_"] for r in m4})
+    for tau in taus:
+        for vname, ls, mk in ((f"sandbag_{tau:g}", "-", "o"), (f"boost_{tau:g}", "--", "s")):
+            rows = sorted((r for r in m4 if r["variant"] == vname), key=lambda r: r["lambda_"])
+            if rows:
+                means, yerr = _errbars(rows, "M_uni")
+                ax1.errorbar([r["lambda_"] for r in rows], means, yerr=yerr, color=palette[tau], linestyle=ls,
+                             marker=mk, capsize=3, linewidth=1.6, label=vname)
+        rows = sorted((r for r in (controlled or []) if r["mechanism"] == "ScoreMechanism"
+                       and r["tau"] == tau), key=lambda r: r["lambda_"])
+        if rows:
+            means, yerr = _errbars(rows, "timing_premium")
+            ax = ax3 if tau >= .9 else ax2
+            ax.errorbar([r["lambda_"] for r in rows], means, yerr=yerr, color=palette[tau],
+                         marker="o", capsize=3, linewidth=1.8, label=f"M4, τ={tau:g}")
+    for ax in (ax1, ax2, ax3):
+        ax.axhline(0, color="#333333", linewidth=0.8)
+        ax.set_xscale("log")
+        ax.set_xticks(lams)
+        ax.xaxis.set_major_formatter(ScalarFormatter())
+        ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.set_xlabel("History penalty λ (M4)")
+        ax.grid(True, linestyle="--", alpha=0.4)
+    ax1.set_ylabel("Unilateral gain $M_{uni}$")
+    ax1.set_title("Population gains (opponents vary by policy)", fontweight="bold", fontsize=10)
+    ax1.legend(fontsize=8, ncol=2)
+    ax2.set_ylabel("Timing premium  U(sandbag) − U(boost)")
+    ax2.set_title("Fixed opponents: τ = 0.5, 0.75 (95% CIs)", fontweight="bold", fontsize=10)
+    ax3.set_ylabel("Timing premium  U(sandbag) − U(boost)")
+    ax3.set_title("Fixed opponents: τ = 0.9 (95% CIs)", fontweight="bold", fontsize=10)
+    if controlled:
+        ax2.legend(fontsize=8)
+        ax3.legend(fontsize=8)
+    else:
+        ax2.text(.5, .5, "Controlled results unavailable", transform=ax2.transAxes, ha="center")
+    fig.suptitle("E19 — Value-threshold timing: population gains and controlled timing comparison",
+                 fontsize=13, fontweight="bold")
+    if save:
+        _save(fig, "e19_value_threshold")
+    plt.close(fig)
+
+
+def _pick_row(rows, **conds):
+    return next((r for r in rows if all(r.get(k) == v for k, v in conds.items())), None)
+
+
+def plot_e20(results: list, save: bool = True) -> None:
+    """Left: truthful WR and J_A vs credit rate.  Right: unilateral gain per policy vs credit rate."""
+    credit = sorted((r for r in results if r["mechanism"] == "CreditVickreyMechanism"), key=lambda r: r["credit_rate"])
+    rates = sorted({r["credit_rate"] for r in credit})
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5), tight_layout=True)
+    tr = [r for r in credit if r["policy"] == "truthful"]
+    for key, color in (("WR", "#1c5cab"), ("J_A", "#2ca02c")):
+        means, yerr = _errbars(tr, key)
+        ax1.errorbar([r["credit_rate"] for r in tr], means, yerr=yerr, color=color, marker="o", capsize=3,
+                     linewidth=1.8, label=f"M5c {key}")
+        for lab, ls in (("M5 (money)", ":"), ("M3", "--")):
+            ref = _pick_row(results, label=lab, policy="truthful")
+            if ref:
+                ax1.axhline(ref[key]["mean"], color=color, linestyle=ls, linewidth=1, label=f"{lab} {key}")
+    ax1.set_ylabel("Truthful WR / J_A")
+    ax1.set_title("Efficiency and equality under a credit budget", fontweight="bold")
+    ax1.legend(fontsize=8, ncol=2)
+    pols = [p for p in dict.fromkeys(r["policy"] for r in results) if p != "truthful"]
+    for idx, pol in enumerate(pols):
+        rows = [r for r in credit if r["policy"] == pol]
+        means, yerr = _errbars(rows, "M_uni")
+        ax2.errorbar([r["credit_rate"] for r in rows], means, yerr=yerr, color=COLORS[idx % len(COLORS)],
+                     marker=MARKERS[idx % len(MARKERS)], capsize=3, linewidth=1.6, label=pol)
+        ref = _pick_row(results, label="M5 (money)", policy=pol)
+        if ref:
+            ax2.scatter([max(rates) * 1.6], [ref["M_uni"]["mean"]], color=COLORS[idx % len(COLORS)],
+                        marker="D", s=40)
+    ax2.axhline(0, color="#333333", linewidth=0.8)
+    ax2.set_ylabel("Unilateral gain $M_{uni}$ (diamonds: M5 with money)")
+    ax2.set_title("Does lying pay once payments are credits?", fontweight="bold")
+    ax2.legend(fontsize=8)
+    for ax in (ax1, ax2):
+        ax.set_xscale("log")
+        ax.set_xticks(rates)
+        ax.xaxis.set_major_formatter(ScalarFormatter())
+        ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.set_xlabel("Credit rate (allowance / fair share at price v_max)")
+        ax.grid(True, linestyle="--", alpha=0.4)
+    fig.suptitle("E20 — Vickrey with a renewable credit quota instead of money (M5c, ρ=0.25)",
+                 fontsize=13, fontweight="bold")
+    if save:
+        _save(fig, "e20_credit_budget")
+    plt.close(fig)
+
+
 def plot_e7(results: list, save: bool = True) -> None:
     """
     Left: unilateral gain of M4 vs lambda, one line per exaggeration factor c.
-    Right: PoS vs c for every mechanism.
+    Right: SWL vs c for every mechanism.
     """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5), tight_layout=True)
     m4 = [r for r in results if r["mechanism"] == "ScoreMechanism"]
@@ -564,12 +668,12 @@ def plot_e7(results: list, save: bool = True) -> None:
     labels = list(dict.fromkeys(r["label"] for r in results))
     for idx, lab in enumerate(labels):
         subset = sorted((r for r in results if r["label"] == lab), key=lambda r: r["c"])
-        means, yerr = _errbars(subset, "PoS")
+        means, yerr = _errbars(subset, "SWL")
         ax2.errorbar([r["c"] for r in subset], means, yerr=yerr, label=lab,
                      color=COLORS[idx % len(COLORS)], marker=MARKERS[idx % len(MARKERS)],
                      capsize=3, linewidth=1.6, markersize=5)
     ax2.set_xlabel("Exaggeration factor c")
-    ax2.set_ylabel("Price of Strategy (PoS)")
+    ax2.set_ylabel("Strategic welfare loss (SWL)")
     ax2.set_xticks(cs)
     ax2.set_title("Welfare cost of the lie", fontweight="bold")
     ax2.legend(fontsize=8, ncol=2)
@@ -746,7 +850,7 @@ def run_all_plots(results_dir: str = "results", figures_dir: str = "figures") ->
     if (d := _load(rd / "e2" / "summary.json")) is not None:
         plot_e2(d)
     if (d := _load(rd / "e3" / "summary.json")) is not None:
-        for metric in ("M_mean", "M_uni", "M_uni_max", "frac_pos_uni", "PoS", "WR", "J_A"):
+        for metric in ("M_mean", "M_uni", "M_uni_max", "frac_pos_uni", "SWL", "WR", "J_A"):
             plot_e3(d, metric=metric)
     if (d := _load(rd / "e3b" / "summary.json")) is not None:
         plot_e3b(d)
@@ -762,6 +866,11 @@ def run_all_plots(results_dir: str = "results", figures_dir: str = "figures") ->
         plot_e7(d)
     if (d := _load(rd / "e8" / "summary.json")) is not None:
         plot_e8(d)
+    if (d := _load(rd / "e19" / "summary.json")) is not None:
+        path = rd / "e19" / "controlled.json"
+        plot_e19(d, controlled=json.loads(path.read_text()) if path.exists() else None)
+    if (d := _load(rd / "e20" / "summary.json")) is not None:
+        plot_e20(d)
     if (d := _load(rd / "e9" / "summary.json")) is not None:
         plot_e9(d)
         plot_e9_frontier(d)

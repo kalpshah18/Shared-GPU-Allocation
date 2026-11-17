@@ -60,7 +60,7 @@ def test_invalid_proposed_parameters_rejected(kw):
 
 def test_factory_labels_and_names_include_proposed():
     assert PROPOSED_MECHANISM_NAMES == ["KarmaCapMechanism", "RankCapMechanism"]
-    assert ALL_MECHANISM_NAMES == MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES + ["ScoreCapMechanism"]
+    assert ALL_MECHANISM_NAMES == MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES + ["ScoreCapMechanism", "CreditVickreyMechanism"]
     assert set(MECHANISM_LABELS) == set(ALL_MECHANISM_NAMES)
     cfg = Config(n=8, k=2, T=3)
     pkg = SeedPackage.generate(1, cfg)

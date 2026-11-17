@@ -66,7 +66,7 @@ def test_make_capped_binds_c_and_names_itself():
 
 def test_registry_keys_and_lookup():
     assert {"truthful", "cap_1.25", "cap_1.5", "cap_2", "max_claim",
-            "timed_cap_1.25", "timed_cap_2"} == set(POLICY_REGISTRY)
+            "timed_cap_1.25", "timed_cap_2", "sandbag_0.75", "boost_0.75"} == set(POLICY_REGISTRY)
     assert get_policy("cap_2")(0.3, H0, CFG) == pytest.approx(0.6)
     assert get_policy("cap_1.5")(0.4, H0, CFG) == pytest.approx(0.6)
     assert get_policy("cap_3")(0.2, H0, CFG) == pytest.approx(0.6)       # built on the fly
@@ -258,3 +258,24 @@ def test_call_policy_passes_users_only_when_declared():
     call_policy(plain, np.ones(2), H0, cfg, users=np.array([1, 2]))
     call_policy(needy, np.ones(2), H0, cfg, users=np.array([1, 2]))
     assert seen["plain"] and list(seen["users"]) == [1, 2]
+
+
+# ── Value-threshold timing (E19) ──────────────────────────────────────────────
+
+def test_value_threshold_sandbag_and_boost():
+    from sim.policies import make_value_threshold
+    v = np.array([0.1, 0.5, 0.74, 0.75, 0.9])
+    sandbag = make_value_threshold(0.75, "zero")(v, H0, CFG)
+    boost = make_value_threshold(0.75, "truth")(v, H0, CFG)
+    np.testing.assert_allclose(sandbag, [0, 0, 0, CFG.v_max, CFG.v_max])
+    np.testing.assert_allclose(boost, [0.1, 0.5, 0.74, CFG.v_max, CFG.v_max])
+    assert make_value_threshold(0.5, "zero")(0.6, H0, CFG) == CFG.v_max          # scalar in, scalar out
+    assert get_policy("sandbag_0.9").__name__ == "sandbag_0.9"
+    assert get_policy("boost_0.5")(0.4, H0, CFG) == pytest.approx(0.4)
+
+
+@pytest.mark.parametrize("kw", [dict(tau=-0.1), dict(tau=1.1), dict(tau=0.5, low="half")])
+def test_value_threshold_rejects_bad_arguments(kw):
+    from sim.policies import make_value_threshold
+    with pytest.raises(ValueError):
+        make_value_threshold(**kw)

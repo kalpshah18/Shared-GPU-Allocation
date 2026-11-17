@@ -13,7 +13,7 @@ M4 (lambda = 1, 2) and M5, on the grid that exposed the weaknesses of Score:
 
 plus a karma-supply sensitivity for M6 (karma_init in {1, 5}).  Metrics are the
 unilateral gain M_uni (mean over 5 focal users), its maximum and the fraction
-of users who gain, the coalition gain, PoS and the welfare ratio under attack.
+of users who gain, the coalition gain, SWL and the welfare ratio under attack.
 
 Outputs: results/e10/{summary,paired,config}.json and results/e10/raw/*.json
 Usage:   python experiments/e10_proposed_strategic.py [--seeds N] [--results-dir DIR]
@@ -49,7 +49,7 @@ LIES_025 = {                          # name -> policy
 }
 LIES_FULL = {"cap_2": make_capped(2.0), "max_claim": maximum_claim}    # rho = 1
 REFERENCE = "M4 Score λ=1"
-PAIRED_KEYS = ["M_uni", "WR", "PoS", "J_A"]
+PAIRED_KEYS = ["M_uni", "WR", "SWL", "J_A"]
 
 
 def run_e10(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=True, k=None) -> list:

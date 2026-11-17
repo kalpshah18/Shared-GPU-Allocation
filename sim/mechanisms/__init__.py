@@ -6,6 +6,7 @@ from sim.mechanisms.m2_roundrobin import RoundRobinMechanism
 from sim.mechanisms.m3_greedy    import GreedyMechanism
 from sim.mechanisms.m4_score     import ScoreMechanism
 from sim.mechanisms.m5_vickrey   import VickreyMechanism
+from sim.mechanisms.m5c_credit_vickrey import CreditVickreyMechanism
 from sim.mechanisms.m6_karma     import KarmaCapMechanism
 from sim.mechanisms.m7_rank      import RankCapMechanism
 from sim.mechanisms.score_cap    import ScoreCapMechanism
@@ -17,6 +18,7 @@ __all__ = [
     "GreedyMechanism",
     "ScoreMechanism",
     "VickreyMechanism",
+    "CreditVickreyMechanism",
     "KarmaCapMechanism",
     "RankCapMechanism",
     "ScoreCapMechanism",
@@ -38,7 +40,7 @@ MECHANISM_NAMES = [
 
 # The two mechanisms proposed in this project (extensions beyond the five baselines).
 PROPOSED_MECHANISM_NAMES = ["KarmaCapMechanism", "RankCapMechanism"]
-ALL_MECHANISM_NAMES = MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES + ["ScoreCapMechanism"]
+ALL_MECHANISM_NAMES = MECHANISM_NAMES + PROPOSED_MECHANISM_NAMES + ["ScoreCapMechanism", "CreditVickreyMechanism"]
 
 MECHANISM_LABELS = {
     "RandomMechanism"    : "M1 Random",
@@ -46,6 +48,7 @@ MECHANISM_LABELS = {
     "GreedyMechanism"    : "M3 Greedy",
     "ScoreMechanism"     : "M4 Score",
     "VickreyMechanism"   : "M5 Vickrey",
+    "CreditVickreyMechanism": "M5c Credit-Vickrey",
     "KarmaCapMechanism"  : "M6 Karma-Cap",
     "RankCapMechanism"   : "M7 Rank-Cap",
     "ScoreCapMechanism"  : "Score-Cap",
@@ -72,6 +75,8 @@ def make_mechanism(name: str, cfg, pkg=None) -> Mechanism:
         return ScoreMechanism(cfg)
     if name == "VickreyMechanism":
         return VickreyMechanism(cfg)
+    if name == "CreditVickreyMechanism":
+        return CreditVickreyMechanism(cfg)
     if name == "KarmaCapMechanism":
         return KarmaCapMechanism(cfg)
     if name == "RankCapMechanism":

@@ -141,6 +141,10 @@ def paired_differences(
             continue
         if len(rows) != len(ref_rows):
             raise ValueError(f"group '{name}' has {len(rows)} seeds, reference has {len(ref_rows)}.")
+        if any("seed" in row for row in rows + ref_rows):
+            if ([row.get("seed") for row in rows] != [row.get("seed") for row in ref_rows]
+                    or any("seed" not in row for row in rows + ref_rows)):
+                raise ValueError(f"group '{name}' is not aligned with reference seeds.")
         out[name] = {}
         for key in metric_keys:
             a = np.array([r[key] for r in rows], dtype=np.float64)

@@ -124,12 +124,12 @@ def test_unilateral_gain_hand_computed():
     assert abs(M.unilateral_gain(h_dev, h_tru, VAL, focal=0) - (-0.2)) < 1e-12
 
 
-# ── Price of Strategy ─────────────────────────────────────────────────────────
+# ── Strategic welfare loss ─────────────────────────────────────────────────────────
 
-def test_price_of_strategy_zero():
+def test_strategic_welfare_loss_zero():
     h1 = _h()
     h2 = _h()
-    pos = M.price_of_strategy(h1, h2, VAL, CFG)
+    pos = M.strategic_welfare_loss(h1, h2, VAL, CFG)
     assert abs(pos) < 1e-10
 
 

@@ -17,6 +17,10 @@ Four bounded policies from proposal section 4.2, plus one extension:
    report truthfully otherwise.  It needs to know *which* user it controls, so
    it declares ``needs_users`` and receives ``users=<indices>`` (see
    ``call_policy``).
+6. Value-threshold timing (extension, tests H2 from the value side): claim
+   v_max when the current value is at least tau * v_max; below it either
+   report 0 ("sandbag": deliberately skip the round to protect one's
+   history score / budget) or report truthfully ("boost": inflation only).
 
 Call contract
 -------------
@@ -169,6 +173,27 @@ def make_timed(c: float = 2.0, quantile: float | None = None) -> Callable:
     return policy
 
 
+# ── 6. Value-threshold timing (extension) ────────────────────────────────────
+
+def make_value_threshold(tau: float, low: str = "zero") -> Callable:
+    """
+    Report v_max when v >= tau * v_max.  Below the threshold report 0
+    (``low="zero"``, the *sandbag* rule) or the true value (``low="truth"``,
+    the *boost* rule).  Elementwise; reports stay in [0, v_max].
+    """
+    if not 0.0 <= tau <= 1.0:
+        raise ValueError(f"tau={tau} must be in [0, 1].")
+    if low not in ("zero", "truth"):
+        raise ValueError(f"low='{low}' must be 'zero' or 'truth'.")
+
+    def policy(true_value, history, cfg, **_):
+        v = np.asarray(true_value, dtype=np.float64)
+        below = np.zeros_like(v) if low == "zero" else v
+        return np.where(v >= tau * cfg.v_max, cfg.v_max, below)[()]
+    policy.__name__ = f"{'sandbag' if low == 'zero' else 'boost'}_{tau:g}"
+    return policy
+
+
 def call_policy(policy: Callable, values, history, cfg, users=None):
     """Invoke `policy`, passing ``users`` only to policies that declare ``needs_users``."""
     if getattr(policy, "needs_users", False):
@@ -186,6 +211,8 @@ POLICY_REGISTRY: dict = {
     "max_claim": maximum_claim,
     "timed_cap_1.25": make_timed(1.25),
     "timed_cap_2"   : make_timed(2.0),
+    "sandbag_0.75"  : make_value_threshold(0.75, "zero"),
+    "boost_0.75"    : make_value_threshold(0.75, "truth"),
     # "rollout" needs a mechanism, RNG and opponent profile; see rollout_report
     # and sim.runner.run_rollout.
 }
@@ -200,4 +227,8 @@ def get_policy(name: str) -> Callable:
     if name.startswith("timed_cap_"):
         c, _, q = name[10:].partition("_q")
         return make_timed(float(c), None if not q else int(q) / 100)
+    if name.startswith("sandbag_"):
+        return make_value_threshold(float(name[8:]), "zero")
+    if name.startswith("boost_"):
+        return make_value_threshold(float(name[6:]), "truth")
     raise KeyError(f"Unknown policy '{name}'. Known: {sorted(POLICY_REGISTRY)}")

@@ -172,7 +172,7 @@ def test_degenerate_zero_valuations():
     h = make_history(2, [[1, 0], [0, 1]])
     assert M.welfare_ratio(h, VAL, cfg) == 1.0
     assert M.price_of_fairness(h, VAL, cfg) == 0.0
-    assert M.price_of_strategy(h, h, VAL, cfg) == 0.0
+    assert M.strategic_welfare_loss(h, h, VAL, cfg) == 0.0
 
 
 def test_nsw_penalises_a_zero_benefit_user():
@@ -200,11 +200,11 @@ def test_coalition_gain_hand_computed():
     assert only0["M_mean"] == pytest.approx(0.1) and only0["frac_pos"] == 1.0
 
 
-def test_price_of_strategy_hand_value_and_sign():
+def test_strategic_welfare_loss_hand_value_and_sign():
     truthful = make_history(2, [[1, 0], [0, 1]])             # W = 1.7
     strategic = make_history(2, [[0, 1], [1, 0]])            # W = 0.7
-    assert M.price_of_strategy(truthful, strategic, VAL2, None) == pytest.approx(1.0 / 1.7)
-    assert M.price_of_strategy(strategic, truthful, VAL2, None) < 0     # strategic run improved welfare
+    assert M.strategic_welfare_loss(truthful, strategic, VAL2, None) == pytest.approx(1.0 / 1.7)
+    assert M.strategic_welfare_loss(strategic, truthful, VAL2, None) < 0     # strategic run improved welfare
 
 
 def test_unilateral_summary():

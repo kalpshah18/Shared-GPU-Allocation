@@ -1,0 +1,1626 @@
+{
+  "cell": "controlled_M5c_rate=0.5_tau0.75",
+  "config": {
+    "n": 50,
+    "k": 10,
+    "T": 1000,
+    "v_max": 1.0,
+    "rho": 0.25,
+    "n_focal": 5,
+    "lambda_": 1.0,
+    "c": 2.0,
+    "wait_cap": null,
+    "karma_init": 2.0,
+    "karma_cap_mult": 3.0,
+    "rank_blend": 0.0,
+    "enable_wait_cap": true,
+    "rank_rollout_update": true,
+    "credit_rate": 0.5,
+    "credit_horizon": 20.0,
+    "valuation_dist": "uniform",
+    "alpha": 0.0,
+    "ar1_mode": "proposal",
+    "n_seeds": 30,
+    "n_bootstrap": 10000,
+    "delta_multiplier": 2,
+    "results_dir": "results",
+    "figures_dir": "figures",
+    "seeds_file": "seeds/master_seeds.json",
+    "delta": 10,
+    "wait_limit": 10,
+    "tau": 0.75,
+    "opponents": "boost_tau on S minus focal; truthful elsewhere"
+  },
+  "rows": [
+    {
+      "sandbag_gain": 16.128864932418235,
+      "boost_gain": -0.10218195338218265,
+      "timing_premium": 16.231046885800417,
+      "focal_results": [
+        {
+          "focal": 1,
+          "truth_utility": 151.99012886827165,
+          "boost_utility": 152.17661897441081,
+          "sandbag_utility": 167.38985414878087,
+          "sandbag_gain": 15.399725280509216,
+          "boost_gain": 0.18649010613916062,
+          "timing_premium": 15.213235174370055
+        },
+        {
+          "focal": 8,
+          "truth_utility": 151.2300867070675,
+          "boost_utility": 150.53268683401743,
+          "sandbag_utility": 164.67460235934314,
+          "sandbag_gain": 13.44451565227564,
+          "boost_gain": -0.6973998730500739,
+          "timing_premium": 14.141915525325714
+        },
+        {
+          "focal": 13,
+          "truth_utility": 149.2148076158407,
+          "boost_utility": 149.2148076158407,
+          "sandbag_utility": 168.77960775511917,
+          "sandbag_gain": 19.564800139278475,
+          "boost_gain": 0.0,
+          "timing_premium": 19.564800139278475
+        },
+        {
+          "focal": 19,
+          "truth_utility": 152.17069676392086,
+          "boost_utility": 152.17069676392086,
+          "sandbag_utility": 166.95225556369238,
+          "sandbag_gain": 14.781558799771517,
+          "boost_gain": 0.0,
+          "timing_premium": 14.781558799771517
+        },
+        {
+          "focal": 20,
+          "truth_utility": 149.40966899443396,
+          "boost_utility": 149.40966899443396,
+          "sandbag_utility": 166.8633937846903,
+          "sandbag_gain": 17.45372479025633,
+          "boost_gain": 0.0,
+          "timing_premium": 17.45372479025633
+        }
+      ],
+      "seed": 1867694403
+    },
+    {
+      "sandbag_gain": 17.913167142352194,
+      "boost_gain": 0.4205334038779597,
+      "timing_premium": 17.492633738474233,
+      "focal_results": [
+        {
+          "focal": 2,
+          "truth_utility": 153.32148516441237,
+          "boost_utility": 153.32148516441237,
+          "sandbag_utility": 171.38911563658533,
+          "sandbag_gain": 18.067630472172965,
+          "boost_gain": 0.0,
+          "timing_premium": 18.067630472172965
+        },
+        {
+          "focal": 7,
+          "truth_utility": 147.7910573328522,
+          "boost_utility": 147.7910573328522,
+          "sandbag_utility": 166.61593581591566,
+          "sandbag_gain": 18.824878483063458,
+          "boost_gain": 0.0,
+          "timing_premium": 18.824878483063458
+        },
+        {
+          "focal": 12,
+          "truth_utility": 153.26577971259172,
+          "boost_utility": 153.26577971259172,
+          "sandbag_utility": 170.37237465364583,
+          "sandbag_gain": 17.106594941054112,
+          "boost_gain": 0.0,
+          "timing_premium": 17.106594941054112
+        },
+        {
+          "focal": 13,
+          "truth_utility": 149.88774824515312,
+          "boost_utility": 151.99041526454292,
+          "sandbag_utility": 170.42796425516735,
+          "sandbag_gain": 20.540216010014234,
+          "boost_gain": 2.1026670193897985,
+          "timing_premium": 18.437548990624435
+        },
+        {
+          "focal": 19,
+          "truth_utility": 150.4395422224525,
+          "boost_utility": 150.4395422224525,
+          "sandbag_utility": 165.4660580279087,
+          "sandbag_gain": 15.0265158054562,
+          "boost_gain": 0.0,
+          "timing_premium": 15.0265158054562
+        }
+      ],
+      "seed": 181516585
+    },
+    {
+      "sandbag_gain": 14.87351303360598,
+      "boost_gain": -1.024423047744716,
+      "timing_premium": 15.897936081350696,
+      "focal_results": [
+        {
+          "focal": 3,
+          "truth_utility": 149.84966583643438,
+          "boost_utility": 149.84966583643438,
+          "sandbag_utility": 165.28607246934126,
+          "sandbag_gain": 15.43640663290688,
+          "boost_gain": 0.0,
+          "timing_premium": 15.43640663290688
+        },
+        {
+          "focal": 8,
+          "truth_utility": 149.59972256360126,
+          "boost_utility": 149.59972256360126,
+          "sandbag_utility": 163.84793978857294,
+          "sandbag_gain": 14.248217224971683,
+          "boost_gain": 0.0,
+          "timing_premium": 14.248217224971683
+        },
+        {
+          "focal": 14,
+          "truth_utility": 152.62537453335088,
+          "boost_utility": 152.62537453335088,
+          "sandbag_utility": 171.84881977859098,
+          "sandbag_gain": 19.2234452452401,
+          "boost_gain": 0.0,
+          "timing_premium": 19.2234452452401
+        },
+        {
+          "focal": 25,
+          "truth_utility": 151.80300605016234,
+          "boost_utility": 151.80300605016234,
+          "sandbag_utility": 164.97656977264018,
+          "sandbag_gain": 13.173563722477837,
+          "boost_gain": 0.0,
+          "timing_premium": 13.173563722477837
+        },
+        {
+          "focal": 28,
+          "truth_utility": 154.2502050536407,
+          "boost_utility": 149.12808981491713,
+          "sandbag_utility": 166.5361373960741,
+          "sandbag_gain": 12.285932342433398,
+          "boost_gain": -5.12211523872358,
+          "timing_premium": 17.40804758115698
+        }
+      ],
+      "seed": 176759817
+    },
+    {
+      "sandbag_gain": 16.627327519881455,
+      "boost_gain": -0.14738974245917688,
+      "timing_premium": 16.77471726234063,
+      "focal_results": [
+        {
+          "focal": 11,
+          "truth_utility": 149.33580932945293,
+          "boost_utility": 148.03472962227397,
+          "sandbag_utility": 164.6658004086353,
+          "sandbag_gain": 15.329991079182378,
+          "boost_gain": -1.3010797071789568,
+          "timing_premium": 16.631070786361335
+        },
+        {
+          "focal": 12,
+          "truth_utility": 150.09333964129237,
+          "boost_utility": 150.4828963075679,
+          "sandbag_utility": 170.77041710895,
+          "sandbag_gain": 20.677077467657625,
+          "boost_gain": 0.3895566662755243,
+          "timing_premium": 20.2875208013821
+        },
+        {
+          "focal": 14,
+          "truth_utility": 148.86645152079345,
+          "boost_utility": 148.86645152079345,
+          "sandbag_utility": 164.70975437116502,
+          "sandbag_gain": 15.843302850371572,
+          "boost_gain": 0.0,
+          "timing_premium": 15.843302850371572
+        },
+        {
+          "focal": 17,
+          "truth_utility": 153.47770958266938,
+          "boost_utility": 153.65228391127692,
+          "sandbag_utility": 172.1781404965568,
+          "sandbag_gain": 18.70043091388743,
+          "boost_gain": 0.17457432860754807,
+          "timing_premium": 18.525856585279882
+        },
+        {
+          "focal": 19,
+          "truth_utility": 145.50848921453442,
+          "boost_utility": 145.50848921453442,
+          "sandbag_utility": 158.09432450284268,
+          "sandbag_gain": 12.58583528830826,
+          "boost_gain": 0.0,
+          "timing_premium": 12.58583528830826
+        }
+      ],
+      "seed": 969161034
+    },
+    {
+      "sandbag_gain": 14.889125145718008,
+      "boost_gain": -0.4649387125771284,
+      "timing_premium": 15.354063858295138,
+      "focal_results": [
+        {
+          "focal": 3,
+          "truth_utility": 156.32851738105512,
+          "boost_utility": 156.32851738105512,
+          "sandbag_utility": 169.33402309232406,
+          "sandbag_gain": 13.005505711268938,
+          "boost_gain": 0.0,
+          "timing_premium": 13.005505711268938
+        },
+        {
+          "focal": 8,
+          "truth_utility": 152.80389465010788,
+          "boost_utility": 150.47920108722224,
+          "sandbag_utility": 165.75989281632033,
+          "sandbag_gain": 12.955998166212453,
+          "boost_gain": -2.324693562885642,
+          "timing_premium": 15.280691729098095
+        },
+        {
+          "focal": 9,
+          "truth_utility": 152.17586503718917,
+          "boost_utility": 152.17586503718917,
+          "sandbag_utility": 166.9146344852517,
+          "sandbag_gain": 14.738769448062527,
+          "boost_gain": 0.0,
+          "timing_premium": 14.738769448062527
+        },
+        {
+          "focal": 11,
+          "truth_utility": 150.4957661765976,
+          "boost_utility": 150.4957661765976,
+          "sandbag_utility": 168.18410087174462,
+          "sandbag_gain": 17.688334695147006,
+          "boost_gain": 0.0,
+          "timing_premium": 17.688334695147006
+        },
+        {
+          "focal": 12,
+          "truth_utility": 151.07468331872835,
+          "boost_utility": 151.07468331872835,
+          "sandbag_utility": 167.13170102662747,
+          "sandbag_gain": 16.05701770789912,
+          "boost_gain": 0.0,
+          "timing_premium": 16.05701770789912
+        }
+      ],
+      "seed": 2111132541
+    },
+    {
+      "sandbag_gain": 16.349659329777847,
+      "boost_gain": 0.42739810148058266,
+      "timing_premium": 15.922261228297264,
+      "focal_results": [
+        {
+          "focal": 1,
+          "truth_utility": 150.524945400271,
+          "boost_utility": 150.524945400271,
+          "sandbag_utility": 165.94063620227288,
+          "sandbag_gain": 15.415690802001876,
+          "boost_gain": 0.0,
+          "timing_premium": 15.415690802001876
+        },
+        {
+          "focal": 3,
+          "truth_utility": 150.91244166007687,
+          "boost_utility": 150.91244166007687,
+          "sandbag_utility": 162.67354954230825,
+          "sandbag_gain": 11.761107882231386,
+          "boost_gain": 0.0,
+          "timing_premium": 11.761107882231386
+        },
+        {
+          "focal": 7,
+          "truth_utility": 149.96562668767868,
+          "boost_utility": 149.96562668767868,
+          "sandbag_utility": 166.0460498537967,
+          "sandbag_gain": 16.08042316611801,
+          "boost_gain": 0.0,
+          "timing_premium": 16.08042316611801
+        },
+        {
+          "focal": 13,
+          "truth_utility": 148.96565329326467,
+          "boost_utility": 148.96565329326467,
+          "sandbag_utility": 168.3629932235266,
+          "sandbag_gain": 19.39733993026192,
+          "boost_gain": 0.0,
+          "timing_premium": 19.39733993026192
+        },
+        {
+          "focal": 21,
+          "truth_utility": 149.36778891437424,
+          "boost_utility": 151.50477942177716,
+          "sandbag_utility": 168.4615237826503,
+          "sandbag_gain": 19.093734868276044,
+          "boost_gain": 2.1369905074029134,
+          "timing_premium": 16.95674436087313
+        }
+      ],
+      "seed": 731143041
+    },
+    {
+      "sandbag_gain": 15.267472498812907,
+      "boost_gain": 0.0,
+      "timing_premium": 15.267472498812907,
+      "focal_results": [
+        {
+          "focal": 8,
+          "truth_utility": 153.8073237240853,
+          "boost_utility": 153.8073237240853,
+          "sandbag_utility": 171.38679717050425,
+          "sandbag_gain": 17.579473446418945,
+          "boost_gain": 0.0,
+          "timing_premium": 17.579473446418945
+        },
+        {
+          "focal": 17,
+          "truth_utility": 149.54437313691452,
+          "boost_utility": 149.54437313691452,
+          "sandbag_utility": 159.92876144736175,
+          "sandbag_gain": 10.384388310447235,
+          "boost_gain": 0.0,
+          "timing_premium": 10.384388310447235
+        },
+        {
+          "focal": 25,
+          "truth_utility": 149.54710608910847,
+          "boost_utility": 149.54710608910847,
+          "sandbag_utility": 164.44096450313248,
+          "sandbag_gain": 14.89385841402401,
+          "boost_gain": 0.0,
+          "timing_premium": 14.89385841402401
+        },
+        {
+          "focal": 30,
+          "truth_utility": 149.90136432854243,
+          "boost_utility": 149.90136432854243,
+          "sandbag_utility": 164.70193859963533,
+          "sandbag_gain": 14.800574271092898,
+          "boost_gain": 0.0,
+          "timing_premium": 14.800574271092898
+        },
+        {
+          "focal": 32,
+          "truth_utility": 153.32374817492547,
+          "boost_utility": 153.32374817492547,
+          "sandbag_utility": 172.00281622700692,
+          "sandbag_gain": 18.679068052081448,
+          "boost_gain": 0.0,
+          "timing_premium": 18.679068052081448
+        }
+      ],
+      "seed": 1537853632
+    },
+    {
+      "sandbag_gain": 13.269039990452438,
+      "boost_gain": 0.01695250274846103,
+      "timing_premium": 13.252087487703978,
+      "focal_results": [
+        {
+          "focal": 6,
+          "truth_utility": 150.94387389298475,
+          "boost_utility": 150.94387389298475,
+          "sandbag_utility": 167.93980643673757,
+          "sandbag_gain": 16.995932543752815,
+          "boost_gain": 0.0,
+          "timing_premium": 16.995932543752815
+        },
+        {
+          "focal": 10,
+          "truth_utility": 154.9030723441235,
+          "boost_utility": 153.1159538107011,
+          "sandbag_utility": 163.37334941789544,
+          "sandbag_gain": 8.470277073771939,
+          "boost_gain": -1.7871185334224151,
+          "timing_premium": 10.257395607194354
+        },
+        {
+          "focal": 13,
+          "truth_utility": 148.06757127844173,
+          "boost_utility": 148.06757127844173,
+          "sandbag_utility": 156.88194066111532,
+          "sandbag_gain": 8.81436938267359,
+          "boost_gain": 0.0,
+          "timing_premium": 8.81436938267359
+        },
+        {
+          "focal": 14,
+          "truth_utility": 149.39858020626926,
+          "boost_utility": 149.39858020626926,
+          "sandbag_utility": 163.43457790932075,
+          "sandbag_gain": 14.035997703051493,
+          "boost_gain": 0.0,
+          "timing_premium": 14.035997703051493
+        },
+        {
+          "focal": 15,
+          "truth_utility": 148.28026563486236,
+          "boost_utility": 150.15214668202708,
+          "sandbag_utility": 166.30888888387472,
+          "sandbag_gain": 18.028623249012355,
+          "boost_gain": 1.8718810471647203,
+          "timing_premium": 16.156742201847635
+        }
+      ],
+      "seed": 1107828869
+    },
+    {
+      "sandbag_gain": 15.53995897729294,
+      "boost_gain": -1.0907132066624627,
+      "timing_premium": 16.630672183955404,
+      "focal_results": [
+        {
+          "focal": 2,
+          "truth_utility": 149.06869143971488,
+          "boost_utility": 149.06869143971488,
+          "sandbag_utility": 167.1615039699691,
+          "sandbag_gain": 18.092812530254207,
+          "boost_gain": 0.0,
+          "timing_premium": 18.092812530254207
+        },
+        {
+          "focal": 5,
+          "truth_utility": 149.9579133007413,
+          "boost_utility": 149.9579133007413,
+          "sandbag_utility": 166.08503940474046,
+          "sandbag_gain": 16.12712610399916,
+          "boost_gain": 0.0,
+          "timing_premium": 16.12712610399916
+        },
+        {
+          "focal": 7,
+          "truth_utility": 155.51075600933598,
+          "boost_utility": 155.51075600933598,
+          "sandbag_utility": 173.65288877212348,
+          "sandbag_gain": 18.142132762787497,
+          "boost_gain": 0.0,
+          "timing_premium": 18.142132762787497
+        },
+        {
+          "focal": 8,
+          "truth_utility": 153.99066271784906,
+          "boost_utility": 150.76368500801937,
+          "sandbag_utility": 168.0687402752726,
+          "sandbag_gain": 14.07807755742354,
+          "boost_gain": -3.226977709829697,
+          "timing_premium": 17.305055267253238
+        },
+        {
+          "focal": 13,
+          "truth_utility": 153.79753341219623,
+          "boost_utility": 151.57094508871361,
+          "sandbag_utility": 165.05717934419653,
+          "sandbag_gain": 11.259645932000296,
+          "boost_gain": -2.2265883234826163,
+          "timing_premium": 13.486234255482913
+        }
+      ],
+      "seed": 1843299529
+    },
+    {
+      "sandbag_gain": 16.711858334288046,
+      "boost_gain": -0.8762543408471629,
+      "timing_premium": 17.58811267513521,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 151.7926548172111,
+          "boost_utility": 151.7926548172111,
+          "sandbag_utility": 167.8738669216281,
+          "sandbag_gain": 16.081212104417006,
+          "boost_gain": 0.0,
+          "timing_premium": 16.081212104417006
+        },
+        {
+          "focal": 2,
+          "truth_utility": 148.7290576433113,
+          "boost_utility": 148.7290576433113,
+          "sandbag_utility": 166.59106716915053,
+          "sandbag_gain": 17.862009525839227,
+          "boost_gain": 0.0,
+          "timing_premium": 17.862009525839227
+        },
+        {
+          "focal": 8,
+          "truth_utility": 150.24642022977287,
+          "boost_utility": 147.78443545431767,
+          "sandbag_utility": 167.41767014189767,
+          "sandbag_gain": 17.171249912124807,
+          "boost_gain": -2.4619847754551927,
+          "timing_premium": 19.63323468758
+        },
+        {
+          "focal": 14,
+          "truth_utility": 151.09171473696304,
+          "boost_utility": 151.09171473696304,
+          "sandbag_utility": 166.95387261680168,
+          "sandbag_gain": 15.862157879838634,
+          "boost_gain": 0.0,
+          "timing_premium": 15.862157879838634
+        },
+        {
+          "focal": 19,
+          "truth_utility": 148.13398556113293,
+          "boost_utility": 146.2146986323523,
+          "sandbag_utility": 164.7166478103535,
+          "sandbag_gain": 16.58266224922056,
+          "boost_gain": -1.9192869287806218,
+          "timing_premium": 18.501949178001183
+        }
+      ],
+      "seed": 305030012
+    },
+    {
+      "sandbag_gain": 14.286170361111795,
+      "boost_gain": -0.029432905955303568,
+      "timing_premium": 14.315603267067099,
+      "focal_results": [
+        {
+          "focal": 5,
+          "truth_utility": 151.71453999065133,
+          "boost_utility": 151.71453999065133,
+          "sandbag_utility": 163.38498250570612,
+          "sandbag_gain": 11.670442515054788,
+          "boost_gain": 0.0,
+          "timing_premium": 11.670442515054788
+        },
+        {
+          "focal": 8,
+          "truth_utility": 151.09558462181872,
+          "boost_utility": 151.09558462181872,
+          "sandbag_utility": 165.46327456813552,
+          "sandbag_gain": 14.367689946316801,
+          "boost_gain": 0.0,
+          "timing_premium": 14.367689946316801
+        },
+        {
+          "focal": 12,
+          "truth_utility": 151.12542453802467,
+          "boost_utility": 151.12542453802467,
+          "sandbag_utility": 166.2398917951229,
+          "sandbag_gain": 15.114467257098227,
+          "boost_gain": 0.0,
+          "timing_premium": 15.114467257098227
+        },
+        {
+          "focal": 21,
+          "truth_utility": 152.14717059534573,
+          "boost_utility": 152.0000060655692,
+          "sandbag_utility": 167.27929914269438,
+          "sandbag_gain": 15.132128547348657,
+          "boost_gain": -0.14716452977651784,
+          "timing_premium": 15.279293077125175
+        },
+        {
+          "focal": 28,
+          "truth_utility": 152.42565420551207,
+          "boost_utility": 152.42565420551207,
+          "sandbag_utility": 167.57177774525258,
+          "sandbag_gain": 15.1461235397405,
+          "boost_gain": 0.0,
+          "timing_premium": 15.1461235397405
+        }
+      ],
+      "seed": 803566779
+    },
+    {
+      "sandbag_gain": 14.726939591989037,
+      "boost_gain": -1.0718794574527521,
+      "timing_premium": 15.79881904944179,
+      "focal_results": [
+        {
+          "focal": 2,
+          "truth_utility": 152.99764636781575,
+          "boost_utility": 147.05536519311337,
+          "sandbag_utility": 161.29763265897648,
+          "sandbag_gain": 8.299986291160735,
+          "boost_gain": -5.942281174702373,
+          "timing_premium": 14.242267465863108
+        },
+        {
+          "focal": 5,
+          "truth_utility": 151.70954855711742,
+          "boost_utility": 151.70954855711742,
+          "sandbag_utility": 171.38108721671935,
+          "sandbag_gain": 19.671538659601936,
+          "boost_gain": 0.0,
+          "timing_premium": 19.671538659601936
+        },
+        {
+          "focal": 10,
+          "truth_utility": 150.6509853482557,
+          "boost_utility": 150.6509853482557,
+          "sandbag_utility": 166.8819340272675,
+          "sandbag_gain": 16.230948679011817,
+          "boost_gain": 0.0,
+          "timing_premium": 16.230948679011817
+        },
+        {
+          "focal": 11,
+          "truth_utility": 149.72394166008516,
+          "boost_utility": 150.30682554752377,
+          "sandbag_utility": 162.96218045474072,
+          "sandbag_gain": 13.238238794655558,
+          "boost_gain": 0.5828838874386122,
+          "timing_premium": 12.655354907216946
+        },
+        {
+          "focal": 17,
+          "truth_utility": 151.52254003640576,
+          "boost_utility": 151.52254003640576,
+          "sandbag_utility": 167.7165255719209,
+          "sandbag_gain": 16.19398553551514,
+          "boost_gain": 0.0,
+          "timing_premium": 16.19398553551514
+        }
+      ],
+      "seed": 1966061021
+    },
+    {
+      "sandbag_gain": 17.19454531122139,
+      "boost_gain": 0.3285282598829326,
+      "timing_premium": 16.866017051338456,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 153.3061781758028,
+          "boost_utility": 153.3061781758028,
+          "sandbag_utility": 169.25619010113235,
+          "sandbag_gain": 15.950011925329534,
+          "boost_gain": 0.0,
+          "timing_premium": 15.950011925329534
+        },
+        {
+          "focal": 4,
+          "truth_utility": 150.24747862083638,
+          "boost_utility": 150.24747862083638,
+          "sandbag_utility": 163.94558623108603,
+          "sandbag_gain": 13.69810761024965,
+          "boost_gain": 0.0,
+          "timing_premium": 13.69810761024965
+        },
+        {
+          "focal": 6,
+          "truth_utility": 149.81555776576687,
+          "boost_utility": 149.81555776576687,
+          "sandbag_utility": 168.58518278185474,
+          "sandbag_gain": 18.769625016087872,
+          "boost_gain": 0.0,
+          "timing_premium": 18.769625016087872
+        },
+        {
+          "focal": 13,
+          "truth_utility": 151.2742695485102,
+          "boost_utility": 151.2742695485102,
+          "sandbag_utility": 173.04097203732184,
+          "sandbag_gain": 21.76670248881163,
+          "boost_gain": 0.0,
+          "timing_premium": 21.76670248881163
+        },
+        {
+          "focal": 14,
+          "truth_utility": 151.78938882100027,
+          "boost_utility": 153.43203012041494,
+          "sandbag_utility": 167.57766833662853,
+          "sandbag_gain": 15.788279515628261,
+          "boost_gain": 1.642641299414663,
+          "timing_premium": 14.145638216213598
+        }
+      ],
+      "seed": 580385435
+    },
+    {
+      "sandbag_gain": 16.685980085500148,
+      "boost_gain": 0.0,
+      "timing_premium": 16.685980085500148,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 150.7589696266613,
+          "boost_utility": 150.7589696266613,
+          "sandbag_utility": 167.67931232798196,
+          "sandbag_gain": 16.920342701320664,
+          "boost_gain": 0.0,
+          "timing_premium": 16.920342701320664
+        },
+        {
+          "focal": 3,
+          "truth_utility": 149.48625460829217,
+          "boost_utility": 149.48625460829217,
+          "sandbag_utility": 168.42376670758986,
+          "sandbag_gain": 18.93751209929769,
+          "boost_gain": 0.0,
+          "timing_premium": 18.93751209929769
+        },
+        {
+          "focal": 9,
+          "truth_utility": 154.54188784344595,
+          "boost_utility": 154.54188784344595,
+          "sandbag_utility": 169.97068167745357,
+          "sandbag_gain": 15.428793834007621,
+          "boost_gain": 0.0,
+          "timing_premium": 15.428793834007621
+        },
+        {
+          "focal": 14,
+          "truth_utility": 149.80993274746712,
+          "boost_utility": 149.80993274746712,
+          "sandbag_utility": 166.43601996829733,
+          "sandbag_gain": 16.626087220830215,
+          "boost_gain": 0.0,
+          "timing_premium": 16.626087220830215
+        },
+        {
+          "focal": 15,
+          "truth_utility": 152.70050577606884,
+          "boost_utility": 152.70050577606884,
+          "sandbag_utility": 168.2176703481134,
+          "sandbag_gain": 15.51716457204455,
+          "boost_gain": 0.0,
+          "timing_premium": 15.51716457204455
+        }
+      ],
+      "seed": 1191985677
+    },
+    {
+      "sandbag_gain": 13.98997283407635,
+      "boost_gain": 0.0,
+      "timing_premium": 13.98997283407635,
+      "focal_results": [
+        {
+          "focal": 23,
+          "truth_utility": 149.67100003177907,
+          "boost_utility": 149.67100003177907,
+          "sandbag_utility": 167.12627495586952,
+          "sandbag_gain": 17.455274924090446,
+          "boost_gain": 0.0,
+          "timing_premium": 17.455274924090446
+        },
+        {
+          "focal": 25,
+          "truth_utility": 149.87150596912363,
+          "boost_utility": 149.87150596912363,
+          "sandbag_utility": 158.05961548662333,
+          "sandbag_gain": 8.188109517499697,
+          "boost_gain": 0.0,
+          "timing_premium": 8.188109517499697
+        },
+        {
+          "focal": 26,
+          "truth_utility": 154.14917470623482,
+          "boost_utility": 154.14917470623482,
+          "sandbag_utility": 160.06585855499688,
+          "sandbag_gain": 5.916683848762062,
+          "boost_gain": 0.0,
+          "timing_premium": 5.916683848762062
+        },
+        {
+          "focal": 27,
+          "truth_utility": 148.42490818169463,
+          "boost_utility": 148.42490818169463,
+          "sandbag_utility": 165.57425151277465,
+          "sandbag_gain": 17.14934333108002,
+          "boost_gain": 0.0,
+          "timing_premium": 17.14934333108002
+        },
+        {
+          "focal": 32,
+          "truth_utility": 149.09073689929068,
+          "boost_utility": 149.09073689929068,
+          "sandbag_utility": 170.3311894482402,
+          "sandbag_gain": 21.24045254894952,
+          "boost_gain": 0.0,
+          "timing_premium": 21.24045254894952
+        }
+      ],
+      "seed": 1979879667
+    },
+    {
+      "sandbag_gain": 15.937148549157968,
+      "boost_gain": 0.4764243202041996,
+      "timing_premium": 15.460724228953769,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 154.08664101436722,
+          "boost_utility": 154.08664101436722,
+          "sandbag_utility": 167.26217392928567,
+          "sandbag_gain": 13.175532914918449,
+          "boost_gain": 0.0,
+          "timing_premium": 13.175532914918449
+        },
+        {
+          "focal": 2,
+          "truth_utility": 149.7625340723343,
+          "boost_utility": 149.7625340723343,
+          "sandbag_utility": 169.87215160845415,
+          "sandbag_gain": 20.109617536119856,
+          "boost_gain": 0.0,
+          "timing_premium": 20.109617536119856
+        },
+        {
+          "focal": 4,
+          "truth_utility": 151.63440827539478,
+          "boost_utility": 154.01652987641577,
+          "sandbag_utility": 170.7472053597356,
+          "sandbag_gain": 19.112797084340826,
+          "boost_gain": 2.382121601020998,
+          "timing_premium": 16.73067548331983
+        },
+        {
+          "focal": 8,
+          "truth_utility": 150.05896772149177,
+          "boost_utility": 150.05896772149177,
+          "sandbag_utility": 161.013121109216,
+          "sandbag_gain": 10.954153387724233,
+          "boost_gain": 0.0,
+          "timing_premium": 10.954153387724233
+        },
+        {
+          "focal": 11,
+          "truth_utility": 149.00916661230477,
+          "boost_utility": 149.00916661230477,
+          "sandbag_utility": 165.34280843499124,
+          "sandbag_gain": 16.333641822686474,
+          "boost_gain": 0.0,
+          "timing_premium": 16.333641822686474
+        }
+      ],
+      "seed": 1313852837
+    },
+    {
+      "sandbag_gain": 13.027103796948671,
+      "boost_gain": -0.588675123703382,
+      "timing_premium": 13.615778920652053,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 152.69818631639967,
+          "boost_utility": 152.69818631639967,
+          "sandbag_utility": 168.7607492446571,
+          "sandbag_gain": 16.06256292825742,
+          "boost_gain": 0.0,
+          "timing_premium": 16.06256292825742
+        },
+        {
+          "focal": 4,
+          "truth_utility": 151.24802365371937,
+          "boost_utility": 147.87534586007308,
+          "sandbag_utility": 165.2635661891751,
+          "sandbag_gain": 14.015542535455722,
+          "boost_gain": -3.3726777936462895,
+          "timing_premium": 17.388220329102012
+        },
+        {
+          "focal": 7,
+          "truth_utility": 153.75030269053477,
+          "boost_utility": 153.75030269053477,
+          "sandbag_utility": 165.16703960107094,
+          "sandbag_gain": 11.416736910536173,
+          "boost_gain": 0.0,
+          "timing_premium": 11.416736910536173
+        },
+        {
+          "focal": 9,
+          "truth_utility": 151.61287570340238,
+          "boost_utility": 152.04217787853176,
+          "sandbag_utility": 162.53261774353822,
+          "sandbag_gain": 10.919742040135844,
+          "boost_gain": 0.4293021751293793,
+          "timing_premium": 10.490439865006465
+        },
+        {
+          "focal": 29,
+          "truth_utility": 146.73715788977694,
+          "boost_utility": 146.73715788977694,
+          "sandbag_utility": 159.45809246013513,
+          "sandbag_gain": 12.720934570358196,
+          "boost_gain": 0.0,
+          "timing_premium": 12.720934570358196
+        }
+      ],
+      "seed": 1376510864
+    },
+    {
+      "sandbag_gain": 15.742134716273977,
+      "boost_gain": -0.3425917203404595,
+      "timing_premium": 16.08472643661444,
+      "focal_results": [
+        {
+          "focal": 2,
+          "truth_utility": 151.95835688392313,
+          "boost_utility": 151.95835688392313,
+          "sandbag_utility": 169.7495957468792,
+          "sandbag_gain": 17.791238862956078,
+          "boost_gain": 0.0,
+          "timing_premium": 17.791238862956078
+        },
+        {
+          "focal": 9,
+          "truth_utility": 150.26037881138998,
+          "boost_utility": 148.5474202096877,
+          "sandbag_utility": 165.91198579006138,
+          "sandbag_gain": 15.651606978671396,
+          "boost_gain": -1.7129586017022973,
+          "timing_premium": 17.364565580373693
+        },
+        {
+          "focal": 11,
+          "truth_utility": 150.82271105289328,
+          "boost_utility": 150.82271105289328,
+          "sandbag_utility": 166.43198413552315,
+          "sandbag_gain": 15.60927308262987,
+          "boost_gain": 0.0,
+          "timing_premium": 15.60927308262987
+        },
+        {
+          "focal": 13,
+          "truth_utility": 144.2710255840826,
+          "boost_utility": 144.2710255840826,
+          "sandbag_utility": 156.78241453611054,
+          "sandbag_gain": 12.511388952027943,
+          "boost_gain": 0.0,
+          "timing_premium": 12.511388952027943
+        },
+        {
+          "focal": 14,
+          "truth_utility": 151.10586105015145,
+          "boost_utility": 151.10586105015145,
+          "sandbag_utility": 168.25302675523605,
+          "sandbag_gain": 17.147165705084603,
+          "boost_gain": 0.0,
+          "timing_premium": 17.147165705084603
+        }
+      ],
+      "seed": 2077124754
+    },
+    {
+      "sandbag_gain": 17.508046097512157,
+      "boost_gain": 0.5434312703433477,
+      "timing_premium": 16.96461482716881,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 152.6276211597125,
+          "boost_utility": 152.6276211597125,
+          "sandbag_utility": 169.01412412401766,
+          "sandbag_gain": 16.38650296430515,
+          "boost_gain": 0.0,
+          "timing_premium": 16.38650296430515
+        },
+        {
+          "focal": 3,
+          "truth_utility": 146.3304296221358,
+          "boost_utility": 149.04758597385253,
+          "sandbag_utility": 163.40947742118547,
+          "sandbag_gain": 17.079047799049675,
+          "boost_gain": 2.7171563517167385,
+          "timing_premium": 14.361891447332937
+        },
+        {
+          "focal": 5,
+          "truth_utility": 146.88917498536355,
+          "boost_utility": 146.88917498536355,
+          "sandbag_utility": 166.20723851542195,
+          "sandbag_gain": 19.318063530058396,
+          "boost_gain": 0.0,
+          "timing_premium": 19.318063530058396
+        },
+        {
+          "focal": 6,
+          "truth_utility": 146.92425117090605,
+          "boost_utility": 146.92425117090605,
+          "sandbag_utility": 166.55490257871173,
+          "sandbag_gain": 19.630651407805686,
+          "boost_gain": 0.0,
+          "timing_premium": 19.630651407805686
+        },
+        {
+          "focal": 12,
+          "truth_utility": 149.90286521077263,
+          "boost_utility": 149.90286521077263,
+          "sandbag_utility": 165.0288299971145,
+          "sandbag_gain": 15.125964786341882,
+          "boost_gain": 0.0,
+          "timing_premium": 15.125964786341882
+        }
+      ],
+      "seed": 349357642
+    },
+    {
+      "sandbag_gain": 14.632910895685688,
+      "boost_gain": 0.0,
+      "timing_premium": 14.632910895685688,
+      "focal_results": [
+        {
+          "focal": 1,
+          "truth_utility": 153.76129988727342,
+          "boost_utility": 153.76129988727342,
+          "sandbag_utility": 168.87776574008922,
+          "sandbag_gain": 15.116465852815793,
+          "boost_gain": 0.0,
+          "timing_premium": 15.116465852815793
+        },
+        {
+          "focal": 2,
+          "truth_utility": 150.62434712858123,
+          "boost_utility": 150.62434712858123,
+          "sandbag_utility": 170.81424363176527,
+          "sandbag_gain": 20.18989650318403,
+          "boost_gain": 0.0,
+          "timing_premium": 20.18989650318403
+        },
+        {
+          "focal": 12,
+          "truth_utility": 152.8379367937475,
+          "boost_utility": 152.8379367937475,
+          "sandbag_utility": 170.17904560329816,
+          "sandbag_gain": 17.34110880955066,
+          "boost_gain": 0.0,
+          "timing_premium": 17.34110880955066
+        },
+        {
+          "focal": 13,
+          "truth_utility": 153.42007229181718,
+          "boost_utility": 153.42007229181718,
+          "sandbag_utility": 165.68555048444043,
+          "sandbag_gain": 12.265478192623249,
+          "boost_gain": 0.0,
+          "timing_premium": 12.265478192623249
+        },
+        {
+          "focal": 20,
+          "truth_utility": 152.8043060989237,
+          "boost_utility": 152.8043060989237,
+          "sandbag_utility": 161.0559112191784,
+          "sandbag_gain": 8.251605120254709,
+          "boost_gain": 0.0,
+          "timing_premium": 8.251605120254709
+        }
+      ],
+      "seed": 1072094445
+    },
+    {
+      "sandbag_gain": 16.18466365340198,
+      "boost_gain": 0.3099796595175917,
+      "timing_premium": 15.874683993884389,
+      "focal_results": [
+        {
+          "focal": 2,
+          "truth_utility": 148.4039387950953,
+          "boost_utility": 148.4039387950953,
+          "sandbag_utility": 159.41704190841062,
+          "sandbag_gain": 11.01310311331531,
+          "boost_gain": 0.0,
+          "timing_premium": 11.01310311331531
+        },
+        {
+          "focal": 8,
+          "truth_utility": 149.72184100320607,
+          "boost_utility": 151.27173930079402,
+          "sandbag_utility": 169.6016895239787,
+          "sandbag_gain": 19.87984852077264,
+          "boost_gain": 1.5498982975879585,
+          "timing_premium": 18.32995022318468
+        },
+        {
+          "focal": 10,
+          "truth_utility": 150.05083240437688,
+          "boost_utility": 150.05083240437688,
+          "sandbag_utility": 169.4937556103588,
+          "sandbag_gain": 19.442923205981913,
+          "boost_gain": 0.0,
+          "timing_premium": 19.442923205981913
+        },
+        {
+          "focal": 13,
+          "truth_utility": 150.32989196892237,
+          "boost_utility": 150.32989196892237,
+          "sandbag_utility": 166.41730797365682,
+          "sandbag_gain": 16.08741600473445,
+          "boost_gain": 0.0,
+          "timing_premium": 16.08741600473445
+        },
+        {
+          "focal": 25,
+          "truth_utility": 153.7136440629452,
+          "boost_utility": 153.7136440629452,
+          "sandbag_utility": 168.2136714851508,
+          "sandbag_gain": 14.50002742220559,
+          "boost_gain": 0.0,
+          "timing_premium": 14.50002742220559
+        }
+      ],
+      "seed": 403724232
+    },
+    {
+      "sandbag_gain": 16.724834238026165,
+      "boost_gain": -1.4002824127904774,
+      "timing_premium": 18.125116650816643,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 149.83307211728726,
+          "boost_utility": 149.83307211728726,
+          "sandbag_utility": 162.73083502178957,
+          "sandbag_gain": 12.897762904502315,
+          "boost_gain": 0.0,
+          "timing_premium": 12.897762904502315
+        },
+        {
+          "focal": 2,
+          "truth_utility": 151.3168471652646,
+          "boost_utility": 146.92358837941768,
+          "sandbag_utility": 164.92648338582546,
+          "sandbag_gain": 13.609636220560873,
+          "boost_gain": -4.3932587858469105,
+          "timing_premium": 18.002895006407783
+        },
+        {
+          "focal": 3,
+          "truth_utility": 152.60141792457802,
+          "boost_utility": 149.23748396337479,
+          "sandbag_utility": 171.36526449710152,
+          "sandbag_gain": 18.763846572523505,
+          "boost_gain": -3.36393396120323,
+          "timing_premium": 22.127780533726735
+        },
+        {
+          "focal": 7,
+          "truth_utility": 147.6561961334932,
+          "boost_utility": 147.6561961334932,
+          "sandbag_utility": 168.32830371153972,
+          "sandbag_gain": 20.672107578046507,
+          "boost_gain": 0.0,
+          "timing_premium": 20.672107578046507
+        },
+        {
+          "focal": 17,
+          "truth_utility": 151.9259375381742,
+          "boost_utility": 152.68171822127195,
+          "sandbag_utility": 169.60675545267182,
+          "sandbag_gain": 17.680817914497624,
+          "boost_gain": 0.755780683097754,
+          "timing_premium": 16.92503723139987
+        }
+      ],
+      "seed": 537701754
+    },
+    {
+      "sandbag_gain": 17.927185657758237,
+      "boost_gain": 0.0,
+      "timing_premium": 17.927185657758237,
+      "focal_results": [
+        {
+          "focal": 8,
+          "truth_utility": 149.3720200198852,
+          "boost_utility": 149.3720200198852,
+          "sandbag_utility": 168.29374786052844,
+          "sandbag_gain": 18.92172784064323,
+          "boost_gain": 0.0,
+          "timing_premium": 18.92172784064323
+        },
+        {
+          "focal": 13,
+          "truth_utility": 149.89414239280023,
+          "boost_utility": 149.89414239280023,
+          "sandbag_utility": 169.11593018434328,
+          "sandbag_gain": 19.22178779154305,
+          "boost_gain": 0.0,
+          "timing_premium": 19.22178779154305
+        },
+        {
+          "focal": 18,
+          "truth_utility": 150.79156902954648,
+          "boost_utility": 150.79156902954648,
+          "sandbag_utility": 169.83550505587732,
+          "sandbag_gain": 19.04393602633084,
+          "boost_gain": 0.0,
+          "timing_premium": 19.04393602633084
+        },
+        {
+          "focal": 21,
+          "truth_utility": 150.26931919748773,
+          "boost_utility": 150.26931919748773,
+          "sandbag_utility": 167.00581695674524,
+          "sandbag_gain": 16.736497759257503,
+          "boost_gain": 0.0,
+          "timing_premium": 16.736497759257503
+        },
+        {
+          "focal": 24,
+          "truth_utility": 154.5449866235574,
+          "boost_utility": 154.5449866235574,
+          "sandbag_utility": 170.25696549457396,
+          "sandbag_gain": 15.711978871016555,
+          "boost_gain": 0.0,
+          "timing_premium": 15.711978871016555
+        }
+      ],
+      "seed": 1579212729
+    },
+    {
+      "sandbag_gain": 16.98578923428456,
+      "boost_gain": -0.18009521660810607,
+      "timing_premium": 17.16588445089267,
+      "focal_results": [
+        {
+          "focal": 3,
+          "truth_utility": 150.27177417817717,
+          "boost_utility": 150.27177417817717,
+          "sandbag_utility": 171.90180850521708,
+          "sandbag_gain": 21.63003432703991,
+          "boost_gain": 0.0,
+          "timing_premium": 21.63003432703991
+        },
+        {
+          "focal": 8,
+          "truth_utility": 152.36617742670728,
+          "boost_utility": 152.36617742670728,
+          "sandbag_utility": 165.03443673329164,
+          "sandbag_gain": 12.66825930658436,
+          "boost_gain": 0.0,
+          "timing_premium": 12.66825930658436
+        },
+        {
+          "focal": 13,
+          "truth_utility": 146.65861085456623,
+          "boost_utility": 146.65861085456623,
+          "sandbag_utility": 163.0776363062093,
+          "sandbag_gain": 16.41902545164308,
+          "boost_gain": 0.0,
+          "timing_premium": 16.41902545164308
+        },
+        {
+          "focal": 20,
+          "truth_utility": 150.12960457592462,
+          "boost_utility": 149.2291284928841,
+          "sandbag_utility": 166.5993426976177,
+          "sandbag_gain": 16.46973812169307,
+          "boost_gain": -0.9004760830405303,
+          "timing_premium": 17.3702142047336
+        },
+        {
+          "focal": 21,
+          "truth_utility": 151.1126824492283,
+          "boost_utility": 151.1126824492283,
+          "sandbag_utility": 168.85457141369068,
+          "sandbag_gain": 17.74188896446239,
+          "boost_gain": 0.0,
+          "timing_premium": 17.74188896446239
+        }
+      ],
+      "seed": 1715531334
+    },
+    {
+      "sandbag_gain": 14.821229376398014,
+      "boost_gain": 0.07247827096488776,
+      "timing_premium": 14.748751105433126,
+      "focal_results": [
+        {
+          "focal": 0,
+          "truth_utility": 151.91213844913528,
+          "boost_utility": 151.91213844913528,
+          "sandbag_utility": 163.6631745515667,
+          "sandbag_gain": 11.751036102431414,
+          "boost_gain": 0.0,
+          "timing_premium": 11.751036102431414
+        },
+        {
+          "focal": 2,
+          "truth_utility": 147.0351302822691,
+          "boost_utility": 152.48186775573708,
+          "sandbag_utility": 164.61611345673475,
+          "sandbag_gain": 17.580983174465644,
+          "boost_gain": 5.4467374734679765,
+          "timing_premium": 12.134245700997667
+        },
+        {
+          "focal": 13,
+          "truth_utility": 148.5937593474561,
+          "boost_utility": 145.16690019639802,
+          "sandbag_utility": 167.99214018263308,
+          "sandbag_gain": 19.398380835176965,
+          "boost_gain": -3.426859151058096,
+          "timing_premium": 22.82523998623506
+        },
+        {
+          "focal": 28,
+          "truth_utility": 151.91830959796042,
+          "boost_utility": 150.26082263037497,
+          "sandbag_utility": 166.3712671656304,
+          "sandbag_gain": 14.452957567669984,
+          "boost_gain": -1.6574869675854416,
+          "timing_premium": 16.110444535255425
+        },
+        {
+          "focal": 29,
+          "truth_utility": 155.26927095845886,
+          "boost_utility": 155.26927095845886,
+          "sandbag_utility": 166.19206016070493,
+          "sandbag_gain": 10.922789202246065,
+          "boost_gain": 0.0,
+          "timing_premium": 10.922789202246065
+        }
+      ],
+      "seed": 1921905285
+    },
+    {
+      "sandbag_gain": 15.848565435735072,
+      "boost_gain": 1.1956354983298128,
+      "timing_premium": 14.652929937405258,
+      "focal_results": [
+        {
+          "focal": 4,
+          "truth_utility": 148.69676532194086,
+          "boost_utility": 150.84962745404883,
+          "sandbag_utility": 162.43516970092264,
+          "sandbag_gain": 13.738404378981784,
+          "boost_gain": 2.1528621321079697,
+          "timing_premium": 11.585542246873814
+        },
+        {
+          "focal": 11,
+          "truth_utility": 149.4720425059962,
+          "boost_utility": 149.4720425059962,
+          "sandbag_utility": 163.90642891555427,
+          "sandbag_gain": 14.434386409558073,
+          "boost_gain": 0.0,
+          "timing_premium": 14.434386409558073
+        },
+        {
+          "focal": 12,
+          "truth_utility": 149.55541249499046,
+          "boost_utility": 153.38072785453156,
+          "sandbag_utility": 165.44247415909362,
+          "sandbag_gain": 15.887061664103157,
+          "boost_gain": 3.8253153595410936,
+          "timing_premium": 12.061746304562064
+        },
+        {
+          "focal": 18,
+          "truth_utility": 150.73585551162589,
+          "boost_utility": 150.73585551162589,
+          "sandbag_utility": 166.26393643287145,
+          "sandbag_gain": 15.52808092124556,
+          "boost_gain": 0.0,
+          "timing_premium": 15.52808092124556
+        },
+        {
+          "focal": 19,
+          "truth_utility": 150.27329974591015,
+          "boost_utility": 150.27329974591015,
+          "sandbag_utility": 169.92819355069693,
+          "sandbag_gain": 19.65489380478678,
+          "boost_gain": 0.0,
+          "timing_premium": 19.65489380478678
+        }
+      ],
+      "seed": 613825205
+    },
+    {
+      "sandbag_gain": 15.270749119568501,
+      "boost_gain": 0.4559327737616513,
+      "timing_premium": 14.81481634580685,
+      "focal_results": [
+        {
+          "focal": 2,
+          "truth_utility": 150.78526449166932,
+          "boost_utility": 150.78526449166932,
+          "sandbag_utility": 167.000154260061,
+          "sandbag_gain": 16.214889768391686,
+          "boost_gain": 0.0,
+          "timing_premium": 16.214889768391686
+        },
+        {
+          "focal": 11,
+          "truth_utility": 149.11554901078964,
+          "boost_utility": 149.11554901078964,
+          "sandbag_utility": 158.1334640534548,
+          "sandbag_gain": 9.017915042665152,
+          "boost_gain": 0.0,
+          "timing_premium": 9.017915042665152
+        },
+        {
+          "focal": 12,
+          "truth_utility": 151.10548401897728,
+          "boost_utility": 151.10548401897728,
+          "sandbag_utility": 170.87782384623435,
+          "sandbag_gain": 19.77233982725707,
+          "boost_gain": 0.0,
+          "timing_premium": 19.77233982725707
+        },
+        {
+          "focal": 15,
+          "truth_utility": 151.03919535605354,
+          "boost_utility": 153.3188592248618,
+          "sandbag_utility": 169.46452599310385,
+          "sandbag_gain": 18.42533063705031,
+          "boost_gain": 2.2796638688082567,
+          "timing_premium": 16.14566676824205
+        },
+        {
+          "focal": 17,
+          "truth_utility": 152.54221834079667,
+          "boost_utility": 152.54221834079667,
+          "sandbag_utility": 165.46548866327495,
+          "sandbag_gain": 12.923270322478288,
+          "boost_gain": 0.0,
+          "timing_premium": 12.923270322478288
+        }
+      ],
+      "seed": 1849331768
+    },
+    {
+      "sandbag_gain": 18.056013792461734,
+      "boost_gain": -1.0254887951596914,
+      "timing_premium": 19.081502587621422,
+      "focal_results": [
+        {
+          "focal": 1,
+          "truth_utility": 154.60093015529623,
+          "boost_utility": 149.07499806761376,
+          "sandbag_utility": 171.62810581191525,
+          "sandbag_gain": 17.027175656619022,
+          "boost_gain": -5.525932087682463,
+          "timing_premium": 22.553107744301485
+        },
+        {
+          "focal": 3,
+          "truth_utility": 149.84129905360254,
+          "boost_utility": 150.23978716548655,
+          "sandbag_utility": 169.6284318883548,
+          "sandbag_gain": 19.78713283475227,
+          "boost_gain": 0.39848811188400646,
+          "timing_premium": 19.388644722868264
+        },
+        {
+          "focal": 7,
+          "truth_utility": 148.39989634175217,
+          "boost_utility": 148.39989634175217,
+          "sandbag_utility": 166.38293287155085,
+          "sandbag_gain": 17.98303652979868,
+          "boost_gain": 0.0,
+          "timing_premium": 17.98303652979868
+        },
+        {
+          "focal": 8,
+          "truth_utility": 151.69664717151397,
+          "boost_utility": 151.69664717151397,
+          "sandbag_utility": 170.99866129763848,
+          "sandbag_gain": 19.302014126124504,
+          "boost_gain": 0.0,
+          "timing_premium": 19.302014126124504
+        },
+        {
+          "focal": 10,
+          "truth_utility": 149.31657284995444,
+          "boost_utility": 149.31657284995444,
+          "sandbag_utility": 165.49728266496862,
+          "sandbag_gain": 16.180709815014183,
+          "boost_gain": 0.0,
+          "timing_premium": 16.180709815014183
+        }
+      ],
+      "seed": 1768370664
+    },
+    {
+      "sandbag_gain": 13.82838555737066,
+      "boost_gain": -0.2627042292260512,
+      "timing_premium": 14.091089786596712,
+      "focal_results": [
+        {
+          "focal": 2,
+          "truth_utility": 148.52315537149377,
+          "boost_utility": 151.05863532717493,
+          "sandbag_utility": 165.50819176177836,
+          "sandbag_gain": 16.98503639028459,
+          "boost_gain": 2.5354799556811543,
+          "timing_premium": 14.449556434603437
+        },
+        {
+          "focal": 10,
+          "truth_utility": 152.26162906410377,
+          "boost_utility": 152.7234283106419,
+          "sandbag_utility": 165.20612486006317,
+          "sandbag_gain": 12.944495795959398,
+          "boost_gain": 0.46179924653813487,
+          "timing_premium": 12.482696549421263
+        },
+        {
+          "focal": 13,
+          "truth_utility": 153.7529440679455,
+          "boost_utility": 153.7529440679455,
+          "sandbag_utility": 164.27750870044005,
+          "sandbag_gain": 10.52456463249456,
+          "boost_gain": 0.0,
+          "timing_premium": 10.52456463249456
+        },
+        {
+          "focal": 23,
+          "truth_utility": 150.0494843649621,
+          "boost_utility": 150.0494843649621,
+          "sandbag_utility": 160.9205164572946,
+          "sandbag_gain": 10.871032092332513,
+          "boost_gain": 0.0,
+          "timing_premium": 10.871032092332513
+        },
+        {
+          "focal": 25,
+          "truth_utility": 155.16400308108862,
+          "boost_utility": 150.85320273273908,
+          "sandbag_utility": 172.98080195687086,
+          "sandbag_gain": 17.81679887578224,
+          "boost_gain": -4.310800348349545,
+          "timing_premium": 22.127599224131785
+        }
+      ],
+      "seed": 1459208994
+    },
+    {
+      "sandbag_gain": 12.923734344633875,
+      "boost_gain": -0.9182358331064506,
+      "timing_premium": 13.841970177740325,
+      "focal_results": [
+        {
+          "focal": 3,
+          "truth_utility": 151.31308676631704,
+          "boost_utility": 152.02133441561247,
+          "sandbag_utility": 166.52736101650714,
+          "sandbag_gain": 15.214274250190101,
+          "boost_gain": 0.7082476492954299,
+          "timing_premium": 14.506026600894671
+        },
+        {
+          "focal": 5,
+          "truth_utility": 149.6788554073977,
+          "boost_utility": 149.6788554073977,
+          "sandbag_utility": 161.30042269612858,
+          "sandbag_gain": 11.621567288730887,
+          "boost_gain": 0.0,
+          "timing_premium": 11.621567288730887
+        },
+        {
+          "focal": 11,
+          "truth_utility": 152.21408017036865,
+          "boost_utility": 148.8597336100239,
+          "sandbag_utility": 165.4652001281193,
+          "sandbag_gain": 13.25111995775066,
+          "boost_gain": -3.3543465603447373,
+          "timing_premium": 16.605466518095398
+        },
+        {
+          "focal": 23,
+          "truth_utility": 150.498921406885,
+          "boost_utility": 148.55384115240204,
+          "sandbag_utility": 160.40312504416704,
+          "sandbag_gain": 9.904203637282052,
+          "boost_gain": -1.9450802544829457,
+          "timing_premium": 11.849283891764998
+        },
+        {
+          "focal": 26,
+          "truth_utility": 150.8759273804348,
+          "boost_utility": 150.8759273804348,
+          "sandbag_utility": 165.50343396965047,
+          "sandbag_gain": 14.62750658921567,
+          "boost_gain": 0.0,
+          "timing_premium": 14.62750658921567
+        }
+      ],
+      "seed": 893607661
+    }
+  ]
+}

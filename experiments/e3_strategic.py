@@ -5,7 +5,7 @@ E3 — Strategic population and attack type — Owner: Kalp Shah
 
 Factorial design over rho in {0, 0.1, 0.25, 0.5, 1} and the three scalable
 policies (truthful, capped exaggeration c = 2, maximum claim) for all five
-mechanisms (M4 at lambda = 1).  Metrics: PoS, WR, J_A, J_B, SR_Delta,
+mechanisms (M4 at lambda = 1).  Metrics: SWL, WR, J_A, J_B, SR_Delta,
 coalition gain (M_mean, M_max, frac_pos; undefined at rho = 0) and unilateral
 gain (M_uni, M_uni_max, frac_pos_uni; at rho = 0 each focal user is a lone
 deviator in an otherwise truthful population).
