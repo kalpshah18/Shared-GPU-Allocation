@@ -103,10 +103,10 @@ class Config:
             raise ValueError(f"karma_init={self.karma_init} must be positive.")
         if self.karma_cap_mult < 1:
             raise ValueError(f"karma_cap_mult={self.karma_cap_mult} must be >= 1.")
-        if not self.credit_rate > 0:
-            raise ValueError(f"credit_rate={self.credit_rate} must be positive.")
-        if self.credit_horizon < 1:
-            raise ValueError(f"credit_horizon={self.credit_horizon} must be >= 1.")
+        if not math.isfinite(self.credit_rate) or not self.credit_rate > 0:
+            raise ValueError(f"credit_rate={self.credit_rate} must be finite and positive.")
+        if not math.isfinite(self.credit_horizon) or self.credit_horizon < 1:
+            raise ValueError(f"credit_horizon={self.credit_horizon} must be finite and >= 1.")
         if not (0.0 <= self.rank_blend <= 1.0):
             raise ValueError(f"rank_blend={self.rank_blend} must be in [0, 1].")
         for name in ("enable_wait_cap", "rank_rollout_update"):

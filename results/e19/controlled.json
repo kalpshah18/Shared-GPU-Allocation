@@ -1,0 +1,548 @@
+[
+  {
+    "sandbag_gain": {
+      "mean": 268.49926724790424,
+      "ci_lower": 266.399363841077,
+      "ci_upper": 270.4618674882741,
+      "std": 5.791123681766443
+    },
+    "boost_gain": {
+      "mean": 268.49926724790424,
+      "ci_lower": 266.399363841077,
+      "ci_upper": 270.4618674882741,
+      "std": 5.791123681766443
+    },
+    "timing_premium": {
+      "mean": 0.0,
+      "ci_lower": 0.0,
+      "ci_upper": 0.0,
+      "std": 0.0
+    },
+    "label": "M3",
+    "mechanism": "GreedyMechanism",
+    "lambda_": null,
+    "tau": 0.5,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 52.881238471827636,
+      "ci_lower": 51.64153763373282,
+      "ci_upper": 54.1097753370259,
+      "std": 3.550258972120527
+    },
+    "boost_gain": {
+      "mean": 57.77018847621216,
+      "ci_lower": 56.55025182044971,
+      "ci_upper": 58.99419753307341,
+      "std": 3.524136423042951
+    },
+    "timing_premium": {
+      "mean": -4.8889500043845215,
+      "ci_lower": -5.121708446680984,
+      "ci_upper": -4.6548312706501465,
+      "std": 0.6532489633667571
+    },
+    "label": "M3",
+    "mechanism": "GreedyMechanism",
+    "lambda_": null,
+    "tau": 0.75,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -84.67737516630972,
+      "ci_lower": -85.83018505980809,
+      "ci_upper": -83.5210099656311,
+      "std": 3.244801423419855
+    },
+    "boost_gain": {
+      "mean": 0.311352589633294,
+      "ci_lower": 0.20136691053298064,
+      "ci_upper": 0.43410787668456374,
+      "std": 0.3384096590206124
+    },
+    "timing_premium": {
+      "mean": -84.988727755943,
+      "ci_lower": -86.13963786889488,
+      "ci_upper": -83.82638416413195,
+      "std": 3.261237744364854
+    },
+    "label": "M3",
+    "mechanism": "GreedyMechanism",
+    "lambda_": null,
+    "tau": 0.9,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 34.505364014710764,
+      "ci_lower": 33.64234680851248,
+      "ci_upper": 35.368342335601774,
+      "std": 2.4582783852486956
+    },
+    "boost_gain": {
+      "mean": 34.505364014710764,
+      "ci_lower": 33.64234680851248,
+      "ci_upper": 35.368342335601774,
+      "std": 2.4582783852486956
+    },
+    "timing_premium": {
+      "mean": 0.0,
+      "ci_lower": 0.0,
+      "ci_upper": 0.0,
+      "std": 0.0
+    },
+    "label": "M4 lambda=0.5",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 0.5,
+    "tau": 0.5,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 35.44100159383161,
+      "ci_lower": 34.856275915151535,
+      "ci_upper": 36.00936672119074,
+      "std": 1.6370184357429662
+    },
+    "boost_gain": {
+      "mean": 35.66443568249047,
+      "ci_lower": 35.13802435428623,
+      "ci_upper": 36.18520695383186,
+      "std": 1.4826477184568252
+    },
+    "timing_premium": {
+      "mean": -0.22343408865887188,
+      "ci_lower": -0.3502983865779868,
+      "ci_upper": -0.10673398299412479,
+      "std": 0.353246373504485
+    },
+    "label": "M4 lambda=0.5",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 0.5,
+    "tau": 0.75,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -83.20896382573794,
+      "ci_lower": -84.29206257276897,
+      "ci_upper": -82.12456063589386,
+      "std": 3.0841079731752825
+    },
+    "boost_gain": {
+      "mean": 0.33790489569674453,
+      "ci_lower": 0.256675279560381,
+      "ci_upper": 0.42339163832696014,
+      "std": 0.23690462146117763
+    },
+    "timing_premium": {
+      "mean": -83.54686872143466,
+      "ci_lower": -84.62184678794875,
+      "ci_upper": -82.47462247934055,
+      "std": 3.050199262916433
+    },
+    "label": "M4 lambda=0.5",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 0.5,
+    "tau": 0.9,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 4.483499266775149,
+      "ci_lower": 3.719495658056373,
+      "ci_upper": 5.272074302393041,
+      "std": 2.2049342853673157
+    },
+    "boost_gain": {
+      "mean": 4.482039262317997,
+      "ci_lower": 3.718325644342539,
+      "ci_upper": 5.269770127023525,
+      "std": 2.2059749460957048
+    },
+    "timing_premium": {
+      "mean": 0.0014600044571515505,
+      "ci_lower": 0.0,
+      "ci_upper": 0.004380013371454651,
+      "std": 0.00799677375239989
+    },
+    "label": "M4 lambda=1",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 1.0,
+    "tau": 0.5,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 20.764875265392398,
+      "ci_lower": 20.35976150641506,
+      "ci_upper": 21.144337368779297,
+      "std": 1.1200277759111605
+    },
+    "boost_gain": {
+      "mean": 20.65310762998923,
+      "ci_lower": 20.290557144421015,
+      "ci_upper": 21.001803728685324,
+      "std": 1.0098031836106331
+    },
+    "timing_premium": {
+      "mean": 0.11176763540317437,
+      "ci_lower": 0.003803992046827492,
+      "ci_upper": 0.21144817765692053,
+      "std": 0.2944726178120818
+    },
+    "label": "M4 lambda=1",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 1.0,
+    "tau": 0.75,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -82.73845043003709,
+      "ci_lower": -83.86218708448091,
+      "ci_upper": -81.57950910267671,
+      "std": 3.2371736186165503
+    },
+    "boost_gain": {
+      "mean": 0.2949305748775875,
+      "ci_lower": 0.2287724921886495,
+      "ci_upper": 0.3666863816105078,
+      "std": 0.19812137834546836
+    },
+    "timing_premium": {
+      "mean": -83.03338100491466,
+      "ci_lower": -84.12261018038262,
+      "ci_upper": -81.90163344298676,
+      "std": 3.1535430519155643
+    },
+    "label": "M4 lambda=1",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 1.0,
+    "tau": 0.9,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -10.984249335941989,
+      "ci_lower": -11.571617047215774,
+      "ci_upper": -10.368077032020203,
+      "std": 1.7168056849271902
+    },
+    "boost_gain": {
+      "mean": -11.001689604213908,
+      "ci_lower": -11.59196110930709,
+      "ci_upper": -10.383348661315628,
+      "std": 1.7198951261013322
+    },
+    "timing_premium": {
+      "mean": 0.017440268271918927,
+      "ci_lower": 0.006647346575558875,
+      "ci_upper": 0.029251467153697794,
+      "std": 0.03289246380046201
+    },
+    "label": "M4 lambda=2",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 2.0,
+    "tau": 0.5,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 10.700618291282053,
+      "ci_lower": 10.342286669256556,
+      "ci_upper": 11.043512171121264,
+      "std": 0.9993454742911524
+    },
+    "boost_gain": {
+      "mean": 10.136065447104857,
+      "ci_lower": 9.80280681244092,
+      "ci_upper": 10.457744728635724,
+      "std": 0.932274396013834
+    },
+    "timing_premium": {
+      "mean": 0.5645528441772005,
+      "ci_lower": 0.4663611751256752,
+      "ci_upper": 0.6600194865754629,
+      "std": 0.27629095055782293
+    },
+    "label": "M4 lambda=2",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 2.0,
+    "tau": 0.75,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -81.88190949592831,
+      "ci_lower": -82.97284373394244,
+      "ci_upper": -80.75260755293725,
+      "std": 3.181884817406168
+    },
+    "boost_gain": {
+      "mean": 0.3266668186283494,
+      "ci_lower": 0.2704979616010604,
+      "ci_upper": 0.3890027188035778,
+      "std": 0.16787970535873703
+    },
+    "timing_premium": {
+      "mean": -82.20857631455667,
+      "ci_lower": -83.28273531304436,
+      "ci_upper": -81.09469058321672,
+      "std": 3.14543256702463
+    },
+    "label": "M4 lambda=2",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 2.0,
+    "tau": 0.9,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -19.091519535207002,
+      "ci_lower": -19.49849414583451,
+      "ci_upper": -18.685589329822683,
+      "std": 1.1419693611415294
+    },
+    "boost_gain": {
+      "mean": -19.14889352178441,
+      "ci_lower": -19.558413333064628,
+      "ci_upper": -18.73987946828338,
+      "std": 1.1503515858566664
+    },
+    "timing_premium": {
+      "mean": 0.05737398657740281,
+      "ci_lower": 0.03623194303930076,
+      "ci_upper": 0.08058279513243528,
+      "std": 0.06283993739693686
+    },
+    "label": "M4 lambda=5",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 5.0,
+    "tau": 0.5,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 4.441854742671521,
+      "ci_lower": 4.17159318934724,
+      "ci_upper": 4.711458525715216,
+      "std": 0.7702210137134838
+    },
+    "boost_gain": {
+      "mean": 3.0700030365855198,
+      "ci_lower": 2.815870039669647,
+      "ci_upper": 3.321006624569541,
+      "std": 0.7186863835108735
+    },
+    "timing_premium": {
+      "mean": 1.3718517060860007,
+      "ci_lower": 1.26001538378756,
+      "ci_upper": 1.493759547717777,
+      "std": 0.33077270936108966
+    },
+    "label": "M4 lambda=5",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 5.0,
+    "tau": 0.75,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -80.306574869859,
+      "ci_lower": -81.38590995832672,
+      "ci_upper": -79.19249216159956,
+      "std": 3.1648036551245
+    },
+    "boost_gain": {
+      "mean": 0.4805122226140083,
+      "ci_lower": 0.41872747017939527,
+      "ci_upper": 0.5473557918322206,
+      "std": 0.1850096815337564
+    },
+    "timing_premium": {
+      "mean": -80.78708709247302,
+      "ci_lower": -81.86266262867677,
+      "ci_upper": -79.68085618111694,
+      "std": 3.1352790680558376
+    },
+    "label": "M4 lambda=5",
+    "mechanism": "ScoreMechanism",
+    "lambda_": 5.0,
+    "tau": 0.9,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -75.88198351551657,
+      "ci_lower": -76.51296557618227,
+      "ci_upper": -75.23057601626594,
+      "std": 1.8270778014759803
+    },
+    "boost_gain": {
+      "mean": -75.88198351551657,
+      "ci_lower": -76.51296557618227,
+      "ci_upper": -75.23057601626594,
+      "std": 1.8270778014759803
+    },
+    "timing_premium": {
+      "mean": 0.0,
+      "ci_lower": 0.0,
+      "ci_upper": 0.0,
+      "std": 0.0
+    },
+    "label": "M5",
+    "mechanism": "VickreyMechanism",
+    "lambda_": null,
+    "tau": 0.5,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -4.388024078986404,
+      "ci_lower": -4.512887365966386,
+      "ci_upper": -4.268794215392403,
+      "std": 0.3506893918941673
+    },
+    "boost_gain": {
+      "mean": -4.1833625992133765,
+      "ci_lower": -4.309561367394535,
+      "ci_upper": -4.063914026678642,
+      "std": 0.352389791473313
+    },
+    "timing_premium": {
+      "mean": -0.20466147977302604,
+      "ci_lower": -0.21735251315509987,
+      "ci_upper": -0.19236712609424358,
+      "std": 0.03545683784263057
+    },
+    "label": "M5",
+    "mechanism": "VickreyMechanism",
+    "lambda_": null,
+    "tau": 0.75,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -6.703244522603198,
+      "ci_lower": -6.834442560406491,
+      "ci_upper": -6.574204171150666,
+      "std": 0.36743410522522163
+    },
+    "boost_gain": {
+      "mean": -0.003920946284917264,
+      "ci_lower": -0.005489610309849138,
+      "ci_upper": -0.002432125092913698,
+      "std": 0.004418470566921364
+    },
+    "timing_premium": {
+      "mean": -6.69932357631828,
+      "ci_lower": -6.830835386642859,
+      "ci_upper": -6.570039628587824,
+      "std": 0.3677681724714897
+    },
+    "label": "M5",
+    "mechanism": "VickreyMechanism",
+    "lambda_": null,
+    "tau": 0.9,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -1.200171125617416,
+      "ci_lower": -1.6426641042416255,
+      "ci_upper": -0.7601466258479024,
+      "std": 1.2660628179973212
+    },
+    "boost_gain": {
+      "mean": -2.4493026326883736,
+      "ci_lower": -2.8280262451999643,
+      "ci_upper": -2.0832685425959383,
+      "std": 1.0543218992440286
+    },
+    "timing_premium": {
+      "mean": 1.2491315070709583,
+      "ci_lower": 0.9225697452016047,
+      "ci_upper": 1.5648220061995335,
+      "std": 0.9073942420826531
+    },
+    "label": "M5c rate=0.5",
+    "mechanism": "CreditVickreyMechanism",
+    "lambda_": null,
+    "tau": 0.5,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": 15.662402985123869,
+      "ci_lower": 15.140239089003002,
+      "ci_upper": 16.170817876720026,
+      "std": 1.4519067659706355
+    },
+    "boost_gain": {
+      "mean": -0.1759330878968025,
+      "ci_lower": -0.39037164350274506,
+      "ci_upper": 0.03330992013367868,
+      "std": 0.6053267569634067
+    },
+    "timing_premium": {
+      "mean": 15.838336073020669,
+      "ci_lower": 15.323194561767442,
+      "ci_upper": 16.365525595088386,
+      "std": 1.4697608183296806
+    },
+    "label": "M5c rate=0.5",
+    "mechanism": "CreditVickreyMechanism",
+    "lambda_": null,
+    "tau": 0.75,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  },
+  {
+    "sandbag_gain": {
+      "mean": -55.8572432801007,
+      "ci_lower": -57.006730463177476,
+      "ci_upper": -54.64812498085119,
+      "std": 3.404968852336683
+    },
+    "boost_gain": {
+      "mean": 0.0,
+      "ci_lower": 0.0,
+      "ci_upper": 0.0,
+      "std": 0.0
+    },
+    "timing_premium": {
+      "mean": -55.8572432801007,
+      "ci_lower": -57.006730463177476,
+      "ci_upper": -54.64812498085119,
+      "std": 3.404968852336683
+    },
+    "label": "M5c rate=0.5",
+    "mechanism": "CreditVickreyMechanism",
+    "lambda_": null,
+    "tau": 0.9,
+    "n_seeds": 30,
+    "design": "fixed_opponent_policies"
+  }
+]

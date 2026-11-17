@@ -14,7 +14,7 @@ mechanism, so a user's utility is the value of the GPUs they receive only.
 Per-round rule (n users, k GPUs):
   1. Income.   every balance grows by  income = credit_rate * (k / n) * v_max
                and is clipped at the ceiling  credit_horizon * income
-               (unused quota expires, as in "use it or lose it" cluster quotas)
+               (excess income is discarded; existing credits do not age or expire)
   2. Bid.      b_i = min(report_i, balance_i)
   3. Auction.  the k highest bids win (seeded tie-break); each winner pays the
                (k+1)-st highest bid in credits.  Credits leave the economy.

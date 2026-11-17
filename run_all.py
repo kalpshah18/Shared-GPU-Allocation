@@ -101,6 +101,8 @@ def main() -> None:
              EXTENSION_STEPS if args.extensions_only else STEPS + EXTENSION_STEPS + FOLLOWUP_STEPS)
     for label, script, quick_args in steps:
         run_step(label, [script] + common + (quick_args if args.quick else []))
+    if not args.extensions_only and not args.followups_only:
+        run_step("Feedback data audit", ["analysis/verify_feedback.py", "--results-dir", args.results_dir])
     if not args.extensions_only:
         run_step("Follow-up data audit", ["analysis/verify_followups.py", "--results-dir", args.results_dir])
 

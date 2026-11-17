@@ -24,7 +24,9 @@ def test_config_validation_and_derived_quota():
     assert mech.income == pytest.approx(0.5 * 0.2 * 1.0)
     assert mech.ceiling == pytest.approx(10 * mech.income)
     np.testing.assert_allclose(mech.balance, mech.ceiling)
-    for bad in (dict(credit_rate=0.0), dict(credit_horizon=0.5)):
+    for bad in (dict(credit_rate=0.0), dict(credit_horizon=0.5),
+                dict(credit_rate=float("inf")), dict(credit_horizon=float("nan")),
+                dict(credit_horizon=float("inf"))):
         with pytest.raises(ValueError):
             Config(**bad)
 
@@ -86,3 +88,33 @@ def test_rollout_step_matches_allocate():
 
 def test_strategic_welfare_loss_alias():
     assert M.price_of_strategy is M.strategic_welfare_loss
+
+
+def test_each_credit_transition_accounts_for_income_overflow_and_spending():
+    cfg = Config(n=5, k=2, credit_rate=.25, credit_horizon=3)
+    mech = CreditVickreyMechanism(cfg)
+    rng = np.random.default_rng(17)
+    balance = np.array([[0, .02, .05, .075, mech.ceiling]])
+    for _ in range(25):
+        reports, ties = rng.random((2, 1, 5))
+        before_auction = np.minimum(balance + mech.income, mech.ceiling)
+        bids = np.minimum(reports, before_auction)
+        x, pay, after = mech._step(balance, reports, ties)
+        price = np.sort(bids, axis=-1)[:, -cfg.k-1, None]
+        np.testing.assert_allclose(pay, x * price)
+        np.testing.assert_allclose(after, before_auction - pay)
+        assert x.sum() == cfg.k and np.all(pay >= 0) and np.all(after >= -1e-12)
+        assert np.all(pay <= before_auction + 1e-12)
+        balance = after
+
+
+def test_credits_have_no_direct_utility_and_truth_is_not_dominant():
+    # A loose budget makes this a report-priority allocation with zero utility
+    # payments: user 0 can profit by inflating .6 above the opponent's .7.
+    from sim.policies import maximum_claim
+    cfg = Config(n=2, k=1, T=1, credit_rate=100)
+    pkg = SeedPackage(np.array([[.6], [.7]]), np.array([0]), np.array([0]), 0)
+    truthful = run_mixed(CreditVickreyMechanism(cfg), pkg, cfg, None)
+    inflated = run_mixed(CreditVickreyMechanism(cfg), pkg, cfg, maximum_claim)
+    assert M.utilities(truthful, pkg.valuations)[0] == 0
+    assert M.utilities(inflated, pkg.valuations)[0] == pytest.approx(.6)

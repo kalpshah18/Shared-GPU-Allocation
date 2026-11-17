@@ -493,8 +493,8 @@ E8_STYLES = {"always": ("#333333", "-", "o"), "timed": ("#b8322f", "-", "s"),
 def plot_e8(results: list, save: bool = True) -> None:
     """
     Top row: unilateral gain of M4 vs lambda for always-inflating and three timed
-    variants.  Bottom row: the timing premium (timed minus always, same omega).
-    One column per exaggeration factor c; a positive premium means timing helps.
+    variants. Bottom row: descriptive profile gain differences (timed minus
+    always, same omega). Opponent policies also differ; this does not isolate timing.
     """
     cs = sorted({r["c"] for r in results})
     fig, axes = plt.subplots(2, len(cs), figsize=(6.5 * len(cs), 9), sharex=True, tight_layout=True,
@@ -524,10 +524,10 @@ def plot_e8(results: list, save: bool = True) -> None:
         top.set_title(f"c = {c:g}", fontweight="bold")
         top.set_ylabel("Unilateral gain $M_{uni}$")
         top.legend(fontsize=9)
-        bottom.set_ylabel("Timing premium  M(timed) - M(always)")
+        bottom.set_ylabel("Profile difference  M(timed) - M(always)")
         bottom.set_xlabel("History penalty λ")
         bottom.legend(fontsize=9)
-    fig.suptitle("E8 — Does timing reports pay? (M4, ρ=0.25).  Premium > 0 would support H2",
+    fig.suptitle("E8 — History-triggered reporting (M4, ρ=0.25). Opponent policies differ between cells",
                  fontsize=13, fontweight="bold")
     if save:
         _save(fig, "e8_timing")
@@ -536,16 +536,17 @@ def plot_e8(results: list, save: bool = True) -> None:
 
 # ── E19: value-threshold timing; E20: credit budget ───────────────────────────
 
-def plot_e19(results: list, save: bool = True) -> None:
+def plot_e19(results: list, save: bool = True, controlled: list | None = None) -> None:
     """
     Left: unilateral gain of the sandbag and boost rules vs lambda (M4), one
-    colour per threshold tau, with M3 / M5 / M5c as reference markers.
-    Right: sandbag premium M(sandbag) - M(boost) vs lambda; > 0 supports H2.
+    colour per threshold tau (population-profile comparisons).
+    Centre/right: controlled focal utility differences with fixed opponents;
+    tau=.9 has a separate scale so its large losses do not hide small effects.
     """
     taus = sorted({r["tau"] for r in results if r.get("tau") is not None})
     palette = dict(zip(taus, ["#2ca02c", "#ff7f0e", "#b8322f", "#1c5cab"]))
     m4 = [r for r in results if r["mechanism"] == "ScoreMechanism"]
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5), tight_layout=True)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(17, 5.5), tight_layout=True)
     lams = sorted({r["lambda_"] for r in m4})
     for tau in taus:
         for vname, ls, mk in ((f"sandbag_{tau:g}", "-", "o"), (f"boost_{tau:g}", "--", "s")):
@@ -554,20 +555,14 @@ def plot_e19(results: list, save: bool = True) -> None:
                 means, yerr = _errbars(rows, "M_uni")
                 ax1.errorbar([r["lambda_"] for r in rows], means, yerr=yerr, color=palette[tau], linestyle=ls,
                              marker=mk, capsize=3, linewidth=1.6, label=vname)
-        if tau >= 0.9:          # premium ~ -100 (gives up winnable rounds): shown in the left panel only
-            continue
-        sb = {r["lambda_"]: r["M_uni"]["mean"] for r in m4 if r["variant"] == f"sandbag_{tau:g}"}
-        bo = {r["lambda_"]: r["M_uni"]["mean"] for r in m4 if r["variant"] == f"boost_{tau:g}"}
-        xs = [x for x in lams if x in sb and x in bo]
-        ax2.plot(xs, [sb[x] - bo[x] for x in xs], color=palette[tau], marker="o", linewidth=1.8,
-                 label=f"M4, τ={tau:g}")
-        for lab, mk in (("M3", "x"), ("M5", "D"), ("M5c rate=0.5", "P")):
-            a = _pick_row(results, label=lab, variant=f"sandbag_{tau:g}")
-            b = _pick_row(results, label=lab, variant=f"boost_{tau:g}")
-            if a and b:
-                ax2.scatter([max(lams) * 1.6], [a["M_uni"]["mean"] - b["M_uni"]["mean"]], color=palette[tau],
-                            marker=mk, s=50, label=f"{lab}, τ={tau:g}")
-    for ax in (ax1, ax2):
+        rows = sorted((r for r in (controlled or []) if r["mechanism"] == "ScoreMechanism"
+                       and r["tau"] == tau), key=lambda r: r["lambda_"])
+        if rows:
+            means, yerr = _errbars(rows, "timing_premium")
+            ax = ax3 if tau >= .9 else ax2
+            ax.errorbar([r["lambda_"] for r in rows], means, yerr=yerr, color=palette[tau],
+                         marker="o", capsize=3, linewidth=1.8, label=f"M4, τ={tau:g}")
+    for ax in (ax1, ax2, ax3):
         ax.axhline(0, color="#333333", linewidth=0.8)
         ax.set_xscale("log")
         ax.set_xticks(lams)
@@ -576,12 +571,18 @@ def plot_e19(results: list, save: bool = True) -> None:
         ax.set_xlabel("History penalty λ (M4)")
         ax.grid(True, linestyle="--", alpha=0.4)
     ax1.set_ylabel("Unilateral gain $M_{uni}$")
-    ax1.set_title("Claim v_max above τ; below τ report 0 (sandbag) or truth (boost)", fontweight="bold", fontsize=10)
+    ax1.set_title("Population gains (opponents vary by policy)", fontweight="bold", fontsize=10)
     ax1.legend(fontsize=8, ncol=2)
-    ax2.set_ylabel("Sandbag premium  M(sandbag) − M(boost)")
-    ax2.set_title("Value of losing low-value rounds (τ=0.9 omitted: ≈ −100; right: M3/M5/M5c)", fontweight="bold", fontsize=10)
-    ax2.legend(fontsize=8, ncol=2)
-    fig.suptitle("E19 — Value-threshold timing attack (ρ=0.25).  Premium rising with λ would support H2",
+    ax2.set_ylabel("Timing premium  U(sandbag) − U(boost)")
+    ax2.set_title("Fixed opponents: τ = 0.5, 0.75 (95% CIs)", fontweight="bold", fontsize=10)
+    ax3.set_ylabel("Timing premium  U(sandbag) − U(boost)")
+    ax3.set_title("Fixed opponents: τ = 0.9 (95% CIs)", fontweight="bold", fontsize=10)
+    if controlled:
+        ax2.legend(fontsize=8)
+        ax3.legend(fontsize=8)
+    else:
+        ax2.text(.5, .5, "Controlled results unavailable", transform=ax2.transAxes, ha="center")
+    fig.suptitle("E19 — Value-threshold timing: population gains and controlled timing comparison",
                  fontsize=13, fontweight="bold")
     if save:
         _save(fig, "e19_value_threshold")
@@ -866,7 +867,8 @@ def run_all_plots(results_dir: str = "results", figures_dir: str = "figures") ->
     if (d := _load(rd / "e8" / "summary.json")) is not None:
         plot_e8(d)
     if (d := _load(rd / "e19" / "summary.json")) is not None:
-        plot_e19(d)
+        path = rd / "e19" / "controlled.json"
+        plot_e19(d, controlled=json.loads(path.read_text()) if path.exists() else None)
     if (d := _load(rd / "e20" / "summary.json")) is not None:
         plot_e20(d)
     if (d := _load(rd / "e9" / "summary.json")) is not None:

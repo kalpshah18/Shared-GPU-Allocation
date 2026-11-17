@@ -166,7 +166,9 @@ def section_e3c(rows) -> str:
 
 
 def section_e8(rows) -> str:
-    out = ["## E8 — Timing attack (ρ=0.25); premium = M_uni(timed) - M_uni(always)\n"]
+    out = ["## E8 — History-triggered reporting (ρ=0.25)\n\n"
+           "Profile gain difference = M_uni(timed) - M_uni(always). Opponent policies differ between "
+           "cells, so this is descriptive, not an isolated timing effect. E19 provides a fixed-opponent control.\n"]
     for c in sorted({r["c"] for r in rows}):
         out.append(f"\n**c = {c:g}**\n")
         body = []
@@ -178,7 +180,7 @@ def section_e8(rows) -> str:
                     prem = "—" if v == "always" else f"{r['M_uni']['mean'] - base['M_uni']['mean']:+.2f}"
                     body.append([lab, v, _f(r, "M_uni", 2, ci=True, signed=True), prem,
                                  _f(r, "frac_pos_uni", 2), _f(r, "SWL", 3)])
-        out.append(_table(["Mechanism", "Policy", "M_uni [95% CI]", "Premium", "frac M_i>0", "SWL"], body))
+        out.append(_table(["Mechanism", "Policy", "M_uni [95% CI]", "Profile gain difference", "frac M_i>0", "SWL"], body))
     return "\n".join(out)
 
 
@@ -219,11 +221,33 @@ def section_e11(rows) -> str:
                       "frac rounds at v_max", "mean (report - v)"], body))
 
 
-def section_e19(rows) -> str:
+def section_e19(rows, controlled=None, paired=None) -> str:
     out = ["## E19 — Value-threshold timing attack (ρ=0.25)\n\n"
            "sandbag_τ reports 0 below τ·v_max and v_max above; boost_τ is truthful below and v_max above. "
-           "Sandbag premium = M_uni(sandbag_τ) − M_uni(boost_τ) on the same seeds: the value of deliberately "
-           "losing low-value rounds.\n"]
+           "Profile-level M_uni holds opponents fixed within each gain, but changes their policy between cells. "
+           "Its sandbag-minus-boost difference is descriptive and does not isolate timing.\n"]
+    if controlled:
+        out.append("**Controlled timing comparison.** For each focal user, hold opponents at boost_τ on "
+                   "S minus the focal user and truthful elsewhere; compare focal truth, boost and sandbag "
+                   "from fresh identical mechanism states on the same workload. Timing premium = "
+                   "U_f(sandbag) − U_f(boost). Average focal users within each seed, then bootstrap seeds. "
+                   "All intervals are pointwise, exploratory 95% intervals.\n")
+        out.append(_table(["Mechanism", "τ", "Sandbag gain [95% CI]", "Boost gain [95% CI]",
+                           "Timing premium [95% CI]"],
+                          [[r["label"], f"{r['tau']:g}", _f(r, "sandbag_gain", 2, ci=True, signed=True),
+                            _f(r, "boost_gain", 2, ci=True, signed=True),
+                            _f(r, "timing_premium", 3, ci=True, signed=True)] for r in controlled]))
+    trends = [r for r in (paired or []) if r["comparison"] == "lambda_effect"]
+    if trends:
+        out.append("\n**H2: paired change in timing premium relative to the smallest λ.** "
+                   "A positive interval supports an increase for this threshold and comparison, "
+                   "rather than establishing monotonicity for all λ or policies.\n")
+        out.append(_table(["τ", "λ", "Reference λ", "Premium change [95% CI]"],
+                          [[f"{r['tau']:g}", f"{r['lambda_']:g}", f"{r['reference_lambda']:g}",
+                            _f({"effect": {**r["metrics"]["timing_premium"],
+                                           "mean": r["metrics"]["timing_premium"]["mean_diff"]}},
+                               "effect", 2, ci=True, signed=True)] for r in trends]))
+    out.append("\n**Population-profile results (opponents differ between reporting rules).**\n")
     labels = list(dict.fromkeys(r["label"] for r in rows))
     taus = sorted({r["tau"] for r in rows if r.get("tau") is not None})
     body = []
@@ -236,7 +260,7 @@ def section_e19(rows) -> str:
             body.append([lab, f"{tau:g}", _f(sb, "M_uni", 2, ci=True, signed=True), _f(bo, "M_uni", 2, signed=True),
                          f"{sb['M_uni']['mean'] - bo['M_uni']['mean']:+.2f}",
                          _f(mx, "M_uni", 2, signed=True) if mx else "n/a", _f(sb, "frac_pos_uni", 2), _f(sb, "SWL", 3)])
-    out.append(_table(["Mechanism", "τ", "M_uni sandbag [95% CI]", "M_uni boost", "Sandbag premium",
+    out.append(_table(["Mechanism", "τ", "M_uni sandbag [95% CI]", "M_uni boost", "Profile gain difference",
                        "M_uni max_claim", "frac M_i>0 (sandbag)", "SWL (sandbag)"], body))
     return "\n".join(out)
 
@@ -282,7 +306,14 @@ def build_report(results_dir: str = "results") -> str:
                      "E15 is the corrected fresh-seed attack study. See `docs/EXTENSION_PROTOCOL.md`.\n")
     for exp, fn in SECTIONS:
         rows = _load(rd, exp)
-        parts.append(fn(rows) if rows else f"## {exp.upper()}\n\n_no summary found_")
+        if exp == "e19" and rows:
+            extras = {}
+            for name in ("controlled", "paired"):
+                path = rd / exp / f"{name}.json"
+                extras[name] = json.loads(path.read_text()) if path.exists() else None
+            parts.append(fn(rows, **extras))
+        else:
+            parts.append(fn(rows) if rows else f"## {exp.upper()}\n\n_no summary found_")
     from analysis.course_report import SECTIONS as COURSE_SECTIONS
     for exp, fn in COURSE_SECTIONS:
         rows = _load(rd, exp)

@@ -16,10 +16,11 @@ reports truthfully otherwise.  Three pre-specified thresholds are compared:
     timed_q75  : a_i(t) <= 75th percentile of a(t)  (all but the most served)
 
 For M4 at lambda in {0.5, 1, 2, 5} and c in {1.25, 2} (rho = 0.25), the
-*timing premium* is the paired difference
+descriptive profile gain difference (historically called a timing premium) is
     M_uni(timed) - M_uni(always inflate)
-on identical omega.  H2 predicts the premium grows with lambda.  M3 and M5 do
-not use history and serve as controls.
+on identical omega. Opponent policies differ between these cells, so this does
+not isolate timing or establish H2. E19 adds a focal-only comparison with
+fixed opponent policies. M3 and M5 do not use history and serve as controls.
 
 Outputs: results/e8/{summary,paired,config}.json and results/e8/raw/*.json
 Usage:   python experiments/e8_timing.py [--seeds N] [--results-dir DIR]

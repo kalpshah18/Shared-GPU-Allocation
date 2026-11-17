@@ -1,0 +1,104 @@
+{
+  "experiment": "e19",
+  "n_seeds": 30,
+  "seeds": [
+    1867694403,
+    181516585,
+    176759817,
+    969161034,
+    2111132541,
+    731143041,
+    1537853632,
+    1107828869,
+    1843299529,
+    305030012,
+    803566779,
+    1966061021,
+    580385435,
+    1191985677,
+    1979879667,
+    1313852837,
+    1376510864,
+    2077124754,
+    349357642,
+    1072094445,
+    403724232,
+    537701754,
+    1579212729,
+    1715531334,
+    1921905285,
+    613825205,
+    1849331768,
+    1768370664,
+    1459208994,
+    893607661
+  ],
+  "n": 50,
+  "k": 10,
+  "T": 1000,
+  "rho": 0.25,
+  "taus": [
+    0.5,
+    0.75,
+    0.9
+  ],
+  "variants": [
+    "max_claim",
+    "sandbag_0.5",
+    "boost_0.5",
+    "sandbag_0.75",
+    "boost_0.75",
+    "sandbag_0.9",
+    "boost_0.9"
+  ],
+  "n_bootstrap": 10000,
+  "seed_role": "existing master seeds; exploratory feedback extension",
+  "controlled_opponents": "boost_tau on S minus focal; truthful elsewhere",
+  "settings": [
+    {
+      "mechanism": "GreedyMechanism",
+      "changes": {},
+      "label": "M3"
+    },
+    {
+      "mechanism": "ScoreMechanism",
+      "changes": {
+        "lambda_": 0.5
+      },
+      "label": "M4 lambda=0.5"
+    },
+    {
+      "mechanism": "ScoreMechanism",
+      "changes": {
+        "lambda_": 1.0
+      },
+      "label": "M4 lambda=1"
+    },
+    {
+      "mechanism": "ScoreMechanism",
+      "changes": {
+        "lambda_": 2.0
+      },
+      "label": "M4 lambda=2"
+    },
+    {
+      "mechanism": "ScoreMechanism",
+      "changes": {
+        "lambda_": 5.0
+      },
+      "label": "M4 lambda=5"
+    },
+    {
+      "mechanism": "VickreyMechanism",
+      "changes": {},
+      "label": "M5"
+    },
+    {
+      "mechanism": "CreditVickreyMechanism",
+      "changes": {
+        "credit_rate": 0.5
+      },
+      "label": "M5c rate=0.5"
+    }
+  ]
+}

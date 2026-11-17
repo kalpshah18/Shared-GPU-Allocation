@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from analysis.report import _f, _table
+from analysis.report import _f, _table, section_e19, section_e20
 from analysis.course_report import section_e13
 
 
@@ -21,7 +21,7 @@ def build_manuscript(results_dir="results", followup_report="FAILURE_CASE_STUDIE
         data[exp] = json.loads((rd / exp / "summary.json").read_text())
         configs[exp] = json.loads((rd / exp / "config.json").read_text())
     counts = {cfg["n_seeds"] for cfg in configs.values()}
-    seed_note = ("All four studies use 30 fresh heldout evaluation seeds."
+    seed_note = ("All four extension studies use 30 fresh heldout evaluation seeds."
                  if counts == {30} else f"Development output: evaluation seed counts are {sorted(counts)}; these are not the full study.")
     e12 = data["e12"]
     e15 = data["e15"]
@@ -44,6 +44,9 @@ def build_manuscript(results_dir="results", followup_report="FAILURE_CASE_STUDIE
              "Aayush Kuloor, Harsh Dhru, Raj Modi, Kalp Shah — CS 329 course project\n",
              "## Abstract\n",
              "We study repeated allocation of identical GPUs to unit-demand users with private per-round values. "
+             "The primary incentive question is the history-penalised Score rule M4: whether suppressing low reports "
+             "preserves enough future priority to pay, and how that effect changes with the penalty. "
+             "Greedy's manipulability and monetary Vickrey's per-round truthfulness serve as theory controls. "
              "The course extension separates the service override from two non-monetary incentive components, "
              "evaluates policy choice by adaptive users, strengthens the planning attacker, and compares online welfare "
              "with an offline optimum subject to the same service requirement. " + seed_note + " "
@@ -189,6 +192,53 @@ def build_manuscript(results_dir="results", followup_report="FAILURE_CASE_STUDIE
                  "Historical E3b/E3c/E11 results are retained from checkpoint `1f54943` and explicitly labelled in "
                  "the tables. E15 replaces their attacker assumptions for the fresh evaluation; re-running the old "
                  "scripts with corrected code changes those numbers.\n")
+    if all((rd / exp / "summary.json").exists() for exp in ("e19", "e20")):
+        feedback_cfg = json.loads((rd / "e19" / "config.json").read_text())
+        feedback = ["## Core M4 analysis and reviewer feedback\n\n"
+                    "The primary open question is how the history penalty changes profitable reporting and timing. "
+                    "Greedy's vulnerability and monetary Vickrey's per-round truthfulness are theoretical controls. "
+                    "E2/E7 vary the lie and penalty; E8 studies history-triggered inflation; E19 adds a scalable "
+                    f"value-threshold policy at n={feedback_cfg['n']}, k={feedback_cfg['k']}, "
+                    f"T={feedback_cfg['T']}, with {feedback_cfg['n_seeds']} seeds. "
+                    "E20 tests a non-monetary credit-budget version of Vickrey. "
+                    "These feedback experiments reuse existing master seeds and are exploratory; they are separate "
+                    "from the fresh E12-E15 holdout. The E13/E18 eight-policy libraries are unchanged and do not "
+                    "include these new policies, so their restricted convergence claims do not extend to them.\n\n"
+                    "Strategic welfare loss is **SWL=(W_truthful-W_strategic)/W_truthful**, paired on the same "
+                    "workload. SWL may be negative if strategic reports improve welfare. The name avoids confusion "
+                    "with price of stability. The old Python function name remains a compatibility alias.\n"]
+        e19 = json.loads((rd / "e19" / "summary.json").read_text())
+        controlled_path, paired_path = rd / "e19" / "controlled.json", rd / "e19" / "paired.json"
+        controlled = json.loads(controlled_path.read_text()) if controlled_path.exists() else None
+        paired = json.loads(paired_path.read_text()) if paired_path.exists() else None
+        feedback.append(section_e19(e19, controlled, paired))
+        trend = next((r for r in (paired or []) if r["comparison"] == "lambda_effect"
+                      and r["tau"] == .75 and r["lambda_"] == 5), None)
+        if trend:
+            effect = trend["metrics"]["timing_premium"]
+            interpretation = ("supports the direction of H2 for this threshold and comparison"
+                              if effect["ci_lower"] > 0 else
+                              "does not establish a positive premium change for this comparison")
+            feedback.append("At tau=.75, the paired premium change between lambda="
+                            f"{trend['reference_lambda']:g} and 5 is "
+                            + _difference(trend["metrics"], "timing_premium")
+                            + f". This {interpretation}. Threshold .9 is also reported; a large penalty "
+                            "does not make every suppression policy profitable. These pointwise exploratory "
+                            "intervals establish neither universal monotonicity nor dynamic strategyproofness.\n")
+        feedback.append("M5c credits carry no utility and cannot be converted to money. Income per round is "
+                        "credit_rate*(k/n)*v_max; balances start at the ceiling of credit_horizon rounds of income. "
+                        "Income above the ceiling is discarded, existing credits do not age, bids are balance-capped, "
+                        "and winners' uniform-price payments are destroyed. Utility is allocation value only. "
+                        "This is a dynamic budget model and does not inherit monetary Vickrey's DSIC guarantee.\n")
+        feedback.append(section_e20(json.loads((rd / "e20" / "summary.json").read_text())))
+        if counts == {30}:
+            feedback.append("Figures: [controlled M4 timing](../figures/e19_value_threshold.pdf), "
+                            "[credit-budget tradeoffs](../figures/e20_credit_budget.pdf).\n")
+        feedback.append("Reproduce with `python experiments/e19_value_threshold.py`, "
+                        "`python experiments/e20_credit_budget.py`, `python analysis/verify_feedback.py`, "
+                        "`python analysis/plots.py`, `python analysis/report.py`, and "
+                        "`python analysis/course_manuscript.py`. See [FEEDBACK_PROTOCOL.md](FEEDBACK_PROTOCOL.md).\n")
+        parts[4:4] = feedback
     parts.append("## 6. Reproduction\n\n"
                  "From the repository root, activate `.venv`, install `requirements-lock.txt`, and run:\n\n"
                  "```text\npython -m pytest\npython run_all.py --extensions-only\n```\n\n"
@@ -202,7 +252,7 @@ def build_manuscript(results_dir="results", followup_report="FAILURE_CASE_STUDIE
                      "[attack budgets](../figures/e15_attack_budget.pdf). "
                      "The final [data audit](../results/EXTENSION_AUDIT.json) verifies seed separation, "
                      "saved means, paired differences and oracle certification.\n")
-    return "\n\n".join(parts) + "\n"
+    return "\n\n".join(parts).rstrip() + "\n"
 
 
 if __name__ == "__main__":

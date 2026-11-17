@@ -12,12 +12,12 @@ decide from the *current value*.
     boost_tau   : report v      if v <  tau * v_max   (truthful)
                   report v_max  if v >= tau * v_max
 
-``boost_tau`` isolates the inflation half of the rule, so the paired
-difference
-
-    sandbag premium = M_uni(sandbag_tau) - M_uni(boost_tau)
-
-measures the value of *deliberately losing* low-value rounds.  Under M4 a
+The profile-level M_uni cells have different opponent policies and their
+difference does not isolate timing. A separate controlled comparison holds
+all opponents' policies fixed (boost_tau for S minus the focal user, truthful
+elsewhere), changing only the focal policy among truth, boost and sandbag.
+Its timing premium is U_f(sandbag) - U_f(boost) on identical workloads.
+Under M4 a
 round won raises a_i and lowers every later score, so H2 predicts the premium
 grows with lambda; under Greedy (M3) and per-round-truthful Vickrey (M5)
 skipping a round can only lose value.  The credit-budget Vickrey (M5c, rate
@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -43,6 +44,9 @@ from experiments.common import (
     save_outputs, save_raw, strategic_row,
 )
 from sim.config import Config
+from sim.environment import History, save_json
+from sim.mechanisms import make_mechanism
+from sim.runner import focal_users
 from sim.policies import make_value_threshold, maximum_claim
 
 LAMBDAS = [0.5, 1.0, 2.0, 5.0]
@@ -56,6 +60,46 @@ SETTINGS = ([("GreedyMechanism", {}, "M3")]
             + [("VickreyMechanism", {}, "M5"),
                ("CreditVickreyMechanism", {"credit_rate": 0.5}, "M5c rate=0.5")])
 PAIRED_KEYS = ["M_uni", "frac_pos_uni", "WR", "SWL", "J_A"]
+CONTROLLED_KEYS = ["sandbag_gain", "boost_gain", "timing_premium"]
+
+
+def controlled_timing_row(mname, cfg, pkg, tau):
+    """Switch only focal policies, batching independent exact episode replays.
+
+    The rollout interface is just a vectorised mechanism step here: values
+    and ties are the actual saved workload, with no sampled/planned futures.
+    Each scenario owns separate cumulative counts, waits and credit balances.
+    """
+    focals = focal_users(pkg, cfg)
+    users = np.repeat(focals, 3)
+    policies = np.tile(np.arange(3), len(focals))  # truth, boost, sandbag
+    scenarios = np.arange(len(users))
+    mech = make_mechanism(mname, cfg, pkg)
+    state = mech.rollout_init(History(cfg.n), len(users))
+    utility = np.zeros(len(users))
+    for t in range(cfg.T):
+        values = pkg.valuations[:, t]
+        reports = np.broadcast_to(values, (len(users), cfg.n)).copy()
+        strategic_values = values[pkg.strategic_set]
+        reports[:, pkg.strategic_set] = np.where(strategic_values >= tau * cfg.v_max,
+                                                cfg.v_max, strategic_values)
+        focal_values = values[users]
+        reports[scenarios, users] = np.where(
+            policies == 0, focal_values,
+            np.where(focal_values >= tau * cfg.v_max, cfg.v_max,
+                     np.where(policies == 1, focal_values, 0.0)))
+        ties = np.random.default_rng(int(pkg.tie_seeds[t])).random(cfg.n)
+        x, payments = mech.rollout_step(reports, state, np.broadcast_to(ties, reports.shape))
+        utility += focal_values * x[scenarios, users] - payments[scenarios, users]
+    records = []
+    for focal, outcomes in zip(focals, utility.reshape(-1, 3)):
+        truth, boost, sandbag = map(float, outcomes)
+        records.append({"focal": int(focal), "truth_utility": truth,
+                        "boost_utility": boost, "sandbag_utility": sandbag,
+                        "sandbag_gain": sandbag - truth, "boost_gain": boost - truth,
+                        "timing_premium": sandbag - boost})
+    return {**{key: float(np.mean([r[key] for r in records])) for key in CONTROLLED_KEYS},
+            "focal_results": records}
 
 
 def run_e19(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=True, k=None,
@@ -66,9 +110,11 @@ def run_e19(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=T
     for tau in taus:
         variants[f"sandbag_{tau:g}"] = make_value_threshold(tau, low="zero")
         variants[f"boost_{tau:g}"] = make_value_threshold(tau, low="truth")
-    summaries, paired = [], []
+    summaries, paired, controlled = [], [], []
+    by_lambda = {}
     for (mname, changes, label) in (SETTINGS if settings is None else settings):
-        cfg = Config(n=n, k=k, T=T, rho=0.25, **changes)
+        cfg = Config(n=n, k=k, T=T, rho=0.25, n_seeds=len(seeds),
+                     n_bootstrap=n_bootstrap, **changes)
         per_variant = {}
         for vname, policy in variants.items():
             rows, summary = run_cell(
@@ -90,14 +136,48 @@ def run_e19(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=T
                                         "max_claim": per_variant["max_claim"]},
                                        "boost", PAIRED_KEYS, n_resamples=n_bootstrap)
             paired.append({"label": label, "mechanism": mname, "lambda_": changes.get("lambda_"),
-                           "tau": tau, "comparison": "sandbag - boost", "metrics": diffs["sandbag"]})
+                           "tau": tau, "comparison": "sandbag - boost",
+                           "design": "different_opponent_profiles", "metrics": diffs["sandbag"]})
             paired.append({"label": label, "mechanism": mname, "lambda_": changes.get("lambda_"),
-                           "tau": tau, "comparison": "max_claim - boost", "metrics": diffs["max_claim"]})
+                           "tau": tau, "comparison": "max_claim - boost",
+                           "design": "different_opponent_profiles", "metrics": diffs["max_claim"]})
+            rows, summary = run_cell(
+                lambda pkg, m=mname, cf=cfg, t=tau: controlled_timing_row(m, cf, pkg, t),
+                seeds, cfg, CONTROLLED_KEYS, n_bootstrap)
+            summary.update({"label": label, "mechanism": mname, "lambda_": changes.get("lambda_"),
+                            "tau": tau, "n_seeds": len(seeds), "design": "fixed_opponent_policies"})
+            controlled.append(summary)
+            if mname == "ScoreMechanism":
+                by_lambda[(changes["lambda_"], tau)] = rows
+            if results_dir:
+                save_raw(results_dir, "e19", f"controlled_{label.replace(' ', '_')}_tau{tau:g}",
+                         rows, {**cfg.to_dict(), "tau": tau,
+                                "opponents": "boost_tau on S minus focal; truthful elsewhere"})
+            if verbose:
+                print(f"  E19 controlled {label:<14s} tau={tau:g} "
+                      f"premium={summary['timing_premium']['mean']:+.3f}", flush=True)
+    # H2 concerns growth with lambda, so estimate paired changes in the premium,
+    # rather than inferring a trend from separate point estimates or intervals.
+    lambdas = sorted({lam for lam, _ in by_lambda})
+    if lambdas:
+        for tau in taus:
+            groups = {f"{lam:g}": by_lambda[(lam, tau)] for lam in lambdas}
+            diffs = paired_differences(groups, f"{lambdas[0]:g}", ["timing_premium"],
+                                       n_resamples=n_bootstrap)
+            for lam in lambdas[1:]:
+                paired.append({"comparison": "lambda_effect", "design": "fixed_opponent_policies",
+                               "lambda_": lam, "reference_lambda": lambdas[0], "tau": tau,
+                               "metrics": diffs[f"{lam:g}"]})
     if results_dir:
         save_outputs(results_dir, "e19", summaries,
                      {"n": n, "k": k, "T": T, "rho": 0.25, "taus": list(taus),
-                      "variants": list(variants), "settings": [s[2] for s in (SETTINGS if settings is None else settings)]},
+                      "variants": list(variants), "n_bootstrap": n_bootstrap,
+                      "seed_role": "existing master seeds; exploratory feedback extension",
+                      "controlled_opponents": "boost_tau on S minus focal; truthful elsewhere",
+                      "settings": [{"mechanism": m, "changes": c, "label": l}
+                                   for m, c, l in (SETTINGS if settings is None else settings)]},
                      seeds, paired)
+        save_json(controlled, Path(results_dir) / "e19" / "controlled.json")
     return summaries, paired
 
 

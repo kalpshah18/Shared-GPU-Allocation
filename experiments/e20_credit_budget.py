@@ -54,7 +54,8 @@ def run_e20(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=T
     k = k if k is not None else max(1, round(0.2 * n))
     summaries = []
     for (mname, changes, label) in (SETTINGS if settings is None else settings):
-        cfg = Config(n=n, k=k, T=T, rho=0.25, **changes)
+        cfg = Config(n=n, k=k, T=T, rho=0.25, n_seeds=len(seeds),
+                     n_bootstrap=n_bootstrap, **changes)
         for pname, policy in POLICIES.items():
             rows, summary = run_cell(
                 lambda pkg, m=mname, cf=cfg, p=policy: strategic_row(m, cf, pkg, p),
@@ -72,7 +73,10 @@ def run_e20(seeds, results_dir=None, n=50, T=1000, n_bootstrap=10_000, verbose=T
         save_outputs(results_dir, "e20", summaries,
                      {"n": n, "k": k, "T": T, "rho": 0.25, "credit_rates": RATES,
                       "credit_horizon": Config().credit_horizon, "policies": list(POLICIES),
-                      "settings": [s[2] for s in (SETTINGS if settings is None else settings)]}, seeds)
+                      "n_bootstrap": n_bootstrap,
+                      "seed_role": "existing master seeds; exploratory feedback extension",
+                      "settings": [{"mechanism": m, "changes": c, "label": l}
+                                   for m, c, l in (SETTINGS if settings is None else settings)]}, seeds)
     return summaries
 
 
