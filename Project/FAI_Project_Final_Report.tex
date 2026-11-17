@@ -43,12 +43,13 @@ We study repeated GPU allocation when users privately know their per-round
 values and may misreport them. A seeded simulator compares random allocation,
 round-robin, greedy allocation, a history-penalised score rule, and a monetary
 Vickrey auction. The main question is whether the score rule's fairness benefit
-also limits manipulation. A moderate penalty preserves most truthful welfare
-under homogeneous demand, but mild exaggeration and selective reporting can
-remain profitable. A controlled timing experiment changes only the focal
-user's policy and measures the benefit of withholding low reports. That benefit
-increases with the penalty for one tested threshold, while a higher threshold
-remains costly. We also evaluate a credit-budget version of Vickrey and two
+also limits manipulation. At $\lambda=1$, Score retains truthful welfare ratio
+\TruthScoreWR{} under homogeneous demand, but mild exaggeration and selective
+reporting can remain profitable. A controlled timing experiment changes only
+the focal user's policy. At threshold $\tau=0.75$, increasing $\lambda$ from
+$0.5$ to $5$ raises the timing premium by \TimingTrend{} utility over 1,000
+rounds (95\% interval); a higher threshold remains costly.
+We also evaluate a credit-budget version of Vickrey and two
 mechanisms with a service override. Credits do not inherit monetary
 truthfulness, and a service bound does not ensure incentive compatibility.
 All reported measurements come from saved seed-level outputs. The findings
@@ -373,11 +374,11 @@ These results use the fresh extension seeds, not the core master seeds.
 \begin{center}\small\textbf{Table 4. Matched service thresholds and component outcomes (E12).}\end{center}
 \resulttable{extensions}
 
-Score-Cap retains a positive mean gain under mild inflation. Karma-Cap's
-mean gain is lower in that population, while Rank-Cap still has a small
-positive mean gain. Equal service thresholds make clear that adding the cap
-alone does not ensure incentive compatibility. Heterogeneous and persistent
-demand also expose a larger welfare cost than homogeneous demand does.
+Score-Cap and Rank-Cap retain positive mild-inflation gains, whereas Karma-Cap's
+mean gain is negative in this population. This deterrence reverses when all
+opponents inflate: at $c=2$ and $\rho=1$, Karma-Cap's gain is
+\KarmaPopulationReversal{}. Equal caps therefore do not ensure incentive
+compatibility. Heterogeneous and persistent demand also increase the welfare cost.
 
 \paragraph{Corrected planning attack (E15).}
 A focal user searches reports on the grid $\{0,0.1,\ldots,1\}$ plus exact
@@ -476,7 +477,7 @@ The README links result screenshots, raw data and the final submission.
 Paper tables, figures and numeric text are generated from saved outputs by
 \texttt{python analysis/build\_final\_report.py}. Its evidence file records
 source hashes, seed roles, raw-data checks and the data commit.
-\texttt{python run\_all.py --quick} checks the full pipeline on small instances;
+\verb|python run_all.py --quick| checks the full pipeline on small instances;
 \texttt{python run\_all.py} reruns all experiments. The feedback audit is
 \texttt{python analysis/verify\_feedback.py}. Full reproduction uses the
 locked dependencies and seed lists. The README distinguishes historical

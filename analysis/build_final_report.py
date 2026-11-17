@@ -254,6 +254,9 @@ def build():
         extension_table.append([label] + [value(truthful[c], "WR") for c in ["base", "mixed", "persistent"]]
                                + [value(attack, "M_uni", 2, ci=True, signed=True)])
     table("extensions", "lrrrr", r"Rule ($W=10$) & Base WR & Mixed WR & Persistent WR & Mild-inflation gain", extension_table)
+    reversal = cell("e12", "base_cap_2_rho1_Karma_W10", condition="base", family="Karma",
+                    wait_cap=10, policy="cap_2", rho=1.)
+    macro("KarmaPopulationReversal", reversal, "M_uni", 2, ci=True, signed=True)
     fig, ax = plt.subplots(figsize=(6.5, 1.95), layout="constrained")
     planner_labels = ["Score", "Score lambda=2", "Score-Cap", "Karma-Cap", "Rank-Cap"]
     for i, label in enumerate(planner_labels):
