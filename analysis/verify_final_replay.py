@@ -54,6 +54,8 @@ def main():
         ("e12", "base_cap_1.25_rho0.25_Score_W10", "ScoreCapMechanism", "cap_1.25"),
         ("e12", "base_cap_1.25_rho0.25_Karma_W10", "KarmaCapMechanism", "cap_1.25"),
         ("e12", "base_cap_1.25_rho0.25_Rank_W10", "RankCapMechanism", "cap_1.25"),
+        ("e12", "base_cap_1.25_rho0.25_Karma_WNone", "KarmaCapMechanism", "cap_1.25"),
+        ("e12", "base_cap_1.25_rho0.25_Rank_WNone", "RankCapMechanism", "cap_1.25"),
         ("e20", "M5c_rate=0.5_sandbag_0.75", "CreditVickreyMechanism", "sandbag_0.75"),
     ]
     for exp, name, mechanism, policy in cases:

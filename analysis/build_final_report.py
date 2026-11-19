@@ -61,10 +61,30 @@ def cell(exp, filename, **selector):
     assert len(seed_rows) == summary["n_seeds"] == 30
     ids = [r["seed"] for r in seed_rows]
     assert len(set(ids)) == 30
-    seed_file = "seeds/extension_seeds.json" if exp in ("e12", "e14", "e15") else "seeds/master_seeds.json"
+    seed_file = ("seeds/followup_seeds.json" if exp == "e18" else
+                 "seeds/extension_seeds.json" if exp in ("e12", "e13", "e14", "e15", "e16", "e17")
+                 else "seeds/master_seeds.json")
     assert ids == read(seed_file)["seeds"]
-    keys = [k for k, value in summary.items() if isinstance(value, dict)]
+    keys = [k for k, value in summary.items() if isinstance(value, dict)
+            and k != "restricted_exploitability"]
     same(summary, summarise_seeds(seed_rows, keys, n_resamples=10_000))
+    if "restricted_exploitability" in summary:
+        from experiments.e13_adaptive import exploitability_band
+        same(summary["restricted_exploitability"], exploitability_band(
+            [r["unilateral_gains"] for r in seed_rows], 10_000))
+        cfg = raw["config"]
+        training = cfg["training"]
+        assert (cfg["n"], cfg["k"], cfg["T"]) == (6, 2, 120)
+        assert len(cfg["training_seeds"]) == 5 and len(cfg["policies"]) == 8
+        assert summary["initial"] == cfg["initial"]
+        if exp == "e18":
+            assert summary["budget"] == cfg["budget"]
+        assert not set(ids) & set(cfg["training_seeds"])
+        assert summary["training_status"] == training["status"]
+        assert summary["training_sweeps"] == training["sweeps"]
+        same(summary["training_exploitability"], training["training_exploitability"])
+        assert summary["profile"] == [cfg["policies"][p] for p in training["profile"]]
+        keys.append("restricted_exploitability")
     CELLS[key] = {"summary": summary, "raw_source": raw_path,
                   "seed_file": seed_file, "verified_statistics": keys,
                   "config": raw["config"]}
@@ -136,6 +156,11 @@ def savefig(fig, name):
 def build():
     # The feedback audit includes all cells, focal utility identities and paired comparisons.
     feedback = verify_feedback(ROOT / "results")
+    persistent = cell("e5", "ScoreMechanism_copula_alpha_0.9", mechanism="ScoreMechanism",
+                      alpha=.9, ar1_mode="copula")
+    macro("PersistentScoreSR", persistent, "SR_delta", 1, multiplier=100)
+    runtime = cell("e6", "ScoreMechanism_n_500", mechanism="ScoreMechanism", n=500)
+    macro("ScoreRuntime", runtime, "time_per_round_us", 1)
     mechs = [("RandomMechanism", "M1 Random"), ("RoundRobinMechanism", "M2 Round-robin"),
              ("GreedyMechanism", "M3 Greedy"), ("ScoreMechanism", r"M4 Score ($\lambda=1$)"),
              ("VickreyMechanism", "M5 Vickrey")]
@@ -242,22 +267,25 @@ def build():
         ax.legend(loc="best", fontsize=7)
     savefig(fig, "credit_budget")
 
-    # Matched-cap evaluation: all outcomes below use the fresh extension seeds.
+    # Matched component ablations, including the uncapped Karma and Rank rules.
     extension_table = []
-    for family, label in [("Score", "Score-Cap"), ("Karma", "Karma-Cap"), ("Rank", "Rank-Cap")]:
-        truthful = {}
-        for condition in ["base", "mixed", "persistent"]:
-            truthful[condition] = cell("e12", f"{condition}_truthful_rho0_{family}_W10",
-                condition=condition, family=family, wait_cap=10, policy="truthful", rho=0.)
-        attack = cell("e12", f"base_cap_1.25_rho0.25_{family}_W10", condition="base", family=family,
-                      wait_cap=10, policy="cap_1.25", rho=.25)
-        extension_table.append([label] + [value(truthful[c], "WR") for c in ["base", "mixed", "persistent"]]
-                               + [value(attack, "M_uni", 2, ci=True, signed=True)])
-    table("extensions", "lrrrr", r"Rule ($W=10$) & Base WR & Mixed WR & Persistent WR & Mild-inflation gain", extension_table)
+    for family in ["Score", "Karma", "Rank"]:
+        for W in [None, 10]:
+            truthful = {}
+            for condition in ["base", "mixed", "persistent"]:
+                truthful[condition] = cell("e12", f"{condition}_truthful_rho0_{family}_W{W}",
+                    condition=condition, family=family, wait_cap=W, policy="truthful", rho=0.)
+            attack = cell("e12", f"base_cap_1.25_rho0.25_{family}_W{W}", condition="base", family=family,
+                          wait_cap=W, policy="cap_1.25", rho=.25)
+            label = family + ("-Cap" if W is not None else "")
+            extension_table.append([label, "off" if W is None else str(W)] +
+                [value(truthful[c], "WR") for c in ["base", "mixed", "persistent"]] +
+                [value(attack, "M_uni", 2, ci=True, signed=True)])
+    table("extensions", "llrrrr", r"Rule & $W$ & Base WR & Mixed WR & Persistent WR & Mild-inflation gain", extension_table)
     reversal = cell("e12", "base_cap_2_rho1_Karma_W10", condition="base", family="Karma",
                     wait_cap=10, policy="cap_2", rho=1.)
     macro("KarmaPopulationReversal", reversal, "M_uni", 2, ci=True, signed=True)
-    fig, ax = plt.subplots(figsize=(6.5, 1.95), layout="constrained")
+    fig, ax = plt.subplots(figsize=(6.5, 1.65), layout="constrained")
     planner_labels = ["Score", "Score lambda=2", "Score-Cap", "Karma-Cap", "Rank-Cap"]
     for i, label in enumerate(planner_labels):
         mode = "updating" if label == "Rank-Cap" else "exact"
@@ -289,6 +317,28 @@ def build():
             solves[key] = True
     assert len(solves) == 270
     MACROS["CertifiedSolves"] = str(len(solves))
+
+    # Adaptive regret is a maximum AFTER averaging paired seed-level gains.
+    # Its band is simultaneous across the fixed user/policy library.
+    adaptive = []
+    for label in ["Score-Cap", "Karma-Cap", "Rank-Cap"]:
+        for initial in ["truthful", "cap_2"]:
+            cell("e13", f"{label}_{initial}", label=label, initial=initial)
+            rows = [cell("e18", f"{label}_{initial}_budget{budget}",
+                         label=label, initial=initial, budget=budget) for budget in [4, 20]]
+            long = rows[1]
+            status = "converged" if long["training_status"] == "converged" else "limit"
+            adaptive.append([label, "truth" if initial == "truthful" else r"$c=2$",
+                f"{status} ({long['training_sweeps']})"] +
+                [value(r, "restricted_exploitability", 2, ci=True) for r in rows])
+    table("adaptive", "lllrr", r"Rule & Start & Training at 20 & Regret: 4 sweeps & Regret: 20 sweeps", adaptive)
+    rank = cell("e16", "updating", mode="updating")
+    macro("RankLedgerEffect", rank, "ledger_effect", 2, ci=True, signed=True)
+    karma = cell("e17", "Karma-Cap_rho1", label="Karma-Cap", rho=1.)
+    for name, metric in [("KarmaForcedGain", "forced_gain"), ("KarmaAuctionGain", "auction_gain")]:
+        macro(name, karma, metric, 2, signed=True)
+    uncapped = cell("e17", "Karma_rho1", label="Karma", rho=1.)
+    macro("KarmaUncappedReversal", uncapped, "M_uni", 2, ci=True, signed=True)
 
     (OUT / "numbers.tex").write_text("% Generated from audited raw data; do not edit.\n" +
         "\n".join(rf"\newcommand{{\{k}}}{{{v}}}" for k, v in sorted(MACROS.items())) + "\n", encoding="utf-8")
