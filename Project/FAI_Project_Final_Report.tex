@@ -450,14 +450,14 @@ therefore does not explain the entire gap from the future-aware optimum.
 
 \newpage
 \subsection{Adaptive policies and failure diagnostics}
-E13 trains asynchronous best responses.
-E18 compares four and twenty training sweeps at $n=6$, $k=2$, $T=120$,
-with $W=6$ and Score/Rank penalty $\lambda=1$;
+E18 extends E13 to four and twenty asynchronous sweeps at $n=6$, $k=2$,
+$T=120$, $W=6$, and Score/Rank penalty $\lambda=1$.
 Table~6 evaluates frozen profiles on 30 independent follow-up seeds.
-Karma-Cap training converges at sweep 18 from both starts.
-Score-Cap and Rank-Cap reach the twenty-sweep limit. Held-out regret remains
-uncertain; training convergence establishes neither population nor unrestricted
-equilibrium. The library excludes E19's sandbag and boost policies.
+Karma-Cap converges at sweep 18 from both starts; Score-Cap and Rank-Cap
+reach the twenty-sweep limit. Twenty-sweep regret bands include zero;
+Karma-Cap from the doubling start has a positive four-sweep band.
+Training convergence establishes neither population nor unrestricted equilibrium.
+The library excludes E19's sandbag and boost policies.
 
 \begin{center}\small\textbf{Table 6. Restricted held-out regret; simultaneous 95\% bands (E18).}\end{center}
 \resulttable{adaptive}
