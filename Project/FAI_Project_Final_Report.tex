@@ -228,6 +228,8 @@ outside that invariance property; it is not a truthfulness theorem.
 The uncapped rules retain their auction or quantile component but have no
 certified finite waiting bound. E9/E10 vary balances, rank blending and wait
 thresholds; E12 compares these components with and without the override.
+The Karma balance setting was selected on five development seeds disjoint
+from evaluation, using non-positive mean gain across the scripted attack grid.
 
 \subsection{Experimental protocol and validation}
 The core setting is $n=50$, $k=10$, $T=1000$, independent Uniform$(0,1)$
@@ -238,7 +240,10 @@ Each comparison pairs valuation and tie streams. Results use 30 seeds and
 10,000 seed-bootstrap resamples. E19/E20 reuse master seeds and are exploratory.
 E12--E15 use a separate 30-seed evaluation set, reused descriptively in E16/E17.
 E18 uses another 30 evaluation seeds. Adaptive best responses use five disjoint
-training traces, eight fixed policies and truthful or doubled-report starts.
+training traces and eight policies: truth, capped factors $1.25,1.5,2$,
+maximum claim, history-triggered factors $1.25,2$, and high-only
+(truth for $v\ge0.5$, zero otherwise). Runs start with all users truthful or
+doubling reports.
 Held-out regret maximises seed-averaged unilateral gain over users and policies;
 its band is simultaneous within that library. Other intervals are pointwise.
 E0 exhausts small discrete cases, including capacity, ties, M4 at $\lambda=0$
@@ -445,13 +450,14 @@ therefore does not explain the entire gap from the future-aware optimum.
 
 \newpage
 \subsection{Adaptive policies and failure diagnostics}
-E13 trains asynchronous best responses within an eight-policy library.
-E18 extends training from four to twenty sweeps at $n=6$, $k=2$, $T=120$;
-Table~6 evaluates the frozen profiles on 30 independent follow-up seeds.
-Karma-Cap converges on the five training traces at sweep 18 from both starts.
+E13 trains asynchronous best responses.
+E18 compares four and twenty training sweeps at $n=6$, $k=2$, $T=120$,
+with $W=6$ and Score/Rank penalty $\lambda=1$;
+Table~6 evaluates frozen profiles on 30 independent follow-up seeds.
+Karma-Cap training converges at sweep 18 from both starts.
 Score-Cap and Rank-Cap reach the twenty-sweep limit. Held-out regret remains
 uncertain; training convergence establishes neither population nor unrestricted
-equilibrium. The library excludes E19's value-threshold policies.
+equilibrium. The library excludes E19's sandbag and boost policies.
 
 \begin{center}\small\textbf{Table 6. Restricted held-out regret; simultaneous 95\% bands (E18).}\end{center}
 \resulttable{adaptive}

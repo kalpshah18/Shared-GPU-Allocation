@@ -70,12 +70,15 @@ def cell(exp, filename, **selector):
     same(summary, summarise_seeds(seed_rows, keys, n_resamples=10_000))
     if "restricted_exploitability" in summary:
         from experiments.e13_adaptive import exploitability_band
+        from sim.adaptation import POLICY_NAMES
         same(summary["restricted_exploitability"], exploitability_band(
             [r["unilateral_gains"] for r in seed_rows], 10_000))
         cfg = raw["config"]
         training = cfg["training"]
         assert (cfg["n"], cfg["k"], cfg["T"]) == (6, 2, 120)
+        assert (cfg["wait_limit"], cfg["lambda_"], cfg["karma_init"], cfg["rank_blend"]) == (6, 1., 2., 0.)
         assert len(cfg["training_seeds"]) == 5 and len(cfg["policies"]) == 8
+        assert cfg["policies"] == list(POLICY_NAMES)
         assert summary["initial"] == cfg["initial"]
         if exp == "e18":
             assert summary["budget"] == cfg["budget"]
