@@ -19,9 +19,14 @@ Repository link for submission: [Shared-GPU-Allocation](https://github.com/kalps
 - [Portable LaTeX source archive](output/latex/Shared_GPU_Allocation_Final_Report_Source.zip)
 - [Editable report source](Project/FAI_Project_Final_Report.tex) and [build instructions](Project/FINAL_REPORT_README.md)
 - [Evidence file: raw sources, hashes, seed roles and checked statistics](Project/final_assets/evidence.json)
+- [Coverage of every completed study in the report](docs/REPORT_COVERAGE.md)
 
 The final report completes the supplied review proposal. It includes the mechanism algorithms, controlled timing
 design, credit budget, results and discussion, and the contribution assignments confirmed by the group.
+It covers all five history/service extensions (Score-Cap, Karma, Karma-Cap, Rank and Rank-Cap),
+including uncapped comparisons, adaptive training and the Rank/Karma failure diagnostics.
+Credit-Vickrey is a separate budget extension. The body selects representative results;
+the coverage map links the remaining study grids and identifies historical checkpoints.
 All reported data cells are checked against saved seed-level outputs. The main rollout figure uses corrected E15
 results; the older E3b/E3c/E11 checkpoints are not presented as corrected-code outputs.
 

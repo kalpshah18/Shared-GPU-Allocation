@@ -49,8 +49,8 @@ reporting can remain profitable. A controlled timing experiment changes only
 the focal user's policy. At threshold $\tau=0.75$, increasing $\lambda$ from
 $0.5$ to $5$ raises the timing premium by \TimingTrend{} utility over 1,000
 rounds (95\% interval); a higher threshold remains costly.
-We also evaluate a credit-budget version of Vickrey and two
-mechanisms with a service override. Credits do not inherit monetary
+We also evaluate Credit-Vickrey and five history/service extensions:
+Score-Cap, Karma, Karma-Cap, Rank and Rank-Cap. Credits do not inherit monetary
 truthfulness, and a service bound does not ensure incentive compatibility.
 All reported measurements come from saved seed-level outputs. The findings
 concern synthetic, unit-demand workloads and specified reporting policies;
@@ -132,7 +132,7 @@ focal users within each seed; confidence intervals resample seeds, not users.
 The coalition comparison instead changes all strategic users at once and can
 have a different sign. Strategic welfare loss is
 $\mathrm{SWL}=(W_{\mathrm{truth}}-W_{\mathrm{strategic}})/W_{\mathrm{truth}}$;
-it can be negative. This replaces the ambiguous abbreviation PoS.
+it can be negative.
 For truthful mechanism $F$, $\mathrm{PoF}=(W^*-W_F)/W^*$.
 We compare these objectives separately rather than using an arbitrary weighted sum.
 
@@ -156,6 +156,20 @@ truth is optimal in each round \cite{vickrey1961counterspeculation}:
 conditional on other bids, winning yields value minus a fixed threshold price.
 This property is not transferred to credit-based or history-dependent rules.
 
+\begin{center}\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lp{4.8in}}
+\toprule Studies & Completed scope \\
+\midrule
+E0--E3 & Finite validation; scarcity; fairness/strategy frontier; strategic fraction. \\
+E4--E8 & Heterogeneity; persistence controls; runtime/memory; inflation; history timing. \\
+E9/E10/E12 & Extension settings and capped/uncapped component comparisons. \\
+E3b/E3c/E11/E15 & Historical planning checkpoints, superseded by corrected E15 attacks. \\
+E13/E18 & Adaptive populations and longer training with held-out policy regret. \\
+E14/E16/E17 & Constrained welfare oracle; Rank-history and Karma-accounting diagnostics. \\
+E19/E20 & Controlled value-threshold timing and renewable-credit budgets. \\
+\bottomrule
+\end{tabular}\end{center}
+
 \newpage
 \subsection{Reporting policies and a controlled timing test}
 The core policies are truth, capped exaggeration
@@ -175,6 +189,9 @@ We also estimate paired changes $P_\lambda(\tau)-P_{0.5}(\tau)$.
 This separates the sign of timing's net benefit from its change with $\lambda$.
 
 \subsection{Non-monetary solutions}
+The five history/service extensions are Score-Cap, Karma, Karma-Cap, Rank
+and Rank-Cap. Uncapped Karma and Rank disable the service override in the
+corresponding capped implementation. Credit-Vickrey is a separate budget extension.
 \paragraph{M5c Credit-Vickrey.}
 Each user receives income $I=r(k/n)$ before every round. Balances start at
 the ceiling $C=20I$. Available credits are $b_i^+=\min(b_i+I,C)$;
@@ -208,6 +225,11 @@ $N_{<},N_{=}$ count those below or equal to the current report.
 Fixed strictly increasing distortions of the
 entire report history preserve ranks. Selective reporting and clipping are
 outside that invariance property; it is not a truthfulness theorem.
+The uncapped rules retain their auction or quantile component but have no
+certified finite waiting bound. E9/E10 vary balances, rank blending and wait
+thresholds; E12 compares these components with and without the override.
+The Karma balance setting was selected on five development seeds disjoint
+from evaluation, using non-positive mean gain across the scripted attack grid.
 
 \subsection{Experimental protocol and validation}
 The core setting is $n=50$, $k=10$, $T=1000$, independent Uniform$(0,1)$
@@ -216,10 +238,18 @@ Beta$(2,5)$ and Beta$(5,2)$ groups. A Gaussian copula control preserves the
 value marginals under persistence; the proposal's AR recursion also shrinks variance.
 Each comparison pairs valuation and tie streams. Results use 30 seeds and
 10,000 seed-bootstrap resamples. E19/E20 reuse master seeds and are exploratory.
-E12--E15 use a separate 30-seed evaluation set; adaptive training uses other seeds.
-Intervals are pointwise and are not adjusted for all grid comparisons.
+E12--E15 use a separate 30-seed evaluation set, reused descriptively in E16/E17.
+E18 uses another 30 evaluation seeds. Adaptive best responses use five disjoint
+training traces and eight policies: truth, capped factors $1.25,1.5,2$,
+maximum claim, history-triggered factors $1.25,2$, and high-only
+(truth for $v\ge0.5$, zero otherwise). Runs start with all users truthful or
+doubling reports.
+Held-out regret maximises seed-averaged unilateral gain over users and policies;
+its band is simultaneous within that library. Other intervals are pointwise.
 E0 exhausts small discrete cases, including capacity, ties, M4 at $\lambda=0$
 and one-round Vickrey deviations. Stateful rules start fresh in each counterfactual.
+
+
 
 \newpage
 \section{Results}
@@ -261,13 +291,16 @@ not claims that every user benefits or that all other deviations are deterred.
 The figure also changes the opponents' policy when $c$ changes, so it does
 not rank the policies as best responses to one common opponent population.
 
-\paragraph{Interpretation.}
-M4's history term improves long-run allocation balance, but it does not attach
-a direct utility cost to an inflated claim. A stronger term can make an
-aggressive policy unattractive while leaving a milder deviation profitable.
-The measured outcome depends on the value distribution, penalty and reporting
-policies. The next experiment directly tests the additional incentive to
-protect future priority by withholding low reports.
+\paragraph{Other workload and implementation checks.}
+Scarcity/frontier and strategic-fraction sweeps (E1--E3) compare welfare,
+fairness and policy-specific gain separately. E5 isolates persistence from
+shrinking variance in the proposal recursion: with marginal-preserving
+persistence at $\alpha=0.9$, Score's starvation reaches \PersistentScoreSR{}\%.
+Equal long-run counts need not give regular service. E6 benchmarks $n=10$--500.
+Saved Score runtime at $n=500$, $k=100$ averages \ScoreRuntime{} microseconds
+per round (30 seeds, best of three after warm-up), excluding value generation.
+Peak Python heap includes the seed package and episode records, sampled on
+three seeds. These machine-dependent simulator benchmarks do not measure a production scheduler.
 
 \newpage
 \subsection{Core timing experiment: does suppressing low reports help?}
@@ -363,31 +396,31 @@ transferable credits, redistribution, borrowing or different expiry rules.
 The budget has no service override and supplies no hard waiting guarantee.
 
 \newpage
-\subsection{Service-capped alternatives and stronger attacks}
-E12 isolates the service override from the incentive component. Score-Cap
-and Rank-Cap use $\lambda=1$. All three capped rules use $W=10$ and share the certified wait bound
+\subsection{Five history/service extensions and stronger attacks}
+Table~4 includes all five extensions and uncapped Score as their baseline.
+Score and Rank variants use $\lambda=1$. Capped rules use $W=10$ and share the certified wait bound
 $10+\lceil50/10\rceil-1=14$. Truthful columns use the named workload;
 the final column uses homogeneous demand, $c=1.25$ and $\rho=0.25$.
 Persistent values use the marginal-preserving copula with $\alpha=0.9$.
 These results use the fresh extension seeds, not the core master seeds.
 
-\begin{center}\small\textbf{Table 4. Matched service thresholds and component outcomes (E12).}\end{center}
+\begin{center}\small\textbf{Table 4. Capped and uncapped component outcomes (E12).}\end{center}
 \resulttable{extensions}
 
-Score-Cap and Rank-Cap retain positive mild-inflation gains, whereas Karma-Cap's
-mean gain is negative in this population. This deterrence reverses when all
-opponents inflate: at $c=2$ and $\rho=1$, Karma-Cap's gain is
-\KarmaPopulationReversal{}. Equal caps therefore do not ensure incentive
-compatibility. Heterogeneous and persistent demand also increase the welfare cost.
+Removing the override raises welfare in each listed workload. Score and Rank
+variants retain positive mild-inflation gains; both Karma variants have negative
+means in this population. Karma-Cap reverses when all opponents inflate:
+at $c=2$, $\rho=1$, its gain is \KarmaPopulationReversal{}.
+Equal caps therefore do not ensure incentive compatibility. Heterogeneous
+and persistent demand increase the welfare cost.
 
 \paragraph{Corrected planning attack (E15).}
-A focal user searches reports on the grid $\{0,0.1,\ldots,1\}$ plus exact
-truth. Candidate reports share sampled futures; horizons stop at the episode
-end. Hypothetical allocation counts, balances and rank histories advance.
-Only the focal current value is observed; opponents' values are sampled.
-The focal user then uses truthful continuation in each simulated future.
-Figure~4 uses $n=10$, $k=2$, $T=120$, horizon 40 and 80 sampled futures per
-candidate, with truthful opponents and 30 fresh evaluation seeds.
+A focal user searches $\{0,0.1,\ldots,1\}$ plus exact truth. Candidates share
+sampled futures, truncated at episode end; hypothetical counts, balances and
+rank histories advance. Only the focal current value is observed. Opponent
+values are sampled and focal continuation is truthful. Figure~4 uses $n=10$,
+$k=2$, $T=120$, horizon 40, 80 futures per candidate, truthful opponents and
+30 extension seeds.
 
 \resultfigure{planning_attack}{\textbf{Figure 4.} Corrected rollout gains (E15).
 Gain is measured over 120 rounds, unlike the 1,000-round gains above.
@@ -397,8 +430,8 @@ The planner gains \ScorePlanner{} against Score at $\lambda=2$ and
 \RankPlanner{} against Rank-Cap. Thus the tested fixed inflation results
 do not exhaust these mechanisms' vulnerabilities. Karma-Cap's interval
 includes zero in this setting; this is a limited attack outcome, not a guarantee.
-We omit old E3b/E3c/E11 numerical claims from the main report because their
-saved checkpoint used different attacker assumptions. E15 is the corrected study.
+Historical E3b/E3c/E11 checkpoints used different attacker assumptions;
+their numerical claims are superseded here by corrected E15.
 
 \paragraph{Welfare relative to the same service constraint (E14).}
 For $B=W+\lceil n/k\rceil-1$, an offline binary program requires each user
@@ -416,45 +449,51 @@ The latter includes the online information disadvantage. A service guarantee
 therefore does not explain the entire gap from the future-aware optimum.
 
 \newpage
+\subsection{Adaptive policies and failure diagnostics}
+E18 extends E13 to four and twenty asynchronous sweeps at $n=6$, $k=2$,
+$T=120$, $W=6$, and Score/Rank penalty $\lambda=1$.
+Table~6 evaluates frozen profiles on 30 independent follow-up seeds.
+Karma-Cap converges at sweep 18 from both starts; Score-Cap and Rank-Cap
+reach the twenty-sweep limit. Twenty-sweep regret bands include zero;
+Karma-Cap from the doubling start has a positive four-sweep band.
+Training convergence establishes neither population nor unrestricted equilibrium.
+The library excludes E19's sandbag and boost policies.
+
+\begin{center}\small\textbf{Table 6. Restricted held-out regret; simultaneous 95\% bands (E18).}\end{center}
+\resulttable{adaptive}
+
+E16 replays Rank-Cap's fixed attack reports using a private truthful reference
+for the focal user's rank history.
+Updating the history adds \RankLedgerEffect{} utility relative to that replay.
+This privileged diagnostic is not a deployable rule; the attack also profits
+with the truthful reference. E17 decomposes Karma-Cap's $c=2$, $\rho=1$
+gain into forced-service \KarmaForcedGain{} and auction \KarmaAuctionGain{}
+benefits. Uncapped Karma also reverses sign: \KarmaUncappedReversal{}.
+The override therefore does not alone explain the reversal. These reused-seed
+diagnostics describe accounting and history effects, not unique causal or
+equilibrium explanations.
+
 \section{Discussion and limitations}
 \paragraph{Returning to the proposal's hypotheses.}
-\textbf{H1:} A moderate history penalty costs little truthful welfare in the
-homogeneous case, but its starvation reduction is modest; the claim has weaker
-support for waiting than for fairness.
-\textbf{H2:} At $\tau=0.75$, the controlled timing premium increases between
-the tested penalties. The costly $\tau=0.9$ policy prevents a general claim
-that stronger penalties make timing profitable.
-\textbf{H3:} Round-robin has equal allocation counts but lower welfare.
-In the mixed case it also has the highest mean normalised-benefit fairness;
-these runs do not show a conflict between its count and benefit rankings.
-\textbf{H4:} Monetary Vickrey's one-round incentive property is a theory
-control. M3 and M4 have profitable tested deviations, while replacing money
-with credits removes the justification for monetary truthfulness.
+\textbf{H1:} Moderate history penalties cost little homogeneous truthful welfare,
+but reduce starvation only modestly. \textbf{H2:} Timing's premium increases
+between tested penalties at $\tau=0.75$; the costly $\tau=0.9$ policy prevents
+generalisation. \textbf{H3:} Round-robin trades welfare for equal counts and
+also leads mean normalised-benefit fairness in the mixed case.
+\textbf{H4:} Monetary Vickrey supplies the one-round theory control; its proof
+does not cover credits. M3 and M4 admit profitable tested deviations.
 
 \paragraph{Limits of the evidence.}
-The simulation assumes identical GPUs, one-round service, additive values,
-no arrivals, no placement constraints and no multi-GPU jobs. Synthetic private
-values do not measure training throughput or job completion time. Fairness
-indices describe particular equality objectives, not all notions of fair access.
-Reported gains cover specified policies and a finite planning heuristic.
-The rollout uses independent marginal futures and truthful continuation;
-it is not a best-response oracle. The fresh adaptive studies in the repository
-use a fixed eight-policy library that excludes the new threshold policies.
-Their restricted training convergence cannot establish unrestricted equilibrium.
-E19/E20 are exploratory reuses of the master seeds. Their pointwise intervals
-do not control uncertainty across every inspected threshold and penalty.
-
-\paragraph{Conclusion.}
-Allocation history can improve fairness at a small welfare cost in some
-workloads, but it does not by itself settle waiting or strategic incentives.
-Selective reports can still profit at large penalties. Credits create a
-different dynamic incentive problem, and service caps supply a bounded-wait
-property with a measurable welfare cost. Mechanism choice depends on the
-workload and objective; none of the tested non-monetary rules is established
-as dynamically strategyproof.
+Identical GPUs, one-round service and additive synthetic values omit arrivals,
+placement and multi-GPU jobs; welfare is not training throughput. Fairness
+indices capture specific equality objectives. Rollouts use marginal futures
+and truthful continuation, not optimal best responses. E19/E20 reuse master
+seeds; their exploratory pointwise intervals do not cover all inspected grid
+comparisons. None of the tested non-monetary rules is established as dynamically
+strategyproof.
 
 \section{Contribution}
-The table lists the primary assignments from the proposal and their completion status.
+All four primary assignments were fulfilled.
 \begin{center}\small
 \begin{tabular}{p{1.05in}p{4.05in}p{0.65in}}
 \toprule Member & Assigned task and delivered component & Status \\
@@ -473,15 +512,10 @@ figures, result tables and sensitivity/failure documentation. & Fulfilled \\
 \section{Repository and reproducibility}
 \repo
 
-The README links result screenshots, raw data and the final submission.
-Paper tables, figures and numeric text are generated from saved outputs by
-\texttt{python analysis/build\_final\_report.py}. Its evidence file records
-source hashes, seed roles, raw-data checks and the data commit.
-\verb|python run_all.py --quick| checks the full pipeline on small instances;
-\texttt{python run\_all.py} reruns all experiments. The feedback audit is
-\texttt{python analysis/verify\_feedback.py}. Full reproduction uses the
-locked dependencies and seed lists. The README distinguishes historical
-planning checkpoints from corrected runs.
+Install \texttt{requirements-lock.txt} and run \verb|python run_all.py|
+to rerun experiments and regenerate result plots and tables. Configurations
+and seed lists are included. Run \verb|python -m pytest| for validation.
+\verb|python run_all.py --quick| is a smoke test, not the reported evaluation.
 \label{lastbodypage}
 
 \clearpage

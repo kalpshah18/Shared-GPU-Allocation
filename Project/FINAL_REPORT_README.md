@@ -20,14 +20,17 @@ python analysis/compile_final_report.py
 
 The first command uses the project's Python dependencies. It reconstructs
 reported summary statistics from raw seed rows using 10,000 bootstrap resamples,
-checks seed roles, and regenerates four plots, five tables and numeric text macros.
+checks seed roles, and regenerates four plots, six result tables and numeric text macros.
+Adaptive regret bands are recomputed with their simultaneous, library-specific
+bootstrap rather than treated as ordinary scalar means. Training metadata and
+training/evaluation seed separation are checked too.
 It audits all feedback cells and verifies the count of 270 unique optimal oracle
 solves. It does not rerun experiments or overwrite their outputs.
 
 For a code-to-data check, run `python analysis/verify_final_replay.py` before
-building the assets. It replays the first saved seed in 11 representative
+building the assets. It replays the first saved seed in 13 representative
 cells, including controlled timing, the credit mechanism, the constrained
-oracle and the corrected planning attack. Its record is `final_assets/replay_checks.json`.
+oracle, uncapped Karma/Rank and the corrected planning attack. Its record is `final_assets/replay_checks.json`.
 This is a representative replay check, not a full-grid simulation rerun.
 
 The second command requires PDFLaTeX and BibTeX in PATH. It compiles with shell
@@ -52,12 +55,21 @@ use LaTeX macros rather than separately typed statistics.
 | Figure 1 | E7 | M4 inflation sensitivity, rho=.25, 30 master seeds |
 | Table 2, Figure 2 | E19 | Fixed-opponent timing and distinct population-profile gains |
 | Table 3, Figure 3 | E20 | Renewable credit budgets and policy-specific populations |
-| Table 4 | E12 | Matched W=10; 30 fresh extension seeds |
+| Table 4 | E12 | All six Score/Karma/Rank capped/uncapped rows; 30 extension seeds |
 | Figure 4 | E15 | Corrected planner, n=10, k=2, T=120, H=40, 80 sampled futures |
 | Table 5 | E14 | Mixed demand, n=6, k=2, T=40, W=6, B=8 |
+| Table 6 | E18 | Two starts, 4/20 training sweeps; 30 independent follow-up seeds |
+| Workload/benchmark text | E5/E6 | Marginal-preserving persistence; saved machine-dependent timing |
+| Diagnostic text | E16/E17 | Rank reference replay and forced/auction accounting; reused extension seeds |
+
+The [coverage map](../docs/REPORT_COVERAGE.md) accounts for every implemented
+study, including historical checkpoints, parameter sweeps and selected results.
+Five history/service extensions are shown explicitly: Score-Cap, Karma,
+Karma-Cap, Rank and Rank-Cap. Credit-Vickrey is a separate budget extension.
 
 E19/E20 reuse existing master seeds and have pointwise exploratory intervals.
-The paper distinguishes those from the fresh E12--E15 evaluation set and from
+The paper distinguishes those from the E12--E15 extension evaluation set,
+its descriptive reuse in E16/E17, the independent E18 follow-up set, and
 the historical E3b/E3c/E11 attacker checkpoints. Waiting maxima are averages
 of pre-round per-episode maxima; the formal cap bound also includes terminal
 waiting. The report makes no production-system or dynamic-strategyproofness claim.
@@ -65,5 +77,5 @@ waiting. The report makes no production-system or dynamic-strategyproofness clai
 ## Layout verification
 
 The PDF is rendered page by page for visual checks. The final layout has four
-readable plots, five result tables, the contribution table and six references.
+readable plots, six result tables, a study overview, the contribution table and six references.
 The source archive is also compiled independently to check portability.
